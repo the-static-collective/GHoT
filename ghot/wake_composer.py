@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""GHoT Wake Composer — Experiment 009.
+"""GHoT Wake Composer — Experiments 009/010.
 
-Re-evaluates durable HOLDs against the current liveness/power field. A hold can
-remain held, release into a child energy plan, expire, or remain inert after
-cancellation.
+Re-evaluates durable HOLDs against the current field. When a HOLD becomes
+runnable, the worker must acquire an exclusive expiring lease before execution.
 
-The Wake Composer never invents a future wake time. It reacts to a changed
-field or to an explicit wake pass.
+A healthy worker renews its lease while work runs. If the worker dies, renewal
+stops and another worker may recover the expired claim.
 """
 
 from __future__ import annotations
@@ -14,8 +13,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
+import threading
 import time
 import uuid
+from contextlib import nullcontext
 from typing import Any, Callable
 
 from capability_composer import gather_candidates
@@ -23,9 +25,46 @@ from energy_scheduler import decide_from_candidates
 from hold_queue import HoldQueue, iso_at
 from lan_node import request_task
 from reference_node import execute, node_id, persist
+from work_lease import WorkLeaseStore
 
 
 Executor = Callable[[dict[str, Any], Any], dict[str, Any]]
+
+
+class LeaseHeartbeat:
+    def __init__(
+        self,
+        store: WorkLeaseStore,
+        claim: dict[str, Any],
+        *,
+        lease_seconds: float,
+    ) -> None:
+        self.store = store
+        self.claim = claim
+        self.lease_seconds = lease_seconds
+        self.interval = max(0.25, min(10.0, lease_seconds / 3.0))
+        self.stop = threading.Event()
+        self.lost = threading.Event()
+        self.thread = threading.Thread(target=self._run, daemon=True)
+
+    def _run(self) -> None:
+        while not self.stop.wait(self.interval):
+            renewed = self.store.renew(
+                self.claim,
+                lease_seconds=self.lease_seconds,
+            )
+            if renewed is None:
+                self.lost.set()
+                return
+            self.claim = renewed
+
+    def __enter__(self) -> "LeaseHeartbeat":
+        self.thread.start()
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self.stop.set()
+        self.thread.join(timeout=max(1.0, self.interval + 0.5))
 
 
 def _field_fingerprint(candidates: list[dict[str, Any]]) -> str:
@@ -48,7 +87,10 @@ def _field_fingerprint(candidates: list[dict[str, Any]]) -> str:
             "renewable_surplus": power.get("renewable_surplus"),
             "offers": sorted(offers, key=lambda x: str(x.get("capability"))),
         })
-    raw = json.dumps(sorted(compact, key=lambda x: str(x.get("node_id"))), sort_keys=True)
+    raw = json.dumps(
+        sorted(compact, key=lambda x: str(x.get("node_id"))),
+        sort_keys=True,
+    )
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
@@ -146,6 +188,8 @@ def reevaluate_hold(
     executor: Executor | None = None,
     at: float | None = None,
     trigger: str = "hold.wake",
+    worker_id: str | None = None,
+    lease_seconds: float = 60.0,
 ) -> dict[str, Any]:
     when = time.time() if at is None else float(at)
     queue = queue or HoldQueue()
@@ -165,7 +209,7 @@ def reevaluate_hold(
         expired = queue.expire(hold_id, at=when)
         return {
             "hold_id": hold_id,
-            "status": "expired",
+            "status": expired.get("status"),
             "action": "expire",
             "hold": expired,
         }
@@ -215,29 +259,86 @@ def reevaluate_hold(
             "execution": None,
         }
 
-    # Re-read immediately before execution. Cancellation/expiry wins the race.
-    current = queue.get(hold_id)
-    if current is None:
-        return {"hold_id": hold_id, "status": "missing", "action": "stop"}
-    if current.get("status") != "held":
+    actual_worker = worker_id or f"{node_id()}:pid-{os.getpid()}"
+    claim_result = queue.claim_for_execution(
+        hold_id,
+        worker_id=actual_worker,
+        lease_seconds=lease_seconds,
+        at=when,
+    )
+
+    if claim_result.get("status") != "claimed":
+        status = claim_result.get("status")
+        if status == "busy":
+            return {
+                "hold_id": hold_id,
+                "status": "held",
+                "action": "claimed-by-other",
+                "energy_plan": child_plan,
+                "claim": claim_result.get("claim"),
+                "execution": None,
+            }
+        if status == "inactive":
+            return {
+                "hold_id": hold_id,
+                "status": claim_result.get("hold_status"),
+                "action": "stop",
+                "energy_plan": child_plan,
+                "execution": None,
+            }
         return {
             "hold_id": hold_id,
-            "status": current.get("status"),
-            "action": "stop",
+            "status": status,
+            "action": status,
             "energy_plan": child_plan,
-        }
-    if queue.is_expired(current, at=when):
-        expired = queue.expire(hold_id, at=when)
-        return {
-            "hold_id": hold_id,
-            "status": "expired",
-            "action": "expire",
-            "hold": expired,
-            "energy_plan": child_plan,
+            "execution": None,
         }
 
+    claim = claim_result["claim"]
+    leases = WorkLeaseStore(queue.root)
     runner = executor or _execute_child
-    result = runner(child_plan, hold.get("payload"))
+
+    heartbeat_context = (
+        LeaseHeartbeat(leases, claim, lease_seconds=lease_seconds)
+        if at is None
+        else nullcontext()
+    )
+
+    try:
+        with heartbeat_context as heartbeat:
+            result = runner(child_plan, hold.get("payload"))
+            if heartbeat is not None and getattr(heartbeat, "lost", None):
+                if heartbeat.lost.is_set():
+                    return {
+                        "hold_id": hold_id,
+                        "status": "held",
+                        "action": "lease-lost",
+                        "energy_plan": child_plan,
+                        "claim": claim,
+                        "execution": result,
+                    }
+    except Exception as exc:
+        finish_at = time.time() if at is None else when
+        reason = f"{type(exc).__name__}: {exc}"
+        current = queue.note_recheck(
+            hold_id,
+            child_energy_plan_id=child_plan["energy_plan_id"],
+            reason=reason,
+            at=finish_at,
+        )
+        leases.abandon(claim, reason=reason, at=finish_at)
+        return {
+            "hold_id": hold_id,
+            "status": "held",
+            "action": "release-attempt-exception",
+            "hold": current,
+            "energy_plan": child_plan,
+            "claim": claim,
+            "execution": None,
+            "error": reason,
+        }
+
+    finish_at = time.time() if at is None else when
     receipt = ((result.get("execution") or {}).get("receipt") or {})
     result_status = result.get("status", "unknown")
 
@@ -246,14 +347,33 @@ def reevaluate_hold(
             hold_id,
             child_energy_plan_id=child_plan["energy_plan_id"],
             receipt_id=receipt.get("receipt_id"),
-            at=when,
+            lease_id=claim["lease_id"],
+            at=finish_at,
         )
+        if released.get("status") == "released":
+            leases.finish(
+                claim,
+                outcome="ok",
+                receipt_id=receipt.get("receipt_id"),
+                at=finish_at,
+            )
+            return {
+                "hold_id": hold_id,
+                "status": "released",
+                "action": decision["action"],
+                "hold": released,
+                "energy_plan": child_plan,
+                "claim": claim,
+                "execution": result,
+            }
+
         return {
             "hold_id": hold_id,
-            "status": released.get("status"),
-            "action": decision["action"],
+            "status": released.get("status", "held"),
+            "action": "lease-not-current",
             "hold": released,
             "energy_plan": child_plan,
+            "claim": claim,
             "execution": result,
         }
 
@@ -262,14 +382,16 @@ def reevaluate_hold(
         hold_id,
         child_energy_plan_id=child_plan["energy_plan_id"],
         reason=reason,
-        at=when,
+        at=finish_at,
     )
+    leases.abandon(claim, reason=reason, at=finish_at)
     return {
         "hold_id": hold_id,
         "status": "held",
         "action": "release-attempt-failed",
         "hold": current,
         "energy_plan": child_plan,
+        "claim": claim,
         "execution": result,
     }
 
@@ -279,6 +401,8 @@ def wake_all(
     queue: HoldQueue | None = None,
     timeout: float = 2.0,
     at: float | None = None,
+    worker_id: str | None = None,
+    lease_seconds: float = 60.0,
 ) -> dict[str, Any]:
     when = time.time() if at is None else float(at)
     queue = queue or HoldQueue()
@@ -295,14 +419,17 @@ def wake_all(
         }
 
     candidates, snapshot = gather_candidates(timeout)
+    actual_worker = worker_id or f"{node_id()}:pid-{os.getpid()}"
     results = [
         reevaluate_hold(
             hold["hold_id"],
             queue=queue,
             candidates=candidates,
             field_policy=snapshot.get("policy") or {},
-            at=when,
+            at=at,
             trigger="hold.wake_all",
+            worker_id=actual_worker,
+            lease_seconds=lease_seconds,
         )
         for hold in held
     ]
@@ -310,10 +437,16 @@ def wake_all(
         "kind": "ghot.wake.result",
         "version": "0",
         "observed_at": iso_at(when),
+        "worker_id": actual_worker,
         "expired": [item["hold_id"] for item in expired],
         "field_fingerprint": _field_fingerprint(candidates),
         "results": results,
     }
+
+
+def _add_worker_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--worker-id", default=None)
+    parser.add_argument("--lease-seconds", type=float, default=60.0)
 
 
 def main() -> int:
@@ -329,14 +462,17 @@ def main() -> int:
 
     wake_parser = sub.add_parser("wake")
     wake_parser.add_argument("--timeout", type=float, default=2.0)
+    _add_worker_args(wake_parser)
 
     one_parser = sub.add_parser("recheck")
     one_parser.add_argument("hold_id")
     one_parser.add_argument("--timeout", type=float, default=2.0)
+    _add_worker_args(one_parser)
 
     watch_parser = sub.add_parser("watch")
     watch_parser.add_argument("--timeout", type=float, default=2.0)
     watch_parser.add_argument("--interval", type=float, default=5.0)
+    _add_worker_args(watch_parser)
 
     args = parser.parse_args()
     queue = HoldQueue()
@@ -356,18 +492,30 @@ def main() -> int:
         return 0
 
     if args.command == "recheck":
-        result = reevaluate_hold(args.hold_id, queue=queue, timeout=args.timeout)
+        result = reevaluate_hold(
+            args.hold_id,
+            queue=queue,
+            timeout=args.timeout,
+            worker_id=args.worker_id,
+            lease_seconds=args.lease_seconds,
+        )
         print(json.dumps(result, indent=2))
         return 0 if result.get("status") != "missing" else 1
 
     if args.command == "wake":
-        print(json.dumps(wake_all(queue=queue, timeout=args.timeout), indent=2))
+        print(json.dumps(wake_all(
+            queue=queue,
+            timeout=args.timeout,
+            worker_id=args.worker_id,
+            lease_seconds=args.lease_seconds,
+        ), indent=2))
         return 0
 
     if args.command == "watch":
         if args.interval <= 0:
             raise SystemExit("--interval must be > 0")
 
+        actual_worker = args.worker_id or f"{node_id()}:pid-{os.getpid()}"
         last_fingerprint: str | None = None
         last_hold_set: tuple[str, ...] | None = None
         try:
@@ -379,7 +527,12 @@ def main() -> int:
                 hold_set = tuple(sorted(item["hold_id"] for item in held))
 
                 if fingerprint != last_fingerprint or hold_set != last_hold_set:
-                    print(json.dumps(wake_all(queue=queue, timeout=args.timeout), indent=2))
+                    print(json.dumps(wake_all(
+                        queue=queue,
+                        timeout=args.timeout,
+                        worker_id=actual_worker,
+                        lease_seconds=args.lease_seconds,
+                    ), indent=2))
                     last_fingerprint = fingerprint
                     last_hold_set = hold_set
 
