@@ -50,6 +50,12 @@ def candidate_view(candidate: dict[str, Any]) -> dict[str, Any]:
         "battery_percent": power.get("battery_percent"),
         "charging": power.get("charging"),
         "power_source": power.get("source"),
+        "renewable_surplus": power.get("renewable_surplus"),
+        "temperature_c": power.get("temperature_c"),
+        "thermal_state": power.get("thermal_state"),
+        "load_per_cpu_1m": power.get("load_per_cpu_1m"),
+        "power_willingness": power.get("willingness"),
+        "power_willingness_reasons": power.get("willingness_reasons"),
         "field_state": candidate.get("field_state"),
         "last_seen": candidate.get("last_seen"),
         "age_seconds": candidate.get("age_seconds"),
@@ -92,8 +98,20 @@ def evaluate_candidate(
     else:
         reasons.append("body is awake in liveness field")
 
-    if not offers_capability(body_record, capability):
+    matching_offers = [
+        offer for offer in body_record.get("offers", [])
+        if offer.get("capability") == capability
+    ]
+    if not matching_offers:
         rejected.append("required capability not offered")
+    elif not any(offer.get("available", False) for offer in matching_offers):
+        power_reasons = []
+        for offer in matching_offers:
+            power_reasons.extend((offer.get("power") or {}).get("policy_reasons") or [])
+        if power_reasons:
+            rejected.append("required capability withdrawn: " + "; ".join(power_reasons))
+        else:
+            rejected.append("required capability currently unavailable")
 
     battery = power.get("battery_percent")
     if min_battery is not None:
@@ -112,6 +130,13 @@ def evaluate_candidate(
     if prefer_local and candidate["location"] == "local":
         score += 100.0
         reasons.append("+100 local-body preference")
+
+    if power.get("willingness") == "abundant":
+        reasons.append("power willingness is abundant")
+    elif power.get("willingness") == "conserve":
+        reasons.append("power willingness is conserve")
+    elif power.get("willingness") == "critical":
+        reasons.append("power willingness is critical")
 
     if prefer_plugged_in:
         charging = power.get("charging")
