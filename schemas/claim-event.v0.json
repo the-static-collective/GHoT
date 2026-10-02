@@ -18,6 +18,8 @@
     "event_type": {
       "enum": [
         "claim.acquired",
+        "claim.renewed",
+        "claim.expired",
         "claim.recovered",
         "claim.completed",
         "claim.abandoned"
