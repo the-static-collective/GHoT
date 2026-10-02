@@ -15,6 +15,14 @@ from reference_node import now
 from resilient_composer import run_resilient
 
 
+class NoopField:
+    def record_failure(self, node_id: str, reason: str) -> None:
+        pass
+
+    def record_success(self, node_id: str) -> None:
+        pass
+
+
 def fake_planner(
     capability: str,
     *,
@@ -132,6 +140,7 @@ def main() -> int:
         max_attempts=3,
         planner=fake_planner,
         executor=fake_executor,
+        field=NoopField(),
     )
     print(json.dumps(result, indent=2))
 
