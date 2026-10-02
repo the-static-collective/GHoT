@@ -27,3 +27,6 @@ jobs:
 
       - name: Failure-aware recomposition simulation
         run: python3 ghot/recomposition_sim.py
+
+      - name: Liveness field lifecycle simulation
+        run: python3 ghot/liveness_sim.py
