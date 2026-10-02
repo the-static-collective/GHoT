@@ -1,16 +1,9 @@
 #!/usr/bin/env python3
-"""GHoT reference node — Phase 0 / Executor Pantry.
+"""GHoT reference node — body, pantry and power-aware execution.
 
-Zero external dependencies. Probes the current body, discovers bounded local
-executors, accepts allowlisted capabilities, and produces task/receipt records.
-
-Usage:
-    python ghot/reference_node.py probe
-    python ghot/reference_node.py pantry
-    python ghot/reference_node.py echo "hello heap"
-    python ghot/reference_node.py hash "hello heap"
-    python ghot/reference_node.py run runtime.ffmpeg.version
-    python ghot/reference_node.py run media.probe "/path/to/file.mp3"
+Zero external Python dependencies. Probes the current body, discovers bounded
+local executors, applies current power willingness to offers, accepts
+allowlisted capabilities, and produces task/receipt records.
 """
 
 from __future__ import annotations
@@ -29,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from executor_pantry import derive_offers, execute_adapter, pantry_report, probe_executors
+from power_field import apply_power_policy, probe_power
 
 ROOT = Path(os.environ.get("GHOT_HOME", ".ghot"))
 RECORDS = ROOT / "records"
@@ -61,11 +55,7 @@ def memory_bytes() -> int | None:
     return None
 
 
-def body() -> dict[str, Any]:
-    usage = shutil.disk_usage(Path.cwd())
-    executors = probe_executors()
-    pantry_offers = derive_offers(executors)
-
+def _base_offers(executors: list[dict[str, Any]]) -> list[dict[str, Any]]:
     builtins = [
         {
             "kind": "ghot.offer",
@@ -83,8 +73,17 @@ def body() -> dict[str, Any]:
             "system.hash",
             "system.info",
             "system.pantry",
+            "system.power",
         ]
     ]
+    return builtins + derive_offers(executors)
+
+
+def body() -> dict[str, Any]:
+    usage = shutil.disk_usage(Path.cwd())
+    executors = probe_executors()
+    power = probe_power()
+    offers = apply_power_policy(_base_offers(executors), power)
 
     return {
         "kind": "ghot.body",
@@ -101,13 +100,9 @@ def body() -> dict[str, Any]:
             "free_disk_bytes": usage.free,
             "python": platform.python_version(),
         },
-        "power": {
-            "battery_percent": None,
-            "charging": None,
-            "source": None,
-        },
+        "power": power,
         "executors": executors,
-        "offers": builtins + pantry_offers,
+        "offers": offers,
     }
 
 
@@ -133,6 +128,14 @@ def sha256_json(value: Any) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _current_offer(capability: str) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    current_body = body()
+    for offer in current_body.get("offers", []):
+        if offer.get("capability") == capability:
+            return offer, current_body
+    return None, current_body
+
+
 def execute(
     capability: str,
     payload: Any,
@@ -154,22 +157,35 @@ def execute(
     started = now()
     status = "ok"
     error = None
+    output: Any = None
 
     try:
+        offer, current_body = _current_offer(capability)
+        if offer is None:
+            raise ValueError(f"capability not offered by this body: {capability}")
+        if offer.get("available") is not True:
+            power = offer.get("power") or {}
+            reasons = power.get("policy_reasons") or []
+            reason = "; ".join(reasons) if reasons else "current policy withdrew offer"
+            raise RuntimeError(
+                f"capability currently unavailable: {capability}: {reason}"
+            )
+
         if capability == "system.echo":
             output = payload
         elif capability == "system.hash":
             raw = payload if isinstance(payload, str) else json.dumps(payload, sort_keys=True)
             output = {"sha256": hashlib.sha256(raw.encode("utf-8")).hexdigest()}
         elif capability == "system.info":
-            output = body()
+            output = current_body
         elif capability == "system.pantry":
             output = pantry_report()
+        elif capability == "system.power":
+            output = current_body["power"]
         else:
             output = execute_adapter(capability, payload)
     except Exception as exc:
         status = "error"
-        output = None
         error = f"{type(exc).__name__}: {exc}"
 
     receipt = {
@@ -216,6 +232,11 @@ def main(argv: list[str]) -> int:
 
     if command == "pantry":
         _, receipt = execute("system.pantry", None)
+        print(json.dumps(receipt, indent=2))
+        return 0 if receipt["status"] == "ok" else 1
+
+    if command == "power":
+        _, receipt = execute("system.power", None)
         print(json.dumps(receipt, indent=2))
         return 0 if receipt["status"] == "ok" else 1
 
