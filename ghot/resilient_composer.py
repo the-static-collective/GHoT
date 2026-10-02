@@ -18,6 +18,7 @@ import uuid
 from typing import Any, Callable
 
 from capability_composer import compose_plan, execute_plan, parse_payload
+from liveness_field import LivenessField
 from reference_node import node_id, now, persist
 
 
@@ -82,10 +83,12 @@ def run_resilient(
     prefer_memory: bool = False,
     planner: Planner = compose_plan,
     executor: Executor = execute_plan,
+    field: LivenessField | None = None,
 ) -> dict[str, Any]:
     if max_attempts < 1:
         raise ValueError("max_attempts must be >= 1")
 
+    field_store = field or LivenessField()
     composition_id = f"composition-{uuid.uuid4()}"
     requester = node_id()
     created_at = now()
@@ -109,6 +112,7 @@ def run_resilient(
             composition_id=composition_id,
             parent_plan_id=parent_plan_id,
             recomposition_reason=recomposition_reason,
+            field=field_store,
         )
         final_plan_id = plan.get("plan_id")
         selected = plan.get("selected")
@@ -148,6 +152,7 @@ def run_resilient(
                     ),
                 )
             )
+            field_store.record_failure(selected["node_id"], error)
             excluded.add(selected["node_id"])
             parent_plan_id = plan["plan_id"]
             recomposition_reason = (
@@ -162,6 +167,7 @@ def run_resilient(
         status = result.get("status", "unknown")
 
         if status == "ok":
+            field_store.record_success(selected["node_id"])
             final_receipt_id = receipt.get("receipt_id")
             attempts.append(
                 _record_attempt(
@@ -192,6 +198,10 @@ def run_resilient(
                     "recompose" if ordinal < max_attempts else "stop"
                 ),
             )
+        )
+        field_store.record_failure(
+            selected["node_id"],
+            receipt.get("error") or f"execution status {status}",
         )
         excluded.add(selected["node_id"])
         parent_plan_id = plan["plan_id"]
