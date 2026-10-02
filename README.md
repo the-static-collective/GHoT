@@ -208,3 +208,40 @@ python3 ghot/energy_sim.py
 
 See `docs/ENERGY-AWARE-SCHEDULING.md` and
 `experiments/008-energy-aware-scheduling.md`.
+
+
+## Wake held work
+
+HOLDs now live in an active local queue as well as the append-only record trail:
+
+```bash
+python3 ghot/wake_composer.py list
+python3 ghot/wake_composer.py wake
+python3 ghot/wake_composer.py watch --interval 5
+```
+
+A hold may remain held, release into a child energy plan, be cancelled, or
+expire. Cancelled/expired work is never started by the Wake Composer.
+
+Optional expiry can be attached when a hold is created:
+
+```bash
+python3 ghot/energy_scheduler.py render.video job.json \
+  --urgency background \
+  --deferrable \
+  --hold-for-seconds 3600
+```
+
+Cancellation:
+
+```bash
+python3 ghot/wake_composer.py cancel <hold-id> "no longer needed"
+```
+
+Deterministic proof:
+
+```bash
+python3 ghot/wake_sim.py
+```
+
+See `experiments/009-hold-queue-wake-composer.md`.
