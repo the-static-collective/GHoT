@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/claim-event.v0.json",
+  "title": "GHoT Claim Event V0",
+  "type": "object",
+  "required": [
+    "kind",
+    "version",
+    "event_id",
+    "event_type",
+    "hold_id",
+    "observed_at"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.claim.event" },
+    "version": { "const": "0" },
+    "event_id": { "type": "string", "minLength": 1 },
+    "event_type": {
+      "enum": [
+        "claim.acquired",
+        "claim.recovered",
+        "claim.completed",
+        "claim.abandoned"
+      ]
+    },
+    "hold_id": { "type": "string", "minLength": 1 },
+    "worker_id": { "type": ["string", "null"] },
+    "lease_id": { "type": ["string", "null"] },
+    "observed_at": { "type": "string" },
+    "detail": { "type": "object" }
+  }
+}
