@@ -253,6 +253,16 @@ def schedule(
     }
     persist("energy-plan", record)
 
+    if not execute_now:
+        return {
+            "kind": "ghot.energy.result",
+            "version": "0",
+            "status": "planned",
+            "energy_plan": record,
+            "hold": None,
+            "execution": None,
+        }
+
     if decision["action"] == "hold":
         created_epoch = time.time()
         expires_epoch = (
@@ -274,6 +284,7 @@ def schedule(
             "urgency": urgency,
             "deferrable": deferrable,
             "data_node_id": data_node_id,
+            "prefer_surplus_for_background": prefer_surplus_for_background,
             "reason": "; ".join(decision["hold_reasons"]),
             "release_condition": (
                 "re-evaluate when field/power state changes; V0 has no predictive wake time"
@@ -295,16 +306,6 @@ def schedule(
             "kind": "ghot.energy.result",
             "version": "0",
             "status": "no-eligible-body",
-            "energy_plan": record,
-            "hold": None,
-            "execution": None,
-        }
-
-    if not execute_now:
-        return {
-            "kind": "ghot.energy.result",
-            "version": "0",
-            "status": "planned",
             "energy_plan": record,
             "hold": None,
             "execution": None,
