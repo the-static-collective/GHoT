@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GHoT LAN node — Experiment 002.
+"""GHoT LAN node — Experiments 002/004.
 
 Zero external dependencies.
 
@@ -10,8 +10,8 @@ Machine B:
     python3 ghot/lan_node.py scan
     python3 ghot/lan_node.py task http://192.168.1.10:7788 system.echo "hello other body"
 
-Use only on a LAN you control. The V0 task endpoint exposes an intentionally
-tiny allowlist inherited from reference_node.py.
+Use only on a LAN you control. Remote execution remains bounded by explicit
+capability adapters in reference_node.py / executor_pantry.py.
 """
 
 from __future__ import annotations
@@ -69,11 +69,19 @@ class Handler(BaseHTTPRequestHandler):
             incoming = json.loads(raw.decode("utf-8"))
             capability = incoming["capability"]
             payload = incoming.get("input")
-            task, receipt = execute(capability, payload)
-            send_json(self, 200 if receipt["status"] == "ok" else 400, {
-                "task": task,
-                "receipt": receipt,
-            })
+            requester = incoming.get("requester_node_id")
+            constraints = incoming.get("constraints") or {}
+            task, receipt = execute(
+                capability,
+                payload,
+                requester_node_id=requester,
+                constraints=constraints,
+            )
+            send_json(
+                self,
+                200 if receipt["status"] == "ok" else 400,
+                {"task": task, "receipt": receipt},
+            )
         except Exception as exc:
             send_json(self, 400, {
                 "error": f"{type(exc).__name__}: {exc}",
@@ -144,7 +152,7 @@ def serve(port: int) -> int:
     return 0
 
 
-def scan(timeout: float) -> int:
+def discover_peers(timeout: float = 2.0) -> list[dict[str, Any]]:
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     sock.settimeout(0.25)
@@ -184,17 +192,28 @@ def scan(timeout: float) -> int:
         seen[key] = message
 
     sock.close()
-    print(json.dumps(list(seen.values()), indent=2))
+    return list(seen.values())
+
+
+def scan(timeout: float) -> int:
+    print(json.dumps(discover_peers(timeout), indent=2))
     return 0
 
 
-def cross_task(url: str, capability: str, payload: Any) -> int:
+def request_task(
+    url: str,
+    capability: str,
+    payload: Any,
+    constraints: dict[str, Any] | None = None,
+    requester_node_id: str | None = None,
+) -> dict[str, Any]:
     envelope = {
         "kind": "ghot.task.request.v0",
         "version": "0",
-        "requester_node_id": node_id(),
+        "requester_node_id": requester_node_id or node_id(),
         "capability": capability,
         "input": payload,
+        "constraints": constraints or {},
     }
     data = json.dumps(envelope).encode("utf-8")
     req = urllib.request.Request(
@@ -205,12 +224,18 @@ def cross_task(url: str, capability: str, payload: Any) -> int:
     )
     try:
         with urllib.request.urlopen(req, timeout=30) as response:
-            result = json.loads(response.read().decode("utf-8"))
-            print(json.dumps(result, indent=2))
-            return 0
+            return json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
-        print(exc.read().decode("utf-8"))
-        return 1
+        detail = exc.read().decode("utf-8")
+        raise RuntimeError(f"remote task rejected ({exc.code}): {detail}") from exc
+
+
+def cross_task(url: str, capability: str, payload: Any) -> int:
+    try:
+        result = request_task(url, capability, payload)
+        print(json.dumps(result, indent=2))
+        receipt = result.get("receipt") or {}
+        return 0 if receipt.get("status") == "ok" else 1
     except Exception as exc:
         print(json.dumps({"error": f"{type(exc).__name__}: {exc}"}, indent=2))
         return 1
