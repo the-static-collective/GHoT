@@ -75,3 +75,20 @@ No arbitrary remote shell is exposed.
 - `experiments/001-one-body.md`
 - `experiments/002-two-bodies-lan.md`
 - `experiments/003-executor-pantry.md`
+
+## Compose by capability
+
+Once one or more LAN bodies are serving, the requester no longer needs to name
+an IP address:
+
+```bash
+python3 ghot/capability_composer.py runtime.ffmpeg.version --dry-run
+python3 ghot/capability_composer.py runtime.ffmpeg.version
+```
+
+The composer discovers bodies, rejects those that do not offer the capability,
+applies explicit constraints/preferences, persists a PLAN with
+`why_selected`, and then executes locally or crosses the task automatically.
+
+See `docs/CAPABILITY-COMPOSER.md` and
+`experiments/004-capability-composer.md`.
