@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/hold-event.v0.json",
+  "title": "GHoT Hold Event V0",
+  "type": "object",
+  "required": [
+    "kind",
+    "version",
+    "event_id",
+    "event_type",
+    "hold_id",
+    "observed_at",
+    "status"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.hold.event" },
+    "version": { "const": "0" },
+    "event_id": { "type": "string", "minLength": 1 },
+    "event_type": {
+      "enum": [
+        "hold.enqueued",
+        "hold.rechecked",
+        "hold.released",
+        "hold.cancelled",
+        "hold.expired"
+      ]
+    },
+    "hold_id": { "type": "string", "minLength": 1 },
+    "energy_plan_id": { "type": ["string", "null"] },
+    "observed_at": { "type": "string" },
+    "status": {
+      "enum": ["held", "released", "cancelled", "expired"]
+    },
+    "detail": { "type": "object" }
+  }
+}
