@@ -140,7 +140,7 @@ def run_resilient(
                     ordinal=ordinal,
                     plan=plan,
                     started_at=started_at,
-                    finished_at=finished_at if "finished_at" in locals() else now(),
+                    finished_at=now(),
                     outcome="transport-error",
                     error=error,
                     next_action=(
