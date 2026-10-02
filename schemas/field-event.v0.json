@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/field-event.v0.json",
+  "title": "GHoT Field Event V0",
+  "type": "object",
+  "required": [
+    "kind",
+    "version",
+    "event_id",
+    "event_type",
+    "node_id",
+    "observed_at"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.field.event" },
+    "version": { "const": "0" },
+    "event_id": { "type": "string", "minLength": 1 },
+    "event_type": { "type": "string", "minLength": 1 },
+    "node_id": { "type": "string", "minLength": 1 },
+    "observed_at": { "type": "string" },
+    "previous_state": { "type": ["string", "null"] },
+    "next_state": { "type": ["string", "null"] },
+    "detail": { "type": "object" }
+  }
+}
