@@ -160,9 +160,9 @@ def run_resilient(
 
         receipt = _receipt_from_result(result)
         status = result.get("status", "unknown")
-        final_receipt_id = receipt.get("receipt_id")
 
         if status == "ok":
+            final_receipt_id = receipt.get("receipt_id")
             attempts.append(
                 _record_attempt(
                     composition_id=composition_id,
