@@ -114,7 +114,8 @@ def body() -> dict[str, Any]:
 def persist(kind: str, record: dict[str, Any]) -> Path:
     RECORDS.mkdir(parents=True, exist_ok=True)
     ident = (
-        record.get("receipt_id")
+        record.get("plan_id")
+        or record.get("receipt_id")
         or record.get("task_id")
         or record.get("node_id")
         or str(uuid.uuid4())
@@ -129,16 +130,21 @@ def sha256_json(value: Any) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
-def execute(capability: str, payload: Any) -> tuple[dict[str, Any], dict[str, Any]]:
+def execute(
+    capability: str,
+    payload: Any,
+    requester_node_id: str | None = None,
+    constraints: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
     task = {
         "kind": "ghot.task",
         "version": "0",
         "task_id": f"task-{uuid.uuid4()}",
         "capability": capability,
         "created_at": now(),
-        "requester_node_id": node_id(),
+        "requester_node_id": requester_node_id or node_id(),
         "input": payload,
-        "constraints": {"network": "not-required"},
+        "constraints": constraints or {"network": "not-required"},
     }
     persist("task", task)
 
@@ -168,6 +174,7 @@ def execute(capability: str, payload: Any) -> tuple[dict[str, Any], dict[str, An
         "version": "0",
         "receipt_id": f"receipt-{uuid.uuid4()}",
         "task_id": task["task_id"],
+        "requester_node_id": task["requester_node_id"],
         "executor_node_id": node_id(),
         "capability": capability,
         "status": status,
