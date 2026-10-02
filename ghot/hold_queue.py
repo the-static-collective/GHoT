@@ -107,6 +107,48 @@ class HoldQueue:
         expires = hold.get("expires_at_epoch")
         return isinstance(expires, (int, float)) and when >= float(expires)
 
+
+    def claim_for_execution(
+        self,
+        hold_id: str,
+        *,
+        worker_id: str,
+        lease_seconds: float,
+        at: float | None = None,
+    ) -> dict[str, Any]:
+        from work_lease import WorkLeaseStore
+
+        when = time.time() if at is None else float(at)
+        leases = WorkLeaseStore(self.root)
+        with leases.transition(hold_id):
+            hold = self.get(hold_id)
+            if hold is None:
+                return {"status": "missing", "hold_id": hold_id}
+            if hold.get("status") != "held":
+                return {
+                    "status": "inactive",
+                    "hold_id": hold_id,
+                    "hold_status": hold.get("status"),
+                }
+            if self.is_expired(hold, at=when):
+                expired = self._expire_locked(hold, when)
+                return {
+                    "status": "expired",
+                    "hold_id": hold_id,
+                    "hold": expired,
+                }
+
+            result = leases.claim_locked(
+                hold,
+                worker_id=worker_id,
+                lease_seconds=lease_seconds,
+                at=when,
+            )
+            return {
+                **result,
+                "hold_id": hold_id,
+            }
+
     def note_recheck(
         self,
         hold_id: str,
