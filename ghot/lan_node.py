@@ -227,6 +227,12 @@ def request_task(
             return json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8")
+        try:
+            parsed = json.loads(detail)
+        except json.JSONDecodeError:
+            parsed = None
+        if isinstance(parsed, dict) and parsed.get("receipt"):
+            return parsed
         raise RuntimeError(f"remote task rejected ({exc.code}): {detail}") from exc
 
 
