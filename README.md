@@ -140,3 +140,39 @@ python3 ghot/liveness_sim.py
 ```
 
 See `docs/LIVENESS-FIELD.md` and `experiments/006-liveness-field.md`.
+
+
+## Let bodies spend energy honestly
+
+BODY declarations now include live power pressure and power-adjusted offers:
+
+```bash
+python3 ghot/power_field.py
+python3 ghot/reference_node.py power
+python3 ghot/reference_node.py probe
+```
+
+V0 willingness is `abundant`, `normal`, `conserve`, or `critical`.
+
+For solar/experimental nodes:
+
+```bash
+GHOT_POWER_SOURCE=solar \
+GHOT_RENEWABLE_SURPLUS=1 \
+GHOT_BATTERY_PERCENT=90 \
+GHOT_CHARGING=1 \
+python3 ghot/reference_node.py probe
+```
+
+Under conserve pressure, heavy offers withdraw. Under critical pressure, only
+essential offers remain. Execution rechecks the current offer before running,
+so a body may refuse work that became unaffordable after planning without
+changing identity or deleting the executor.
+
+Deterministic proof:
+
+```bash
+python3 ghot/power_sim.py
+```
+
+See `docs/POWER-FIELD.md` and `experiments/007-power-field.md`.
