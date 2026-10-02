@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/body.v0.json",
+  "title": "GHoT Body V0",
+  "type": "object",
+  "required": ["kind", "version", "node_id", "observed_at", "system"],
+  "properties": {
+    "kind": { "const": "ghot.body" },
+    "version": { "const": "0" },
+    "node_id": { "type": "string", "minLength": 1 },
+    "observed_at": { "type": "string" },
+    "system": {
+      "type": "object",
+      "required": ["os", "architecture", "cpu_count"],
+      "properties": {
+        "os": { "type": "string" },
+        "architecture": { "type": "string" },
+        "cpu_count": { "type": "integer", "minimum": 1 },
+        "hostname": { "type": "string" },
+        "memory_bytes": { "type": ["integer", "null"], "minimum": 0 },
+        "free_disk_bytes": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "power": {
+      "type": "object",
+      "properties": {
+        "battery_percent": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+        "charging": { "type": ["boolean", "null"] },
+        "source": { "type": ["string", "null"] }
+      }
+    },
+    "executors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "available"],
+        "properties": {
+          "name": { "type": "string" },
+          "available": { "type": "boolean" },
+          "path": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}
