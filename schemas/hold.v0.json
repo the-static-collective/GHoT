@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/hold.v0.json",
+  "title": "GHoT Hold V0",
+  "type": "object",
+  "required": [
+    "kind",
+    "version",
+    "hold_id",
+    "energy_plan_id",
+    "created_at",
+    "requester_node_id",
+    "capability",
+    "urgency",
+    "deferrable",
+    "reason",
+    "release_condition",
+    "status"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.hold" },
+    "version": { "const": "0" },
+    "hold_id": { "type": "string", "minLength": 1 },
+    "energy_plan_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string" },
+    "requester_node_id": { "type": "string", "minLength": 1 },
+    "capability": { "type": "string", "minLength": 1 },
+    "urgency": { "enum": ["immediate", "normal", "background"] },
+    "deferrable": { "type": "boolean" },
+    "data_node_id": { "type": ["string", "null"] },
+    "reason": { "type": "string" },
+    "release_condition": { "type": "string" },
+    "status": { "enum": ["held", "released", "cancelled"] }
+  }
+}
