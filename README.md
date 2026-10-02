@@ -114,3 +114,29 @@ body B, B succeeds, and the final COMPOSITION preserves both attempts.
 
 See `docs/FAILURE-AWARE-RECOMPOSITION.md` and
 `experiments/005-failure-aware-recomposition.md`.
+
+
+## Keep a living field of bodies
+
+GHoT now remembers bodies beyond a single discovery sweep:
+
+```bash
+python3 ghot/liveness_field.py sweep
+python3 ghot/liveness_field.py show
+python3 ghot/liveness_field.py watch --interval 5
+```
+
+V0 states are `awake`, `stale`, `departed`, and `quarantined`.
+
+A cached body/offer can remain visible as history without being eligible for new
+work. Capability composition requires `awake` liveness, and resilient
+execution feeds failures/successes back into the field's bounded circuit
+breaker.
+
+Deterministic proof:
+
+```bash
+python3 ghot/liveness_sim.py
+```
+
+See `docs/LIVENESS-FIELD.md` and `experiments/006-liveness-field.md`.
