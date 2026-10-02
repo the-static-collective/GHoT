@@ -33,4 +33,45 @@ PROBE
 
 The first milestone is not "distributed AGI." It is two ordinary machines on a LAN proving this loop end-to-end, offline.
 
-See `docs/THE-MANY-BODIED-MACHINE.md` and `docs/BUILD-PLAN.md` on the first implementation branch.
+## Try the body
+
+```bash
+python3 ghot/reference_node.py probe
+python3 ghot/reference_node.py pantry
+python3 ghot/reference_node.py echo "hello heap"
+python3 ghot/reference_node.py hash "the heap remembers"
+```
+
+The pantry currently recognizes Python, Git, ffmpeg/ffprobe, llama.cpp, whisper.cpp, Piper and ImageMagick. Installed executors become bounded capability offers; missing executors do not.
+
+If ffprobe is installed:
+
+```bash
+python3 ghot/reference_node.py run media.probe "/path/to/local/file.mp3"
+```
+
+## Try two bodies
+
+Machine A:
+
+```bash
+python3 ghot/lan_node.py serve --port 7788
+```
+
+Machine B:
+
+```bash
+python3 ghot/lan_node.py scan
+python3 ghot/lan_node.py task http://<A-IP>:7788 system.hash "hello other body"
+```
+
+No arbitrary remote shell is exposed.
+
+## Read next
+
+- `docs/THE-MANY-BODIED-MACHINE.md`
+- `docs/BUILD-PLAN.md`
+- `docs/EXECUTOR-PANTRY.md`
+- `experiments/001-one-body.md`
+- `experiments/002-two-bodies-lan.md`
+- `experiments/003-executor-pantry.md`
