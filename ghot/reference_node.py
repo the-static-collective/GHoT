@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""GHoT reference node — Phase 0.
+"""GHoT reference node — Phase 0 / Executor Pantry.
 
-Zero external dependencies. Probes the current body and executes a tiny
-allowlisted capability set locally, producing task and receipt records.
+Zero external dependencies. Probes the current body, discovers bounded local
+executors, accepts allowlisted capabilities, and produces task/receipt records.
 
 Usage:
     python ghot/reference_node.py probe
+    python ghot/reference_node.py pantry
     python ghot/reference_node.py echo "hello heap"
     python ghot/reference_node.py hash "hello heap"
+    python ghot/reference_node.py run runtime.ffmpeg.version
+    python ghot/reference_node.py run media.probe "/path/to/file.mp3"
 """
 
 from __future__ import annotations
@@ -24,6 +27,8 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from executor_pantry import derive_offers, execute_adapter, pantry_report, probe_executors
 
 ROOT = Path(os.environ.get("GHOT_HOME", ".ghot"))
 RECORDS = ROOT / "records"
@@ -58,10 +63,28 @@ def memory_bytes() -> int | None:
 
 def body() -> dict[str, Any]:
     usage = shutil.disk_usage(Path.cwd())
-    executors = []
-    for name in ["python3", "ffmpeg", "llama-cli", "main", "whisper", "whisper-cli", "piper", "git"]:
-        path = shutil.which(name)
-        executors.append({"name": name, "available": bool(path), "path": path})
+    executors = probe_executors()
+    pantry_offers = derive_offers(executors)
+
+    builtins = [
+        {
+            "kind": "ghot.offer",
+            "version": "0",
+            "capability": capability,
+            "available": True,
+            "executor": "ghot.reference",
+            "limits": {
+                "remote_shell": False,
+                "bounded_adapter_only": True,
+            },
+        }
+        for capability in [
+            "system.echo",
+            "system.hash",
+            "system.info",
+            "system.pantry",
+        ]
+    ]
 
     return {
         "kind": "ghot.body",
@@ -84,11 +107,7 @@ def body() -> dict[str, Any]:
             "source": None,
         },
         "executors": executors,
-        "offers": [
-            "system.echo",
-            "system.hash",
-            "system.info",
-        ],
+        "offers": builtins + pantry_offers,
     }
 
 
@@ -135,8 +154,10 @@ def execute(capability: str, payload: Any) -> tuple[dict[str, Any], dict[str, An
             output = {"sha256": hashlib.sha256(raw.encode("utf-8")).hexdigest()}
         elif capability == "system.info":
             output = body()
+        elif capability == "system.pantry":
+            output = pantry_report()
         else:
-            raise ValueError(f"unsupported capability: {capability}")
+            output = execute_adapter(capability, payload)
     except Exception as exc:
         status = "error"
         output = None
@@ -160,6 +181,16 @@ def execute(capability: str, payload: Any) -> tuple[dict[str, Any], dict[str, An
     return task, receipt
 
 
+def parse_payload(args: list[str]) -> Any:
+    if not args:
+        return None
+    raw = " ".join(args)
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return raw
+
+
 def main(argv: list[str]) -> int:
     if len(argv) < 2:
         print(__doc__.strip())
@@ -172,6 +203,11 @@ def main(argv: list[str]) -> int:
         persist("body", record)
         print(json.dumps(record, indent=2))
         return 0
+
+    if command == "pantry":
+        _, receipt = execute("system.pantry", None)
+        print(json.dumps(receipt, indent=2))
+        return 0 if receipt["status"] == "ok" else 1
 
     if command == "echo":
         payload = " ".join(argv[2:])
@@ -187,6 +223,16 @@ def main(argv: list[str]) -> int:
 
     if command == "info":
         _, receipt = execute("system.info", None)
+        print(json.dumps(receipt, indent=2))
+        return 0 if receipt["status"] == "ok" else 1
+
+    if command == "run":
+        if len(argv) < 3:
+            print("run requires a capability", file=sys.stderr)
+            return 2
+        capability = argv[2]
+        payload = parse_payload(argv[3:])
+        _, receipt = execute(capability, payload)
         print(json.dumps(receipt, indent=2))
         return 0 if receipt["status"] == "ok" else 1
 
