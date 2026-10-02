@@ -1,0 +1,198 @@
+#!/usr/bin/env python3
+"""GHoT reference node — Phase 0.
+
+Zero external dependencies. Probes the current body and executes a tiny
+allowlisted capability set locally, producing task and receipt records.
+
+Usage:
+    python ghot/reference_node.py probe
+    python ghot/reference_node.py echo "hello heap"
+    python ghot/reference_node.py hash "hello heap"
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import platform
+import shutil
+import socket
+import sys
+import time
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(os.environ.get("GHOT_HOME", ".ghot"))
+RECORDS = ROOT / "records"
+NODE_ID_FILE = ROOT / "node-id"
+
+
+def now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def node_id() -> str:
+    ROOT.mkdir(parents=True, exist_ok=True)
+    if NODE_ID_FILE.exists():
+        value = NODE_ID_FILE.read_text(encoding="utf-8").strip()
+        if value:
+            return value
+    value = f"node-{uuid.uuid4()}"
+    NODE_ID_FILE.write_text(value + "\n", encoding="utf-8")
+    return value
+
+
+def memory_bytes() -> int | None:
+    try:
+        if hasattr(os, "sysconf"):
+            pages = os.sysconf("SC_PHYS_PAGES")
+            page_size = os.sysconf("SC_PAGE_SIZE")
+            return int(pages) * int(page_size)
+    except (ValueError, OSError, AttributeError):
+        pass
+    return None
+
+
+def body() -> dict[str, Any]:
+    usage = shutil.disk_usage(Path.cwd())
+    executors = []
+    for name in ["python3", "ffmpeg", "llama-cli", "main", "whisper", "whisper-cli", "piper", "git"]:
+        path = shutil.which(name)
+        executors.append({"name": name, "available": bool(path), "path": path})
+
+    return {
+        "kind": "ghot.body",
+        "version": "0",
+        "node_id": node_id(),
+        "observed_at": now(),
+        "system": {
+            "os": platform.system(),
+            "release": platform.release(),
+            "architecture": platform.machine(),
+            "cpu_count": os.cpu_count() or 1,
+            "hostname": socket.gethostname(),
+            "memory_bytes": memory_bytes(),
+            "free_disk_bytes": usage.free,
+            "python": platform.python_version(),
+        },
+        "power": {
+            "battery_percent": None,
+            "charging": None,
+            "source": None,
+        },
+        "executors": executors,
+        "offers": [
+            "system.echo",
+            "system.hash",
+            "system.info",
+        ],
+    }
+
+
+def persist(kind: str, record: dict[str, Any]) -> Path:
+    RECORDS.mkdir(parents=True, exist_ok=True)
+    ident = (
+        record.get("receipt_id")
+        or record.get("task_id")
+        or record.get("node_id")
+        or str(uuid.uuid4())
+    )
+    path = RECORDS / f"{int(time.time() * 1000)}-{kind}-{ident}.json"
+    path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return path
+
+
+def sha256_json(value: Any) -> str:
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def execute(capability: str, payload: Any) -> tuple[dict[str, Any], dict[str, Any]]:
+    task = {
+        "kind": "ghot.task",
+        "version": "0",
+        "task_id": f"task-{uuid.uuid4()}",
+        "capability": capability,
+        "created_at": now(),
+        "requester_node_id": node_id(),
+        "input": payload,
+        "constraints": {"network": "not-required"},
+    }
+    persist("task", task)
+
+    started = now()
+    status = "ok"
+    error = None
+
+    try:
+        if capability == "system.echo":
+            output = payload
+        elif capability == "system.hash":
+            raw = payload if isinstance(payload, str) else json.dumps(payload, sort_keys=True)
+            output = {"sha256": hashlib.sha256(raw.encode("utf-8")).hexdigest()}
+        elif capability == "system.info":
+            output = body()
+        else:
+            raise ValueError(f"unsupported capability: {capability}")
+    except Exception as exc:
+        status = "error"
+        output = None
+        error = f"{type(exc).__name__}: {exc}"
+
+    receipt = {
+        "kind": "ghot.receipt",
+        "version": "0",
+        "receipt_id": f"receipt-{uuid.uuid4()}",
+        "task_id": task["task_id"],
+        "executor_node_id": node_id(),
+        "capability": capability,
+        "status": status,
+        "started_at": started,
+        "finished_at": now(),
+        "output": output,
+        "output_sha256": sha256_json(output) if output is not None else None,
+        "error": error,
+    }
+    persist("receipt", receipt)
+    return task, receipt
+
+
+def main(argv: list[str]) -> int:
+    if len(argv) < 2:
+        print(__doc__.strip())
+        return 2
+
+    command = argv[1]
+
+    if command == "probe":
+        record = body()
+        persist("body", record)
+        print(json.dumps(record, indent=2))
+        return 0
+
+    if command == "echo":
+        payload = " ".join(argv[2:])
+        _, receipt = execute("system.echo", payload)
+        print(json.dumps(receipt, indent=2))
+        return 0 if receipt["status"] == "ok" else 1
+
+    if command == "hash":
+        payload = " ".join(argv[2:])
+        _, receipt = execute("system.hash", payload)
+        print(json.dumps(receipt, indent=2))
+        return 0 if receipt["status"] == "ok" else 1
+
+    if command == "info":
+        _, receipt = execute("system.info", None)
+        print(json.dumps(receipt, indent=2))
+        return 0 if receipt["status"] == "ok" else 1
+
+    print(f"unknown command: {command}", file=sys.stderr)
+    return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv))
