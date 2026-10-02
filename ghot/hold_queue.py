@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Durable active HOLD queue for GHoT Experiment 009."""
+"""Durable active HOLD queue for GHoT Experiments 009/010."""
 
 from __future__ import annotations
 
@@ -27,10 +27,13 @@ class HoldQueue:
 
     def _write(self, hold: dict[str, Any]) -> None:
         self.holds_dir.mkdir(parents=True, exist_ok=True)
-        self._path(hold["hold_id"]).write_text(
+        target = self._path(hold["hold_id"])
+        temp = target.with_suffix(f".tmp-{uuid.uuid4()}")
+        temp.write_text(
             json.dumps(hold, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
+        temp.replace(target)
 
     def _event(
         self,
@@ -64,6 +67,7 @@ class HoldQueue:
         record.setdefault("updated_at", iso_at(when))
         record.setdefault("released_at", None)
         record.setdefault("released_energy_plan_id", None)
+        record.setdefault("released_receipt_id", None)
         record.setdefault("cancelled_at", None)
         record.setdefault("cancellation_reason", None)
         record.setdefault("expired_at", None)
@@ -140,33 +144,45 @@ class HoldQueue:
         *,
         child_energy_plan_id: str,
         receipt_id: str | None,
+        lease_id: str | None = None,
         at: float | None = None,
     ) -> dict[str, Any]:
-        when = time.time() if at is None else float(at)
-        hold = self.get(hold_id)
-        if hold is None:
-            raise KeyError(f"unknown hold: {hold_id}")
-        if hold.get("status") != "held":
-            return hold
-        if self.is_expired(hold, at=when):
-            return self.expire(hold_id, at=when)
+        from work_lease import WorkLeaseStore
 
-        hold["status"] = "released"
-        hold["released_at"] = iso_at(when)
-        hold["released_energy_plan_id"] = child_energy_plan_id
-        hold["released_receipt_id"] = receipt_id
-        hold["updated_at"] = iso_at(when)
-        self._write(hold)
-        self._event(
-            hold,
-            "hold.released",
-            detail={
-                "child_energy_plan_id": child_energy_plan_id,
-                "receipt_id": receipt_id,
-            },
-            at=when,
-        )
-        return hold
+        when = time.time() if at is None else float(at)
+        leases = WorkLeaseStore(self.root)
+        with leases.transition(hold_id):
+            hold = self.get(hold_id)
+            if hold is None:
+                raise KeyError(f"unknown hold: {hold_id}")
+            if hold.get("status") != "held":
+                return hold
+            if self.is_expired(hold, at=when):
+                return self._expire_locked(hold, when)
+
+            current_claim = leases.get_claim(hold_id)
+            if lease_id is not None:
+                if current_claim is None or current_claim.get("lease_id") != lease_id:
+                    return hold
+
+            hold["status"] = "released"
+            hold["released_at"] = iso_at(when)
+            hold["released_energy_plan_id"] = child_energy_plan_id
+            hold["released_receipt_id"] = receipt_id
+            hold["released_lease_id"] = lease_id
+            hold["updated_at"] = iso_at(when)
+            self._write(hold)
+            self._event(
+                hold,
+                "hold.released",
+                detail={
+                    "child_energy_plan_id": child_energy_plan_id,
+                    "receipt_id": receipt_id,
+                    "lease_id": lease_id,
+                },
+                at=when,
+            )
+            return hold
 
     def cancel(
         self,
@@ -175,29 +191,42 @@ class HoldQueue:
         *,
         at: float | None = None,
     ) -> dict[str, Any]:
+        from work_lease import WorkLeaseStore
+
         when = time.time() if at is None else float(at)
-        hold = self.get(hold_id)
-        if hold is None:
-            raise KeyError(f"unknown hold: {hold_id}")
-        if hold.get("status") != "held":
+        leases = WorkLeaseStore(self.root)
+        with leases.transition(hold_id):
+            hold = self.get(hold_id)
+            if hold is None:
+                raise KeyError(f"unknown hold: {hold_id}")
+            if hold.get("status") != "held":
+                return hold
+
+            current_claim = leases.get_claim(hold_id)
+            if current_claim is not None and not leases.is_claim_expired(current_claim, at=when):
+                result = dict(hold)
+                result["transition_blocked"] = "active-claim"
+                result["active_lease_id"] = current_claim.get("lease_id")
+                result["active_worker_id"] = current_claim.get("worker_id")
+                return result
+
+            if current_claim is not None:
+                leases.remove_expired_claim_locked(
+                    current_claim,
+                    recovery_worker_id=None,
+                    at=when,
+                    reason="cancel-after-expired-lease",
+                )
+
+            hold["status"] = "cancelled"
+            hold["cancelled_at"] = iso_at(when)
+            hold["cancellation_reason"] = reason
+            hold["updated_at"] = iso_at(when)
+            self._write(hold)
+            self._event(hold, "hold.cancelled", detail={"reason": reason}, at=when)
             return hold
 
-        hold["status"] = "cancelled"
-        hold["cancelled_at"] = iso_at(when)
-        hold["cancellation_reason"] = reason
-        hold["updated_at"] = iso_at(when)
-        self._write(hold)
-        self._event(hold, "hold.cancelled", detail={"reason": reason}, at=when)
-        return hold
-
-    def expire(self, hold_id: str, *, at: float | None = None) -> dict[str, Any]:
-        when = time.time() if at is None else float(at)
-        hold = self.get(hold_id)
-        if hold is None:
-            raise KeyError(f"unknown hold: {hold_id}")
-        if hold.get("status") != "held":
-            return hold
-
+    def _expire_locked(self, hold: dict[str, Any], when: float) -> dict[str, Any]:
         hold["status"] = "expired"
         hold["expired_at"] = iso_at(when)
         hold["updated_at"] = iso_at(when)
@@ -205,10 +234,42 @@ class HoldQueue:
         self._event(hold, "hold.expired", at=when)
         return hold
 
+    def expire(self, hold_id: str, *, at: float | None = None) -> dict[str, Any]:
+        from work_lease import WorkLeaseStore
+
+        when = time.time() if at is None else float(at)
+        leases = WorkLeaseStore(self.root)
+        with leases.transition(hold_id):
+            hold = self.get(hold_id)
+            if hold is None:
+                raise KeyError(f"unknown hold: {hold_id}")
+            if hold.get("status") != "held":
+                return hold
+
+            current_claim = leases.get_claim(hold_id)
+            if current_claim is not None and not leases.is_claim_expired(current_claim, at=when):
+                result = dict(hold)
+                result["transition_blocked"] = "active-claim"
+                result["active_lease_id"] = current_claim.get("lease_id")
+                result["active_worker_id"] = current_claim.get("worker_id")
+                return result
+
+            if current_claim is not None:
+                leases.remove_expired_claim_locked(
+                    current_claim,
+                    recovery_worker_id=None,
+                    at=when,
+                    reason="expire-after-expired-lease",
+                )
+
+            return self._expire_locked(hold, when)
+
     def expire_due(self, *, at: float | None = None) -> list[dict[str, Any]]:
         when = time.time() if at is None else float(at)
         expired: list[dict[str, Any]] = []
         for hold in self.list(status="held"):
             if self.is_expired(hold, at=when):
-                expired.append(self.expire(hold["hold_id"], at=when))
+                result = self.expire(hold["hold_id"], at=when)
+                if result.get("status") == "expired":
+                    expired.append(result)
         return expired
