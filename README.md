@@ -245,3 +245,31 @@ python3 ghot/wake_sim.py
 ```
 
 See `experiments/009-hold-queue-wake-composer.md`.
+
+
+## Share one HOLD queue safely
+
+Wake workers now acquire an exclusive expiring lease before execution.
+
+```bash
+python3 ghot/wake_composer.py watch \
+  --worker-id worker-a \
+  --lease-seconds 60
+```
+
+A second worker sharing the same `GHOT_HOME` cannot start the same HOLD while
+the lease is live. Healthy workers renew their lease during execution; if a
+worker dies, the lease expires and another worker can recover it.
+
+Cancellation/expiry wins before claim. Once a live claim exists, V0 reports
+that cancellation is blocked rather than pretending already-started work was
+revoked.
+
+Deterministic concurrency proof:
+
+```bash
+python3 ghot/lease_sim.py
+```
+
+See `docs/WORK-LEASES.md` and
+`experiments/010-atomic-claim-work-lease.md`.
