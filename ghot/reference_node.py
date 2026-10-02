@@ -114,7 +114,8 @@ def body() -> dict[str, Any]:
 def persist(kind: str, record: dict[str, Any]) -> Path:
     RECORDS.mkdir(parents=True, exist_ok=True)
     ident = (
-        record.get("attempt_id")
+        record.get("event_id")
+        or record.get("attempt_id")
         or record.get("plan_id")
         or record.get("receipt_id")
         or record.get("task_id")
