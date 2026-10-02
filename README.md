@@ -176,3 +176,35 @@ python3 ghot/power_sim.py
 ```
 
 See `docs/POWER-FIELD.md` and `experiments/007-power-field.md`.
+
+
+## Schedule across power and time
+
+Energy-aware scheduling can now choose `run_here`, `run_there`, or `hold`:
+
+```bash
+python3 ghot/energy_scheduler.py runtime.ffmpeg.version --urgency normal --dry-run
+```
+
+For deferrable heavy background work, GHoT may persist a HOLD instead of
+spending battery immediately:
+
+```bash
+python3 ghot/energy_scheduler.py render.video job.json \
+  --urgency background \
+  --deferrable \
+  --dry-run
+```
+
+Urgent work is not delayed merely for energy optimization. Data locality is an
+explicit scheduling factor, and HOLD records preserve the original intent for
+later re-evaluation.
+
+Deterministic proof:
+
+```bash
+python3 ghot/energy_sim.py
+```
+
+See `docs/ENERGY-AWARE-SCHEDULING.md` and
+`experiments/008-energy-aware-scheduling.md`.
