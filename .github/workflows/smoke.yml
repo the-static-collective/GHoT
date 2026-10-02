@@ -30,3 +30,11 @@ jobs:
 
       - name: Liveness field lifecycle simulation
         run: python3 ghot/liveness_sim.py
+
+      - name: Power field policy simulation
+        run: python3 ghot/power_sim.py
+
+      - name: Power-aware BODY probe
+        run: |
+          GHOT_POWER_SOURCE=battery GHOT_BATTERY_PERCENT=9 GHOT_CHARGING=0 python3 ghot/reference_node.py probe
+          GHOT_POWER_SOURCE=solar GHOT_RENEWABLE_SURPLUS=1 GHOT_BATTERY_PERCENT=90 GHOT_CHARGING=1 python3 ghot/reference_node.py power
