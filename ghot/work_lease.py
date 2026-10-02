@@ -155,6 +155,34 @@ class WorkLeaseStore:
         except FileNotFoundError:
             pass
 
+    def remove_expired_claim_locked(
+        self,
+        claim: dict[str, Any],
+        *,
+        recovery_worker_id: str | None,
+        at: float,
+        reason: str,
+    ) -> None:
+        if not self.is_claim_expired(claim, at=at):
+            raise ValueError("claim is not expired")
+        hold_id = claim["hold_id"]
+        current = self.get_claim(hold_id)
+        if current is None or current.get("lease_id") != claim.get("lease_id"):
+            return
+        self._remove_claim(hold_id)
+        self._event(
+            "claim.expired",
+            hold_id=hold_id,
+            worker_id=recovery_worker_id,
+            lease_id=claim.get("lease_id"),
+            at=at,
+            detail={
+                "previous_worker_id": claim.get("worker_id"),
+                "previous_lease_until": claim.get("lease_until"),
+                "reason": reason,
+            },
+        )
+
     def claim_locked(
         self,
         hold: dict[str, Any],
@@ -178,17 +206,11 @@ class WorkLeaseStore:
                     "recovered": False,
                 }
             recovered_from = existing
-            self._remove_claim(hold_id)
-            self._event(
-                "claim.recovered",
-                hold_id=hold_id,
-                worker_id=worker_id,
-                lease_id=existing.get("lease_id"),
+            self.remove_expired_claim_locked(
+                existing,
+                recovery_worker_id=worker_id,
                 at=at,
-                detail={
-                    "previous_worker_id": existing.get("worker_id"),
-                    "previous_lease_until": existing.get("lease_until"),
-                },
+                reason="recovered-by-new-worker",
             )
 
         lease_id = f"lease-{uuid.uuid4()}"
@@ -211,6 +233,18 @@ class WorkLeaseStore:
         }
         self._exclusive_write(self.claim_path(hold_id), claim)
         persist("claim", claim)
+        if recovered_from is not None:
+            self._event(
+                "claim.recovered",
+                hold_id=hold_id,
+                worker_id=worker_id,
+                lease_id=lease_id,
+                at=at,
+                detail={
+                    "recovered_from_lease_id": recovered_from.get("lease_id"),
+                    "previous_worker_id": recovered_from.get("worker_id"),
+                },
+            )
         self._event(
             "claim.acquired",
             hold_id=hold_id,
@@ -224,6 +258,47 @@ class WorkLeaseStore:
             "claim": claim,
             "recovered": recovered_from is not None,
         }
+
+    def renew(
+        self,
+        claim: dict[str, Any],
+        *,
+        lease_seconds: float,
+        at: float | None = None,
+    ) -> dict[str, Any] | None:
+        if lease_seconds <= 0:
+            raise ValueError("lease_seconds must be > 0")
+        when = time.time() if at is None else float(at)
+        hold_id = claim["hold_id"]
+        with self.transition(hold_id):
+            current = self.get_claim(hold_id)
+            if current is None:
+                return None
+            if current.get("lease_id") != claim.get("lease_id"):
+                return None
+            if self.is_claim_expired(current, at=when):
+                return None
+
+            until = when + lease_seconds
+            current["lease_seconds"] = lease_seconds
+            current["lease_until_epoch"] = until
+            current["lease_until"] = iso_at(until)
+            path = self.claim_path(hold_id)
+            temp = path.with_suffix(f".tmp-{uuid.uuid4()}")
+            temp.write_text(
+                json.dumps(current, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            temp.replace(path)
+            self._event(
+                "claim.renewed",
+                hold_id=hold_id,
+                worker_id=current.get("worker_id"),
+                lease_id=current.get("lease_id"),
+                at=when,
+                detail={"lease_until": current["lease_until"]},
+            )
+            return current
 
     def finish(
         self,
