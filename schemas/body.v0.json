@@ -3,7 +3,7 @@
   "$id": "https://the-static-collective.github.io/GHoT/schemas/body.v0.json",
   "title": "GHoT Body V0",
   "type": "object",
-  "required": ["kind", "version", "node_id", "observed_at", "system"],
+  "required": ["kind", "version", "node_id", "observed_at", "system", "power", "offers"],
   "properties": {
     "kind": { "const": "ghot.body" },
     "version": { "const": "0" },
@@ -23,10 +23,20 @@
     },
     "power": {
       "type": "object",
+      "required": ["willingness", "willingness_reasons", "thermal_state"],
       "properties": {
         "battery_percent": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
         "charging": { "type": ["boolean", "null"] },
-        "source": { "type": ["string", "null"] }
+        "source": { "type": ["string", "null"] },
+        "renewable_surplus": { "type": ["boolean", "null"] },
+        "temperature_c": { "type": ["number", "null"] },
+        "thermal_state": { "enum": ["unknown", "normal", "warm", "hot", "critical"] },
+        "load_per_cpu_1m": { "type": ["number", "null"] },
+        "willingness": { "enum": ["abundant", "normal", "conserve", "critical"] },
+        "willingness_reasons": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
       }
     },
     "executors": {
@@ -40,6 +50,10 @@
           "path": { "type": ["string", "null"] }
         }
       }
+    },
+    "offers": {
+      "type": "array",
+      "items": { "type": "object" }
     }
   }
 }
