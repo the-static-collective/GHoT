@@ -42,6 +42,7 @@
     "released_at": { "type": ["string", "null"] },
     "released_energy_plan_id": { "type": ["string", "null"] },
     "released_receipt_id": { "type": ["string", "null"] },
+    "released_lease_id": { "type": ["string", "null"] },
     "cancelled_at": { "type": ["string", "null"] },
     "cancellation_reason": { "type": ["string", "null"] },
     "expired_at": { "type": ["string", "null"] },
