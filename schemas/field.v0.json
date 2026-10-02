@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/field.v0.json",
+  "title": "GHoT Liveness Field V0",
+  "type": "object",
+  "required": ["kind", "version", "updated_at", "policy", "bodies"],
+  "properties": {
+    "kind": { "const": "ghot.field" },
+    "version": { "const": "0" },
+    "updated_at": { "type": "string" },
+    "policy": {
+      "type": "object",
+      "required": [
+        "awake_ttl_seconds",
+        "depart_after_seconds",
+        "failure_threshold",
+        "quarantine_seconds"
+      ]
+    },
+    "bodies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "node_id",
+          "state",
+          "consecutive_failures"
+        ],
+        "properties": {
+          "node_id": { "type": "string", "minLength": 1 },
+          "state": {
+            "enum": ["awake", "stale", "departed", "quarantined"]
+          },
+          "first_seen": { "type": ["string", "null"] },
+          "last_seen": { "type": ["string", "null"] },
+          "url": { "type": ["string", "null"] },
+          "address": { "type": ["string", "null"] },
+          "body": { "type": "object" },
+          "consecutive_failures": { "type": "integer", "minimum": 0 },
+          "quarantine_until": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}
