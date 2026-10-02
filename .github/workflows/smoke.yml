@@ -41,3 +41,6 @@ jobs:
 
       - name: Energy-aware scheduling simulation
         run: python3 ghot/energy_sim.py
+
+      - name: Hold queue wake simulation
+        run: python3 ghot/wake_sim.py
