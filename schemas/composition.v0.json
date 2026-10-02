@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/composition.v0.json",
+  "title": "GHoT Composition V0",
+  "type": "object",
+  "required": [
+    "kind",
+    "version",
+    "composition_id",
+    "requester_node_id",
+    "capability",
+    "created_at",
+    "finished_at",
+    "max_attempts",
+    "attempts",
+    "excluded_node_ids",
+    "final_status"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.composition" },
+    "version": { "const": "0" },
+    "composition_id": { "type": "string", "minLength": 1 },
+    "requester_node_id": { "type": "string", "minLength": 1 },
+    "capability": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string" },
+    "finished_at": { "type": "string" },
+    "max_attempts": { "type": "integer", "minimum": 1 },
+    "attempts": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "excluded_node_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "final_status": {
+      "enum": ["ok", "no-eligible-body", "exhausted"]
+    },
+    "final_plan_id": { "type": ["string", "null"] },
+    "final_receipt_id": { "type": ["string", "null"] }
+  }
+}
