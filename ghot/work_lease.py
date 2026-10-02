@@ -36,10 +36,12 @@ class TransitionLock:
         *,
         timeout_seconds: float = 2.0,
         retry_seconds: float = 0.01,
+        stale_after_seconds: float = 10.0,
     ) -> None:
         self.path = path
         self.timeout_seconds = timeout_seconds
         self.retry_seconds = retry_seconds
+        self.stale_after_seconds = stale_after_seconds
         self.fd: int | None = None
 
     def __enter__(self) -> "TransitionLock":
@@ -61,6 +63,14 @@ class TransitionLock:
                 )
                 return self
             except FileExistsError:
+                try:
+                    age = max(0.0, time.time() - self.path.stat().st_mtime)
+                    if age >= self.stale_after_seconds:
+                        self.path.unlink()
+                        continue
+                except FileNotFoundError:
+                    continue
+
                 if time.monotonic() >= deadline:
                     raise HoldBusy(f"transition lock busy: {self.path.name}")
                 time.sleep(self.retry_seconds)
