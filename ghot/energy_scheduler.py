@@ -78,8 +78,8 @@ def evaluate_energy_candidate(
                 rejected.append("offer currently unavailable")
 
     if data_node_id and candidate.get("node_id") == data_node_id:
-        score += 80.0
-        reasons.append("+80 data already local")
+        score += 120.0
+        reasons.append("+120 data already local")
 
     willingness = str(power.get("willingness") or "normal")
     if willingness == "abundant":
