@@ -47,7 +47,7 @@ V0 adds a large visible score for processing data where it already lives rather 
 
 For otherwise-eligible candidates:
 
-- data already local: +80
+- data already local: +120
 - abundant power willingness: +60
 - renewable surplus: +40
 - external power / charging: +20
