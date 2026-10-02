@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GHoT Capability Composer — Experiment 004.
+"""GHoT Capability Composer — Experiments 004/005.
 
 Discover local + LAN bodies, select an eligible executor for a requested
 capability using explicit deterministic policy, persist the plan, then execute.
@@ -72,6 +72,7 @@ def evaluate_candidate(
     prefer_local: bool,
     prefer_plugged_in: bool,
     prefer_memory: bool,
+    excluded_node_ids: set[str] | None = None,
 ) -> dict[str, Any]:
     body_record = candidate["body"]
     power = body_record.get("power") or {}
@@ -79,6 +80,10 @@ def evaluate_candidate(
     reasons: list[str] = []
     rejected: list[str] = []
     score = 0.0
+
+    excluded = excluded_node_ids or set()
+    if candidate["node_id"] in excluded:
+        rejected.append("excluded after earlier failed attempt")
 
     if not offers_capability(body_record, capability):
         rejected.append("required capability not offered")
@@ -165,7 +170,12 @@ def compose_plan(
     prefer_local: bool = True,
     prefer_plugged_in: bool = False,
     prefer_memory: bool = False,
+    excluded_node_ids: set[str] | None = None,
+    composition_id: str | None = None,
+    parent_plan_id: str | None = None,
+    recomposition_reason: str | None = None,
 ) -> dict[str, Any]:
+    excluded = excluded_node_ids or set()
     evaluated = [
         evaluate_candidate(
             candidate,
@@ -174,6 +184,7 @@ def compose_plan(
             prefer_local=prefer_local,
             prefer_plugged_in=prefer_plugged_in,
             prefer_memory=prefer_memory,
+            excluded_node_ids=excluded,
         )
         for candidate in gather_candidates(timeout)
     ]
@@ -198,6 +209,9 @@ def compose_plan(
         "kind": "ghot.plan",
         "version": "0",
         "plan_id": f"plan-{uuid.uuid4()}",
+        "composition_id": composition_id,
+        "parent_plan_id": parent_plan_id,
+        "recomposition_reason": recomposition_reason,
         "created_at": now(),
         "requester_node_id": node_id(),
         "capability": capability,
@@ -209,6 +223,7 @@ def compose_plan(
             "prefer_plugged_in": prefer_plugged_in,
             "prefer_memory": prefer_memory,
         },
+        "excluded_node_ids": sorted(excluded),
         "candidates": evaluated,
         "selected": selected,
     }
@@ -232,6 +247,7 @@ def execute_plan(
 
     crossing_constraints = {
         **(plan.get("constraints") or {}),
+        "composition_id": plan.get("composition_id"),
         "plan_id": plan["plan_id"],
         "selected_node_id": selected["node_id"],
         "why_selected": selected["why_selected"],
