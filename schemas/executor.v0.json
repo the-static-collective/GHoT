@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/executor.v0.json",
+  "title": "GHoT Executor V0",
+  "type": "object",
+  "required": ["kind", "version", "name", "available", "capabilities"],
+  "properties": {
+    "kind": { "const": "ghot.executor" },
+    "version": { "const": "0" },
+    "name": { "type": "string", "minLength": 1 },
+    "available": { "type": "boolean" },
+    "command": { "type": ["string", "null"] },
+    "path": { "type": ["string", "null"] },
+    "reported_version": { "type": ["string", "null"] },
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  }
+}
