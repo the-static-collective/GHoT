@@ -9,6 +9,7 @@
     "version": { "const": "0" },
     "receipt_id": { "type": "string", "minLength": 1 },
     "task_id": { "type": "string", "minLength": 1 },
+    "requester_node_id": { "type": ["string", "null"] },
     "executor_node_id": { "type": "string", "minLength": 1 },
     "capability": { "type": "string", "minLength": 1 },
     "status": { "enum": ["ok", "error", "rejected"] },
