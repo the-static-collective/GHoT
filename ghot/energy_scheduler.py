@@ -18,10 +18,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 import uuid
 from typing import Any
 
 from capability_composer import gather_candidates, parse_payload
+from hold_queue import HoldQueue, iso_at
 from power_field import capability_power_class
 from reference_node import execute, node_id, now, persist
 from lan_node import request_task
@@ -220,6 +222,10 @@ def schedule(
     timeout: float = 2.0,
     prefer_surplus_for_background: bool = True,
     execute_now: bool = True,
+    hold_for_seconds: float | None = None,
+    parent_hold_id: str | None = None,
+    parent_energy_plan_id: str | None = None,
+    trigger: str | None = None,
 ) -> dict[str, Any]:
     candidates, field_snapshot = gather_candidates(timeout)
     decision = decide_from_candidates(
@@ -238,6 +244,9 @@ def schedule(
         "energy_plan_id": schedule_id,
         "created_at": now(),
         "requester_node_id": node_id(),
+        "parent_hold_id": parent_hold_id,
+        "parent_energy_plan_id": parent_energy_plan_id,
+        "trigger": trigger,
         "field_policy": field_snapshot.get("policy") or {},
         "payload": payload,
         **decision,
@@ -245,12 +254,20 @@ def schedule(
     persist("energy-plan", record)
 
     if decision["action"] == "hold":
+        created_epoch = time.time()
+        expires_epoch = (
+            created_epoch + hold_for_seconds
+            if isinstance(hold_for_seconds, (int, float)) and hold_for_seconds > 0
+            else None
+        )
         hold = {
             "kind": "ghot.hold",
             "version": "0",
             "hold_id": f"hold-{uuid.uuid4()}",
             "energy_plan_id": schedule_id,
-            "created_at": now(),
+            "created_at": iso_at(created_epoch),
+            "expires_at_epoch": expires_epoch,
+            "expires_at": iso_at(expires_epoch) if expires_epoch is not None else None,
             "requester_node_id": record["requester_node_id"],
             "capability": capability,
             "payload": payload,
@@ -263,7 +280,7 @@ def schedule(
             ),
             "status": "held",
         }
-        persist("hold", hold)
+        hold = HoldQueue().enqueue(hold, at=created_epoch)
         return {
             "kind": "ghot.energy.result",
             "version": "0",
@@ -351,6 +368,12 @@ def main() -> int:
         action="store_true",
         help="do not hold background heavy work merely waiting for favorable power",
     )
+    parser.add_argument(
+        "--hold-for-seconds",
+        type=float,
+        default=None,
+        help="optional expiry for a HOLD; expired work is never started",
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -363,6 +386,7 @@ def main() -> int:
         timeout=args.timeout,
         prefer_surplus_for_background=not args.allow_background_battery,
         execute_now=not args.dry_run,
+        hold_for_seconds=args.hold_for_seconds,
     )
     print(json.dumps(result, indent=2))
 
