@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/energy-plan.v0.json",
+  "title": "GHoT Energy Plan V0",
+  "type": "object",
+  "required": [
+    "kind",
+    "version",
+    "energy_plan_id",
+    "created_at",
+    "requester_node_id",
+    "action",
+    "capability",
+    "urgency",
+    "deferrable",
+    "power_class",
+    "candidates"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.energy.plan" },
+    "version": { "const": "0" },
+    "energy_plan_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string" },
+    "requester_node_id": { "type": "string", "minLength": 1 },
+    "action": { "enum": ["run_here", "run_there", "hold", "no_eligible_body"] },
+    "capability": { "type": "string", "minLength": 1 },
+    "urgency": { "enum": ["immediate", "normal", "background"] },
+    "deferrable": { "type": "boolean" },
+    "power_class": { "enum": ["essential", "light", "medium", "heavy"] },
+    "data_node_id": { "type": ["string", "null"] },
+    "prefer_surplus_for_background": { "type": "boolean" },
+    "candidates": { "type": "array", "items": { "type": "object" } },
+    "selected": { "type": ["object", "null"] },
+    "hold_reasons": { "type": "array", "items": { "type": "string" } }
+  }
+}
