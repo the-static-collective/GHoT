@@ -22,7 +22,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Callable
 
-from reference_node import ROOT, now, persist
+from reference_node import ROOT, body, now, persist
 
 DEFAULT_AWAKE_TTL_SECONDS = 15.0
 DEFAULT_DEPART_AFTER_SECONDS = 60.0
@@ -387,7 +387,15 @@ class LivenessField:
 def heartbeat_sweep(timeout: float = 2.0) -> dict[str, Any]:
     from lan_node import discover_peers
     field = LivenessField()
-    return field.refresh_observations(discover_peers(timeout))
+    local = body()
+    observations = [{
+        "node_id": local["node_id"],
+        "body": local,
+        "url": None,
+        "address": None,
+    }]
+    observations.extend(discover_peers(timeout))
+    return field.refresh_observations(observations)
 
 
 def main() -> int:
