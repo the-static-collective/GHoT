@@ -1,0 +1,29 @@
+name: GHoT smoke
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python version
+        run: python3 --version
+
+      - name: Compile all Python modules
+        run: python3 -m py_compile ghot/*.py
+
+      - name: Phase 0 local body
+        run: |
+          python3 ghot/reference_node.py probe
+          python3 ghot/reference_node.py hash "the heap remembers"
+
+      - name: Executor pantry
+        run: python3 ghot/reference_node.py pantry
+
+      - name: Failure-aware recomposition simulation
+        run: python3 ghot/recomposition_sim.py
