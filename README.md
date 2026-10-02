@@ -92,3 +92,25 @@ applies explicit constraints/preferences, persists a PLAN with
 
 See `docs/CAPABILITY-COMPOSER.md` and
 `experiments/004-capability-composer.md`.
+
+
+## Survive a disappearing body
+
+Failure-aware recomposition keeps one stable composition identity across
+multiple plans and attempts:
+
+```bash
+python3 ghot/resilient_composer.py runtime.ffmpeg.version --max-attempts 3
+```
+
+A deterministic no-network proof is included:
+
+```bash
+python3 ghot/recomposition_sim.py
+```
+
+Expected: body A is selected and fails, A is excluded, a child plan selects
+body B, B succeeds, and the final COMPOSITION preserves both attempts.
+
+See `docs/FAILURE-AWARE-RECOMPOSITION.md` and
+`experiments/005-failure-aware-recomposition.md`.
