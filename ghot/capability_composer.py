@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
-"""GHoT Capability Composer — Experiments 004/005.
+"""GHoT Capability Composer — Experiments 004–006.
 
-Discover local + LAN bodies, select an eligible executor for a requested
-capability using explicit deterministic policy, persist the plan, then execute.
-
-Examples:
-    python3 ghot/capability_composer.py system.hash "hello heap" --dry-run
-    python3 ghot/capability_composer.py runtime.ffmpeg.version --prefer-memory
-    python3 ghot/capability_composer.py system.hash "hello" --min-battery 25
+Discover local + known LAN bodies, filter by truthful capability and liveness,
+apply explicit deterministic policy, persist the plan, then execute.
 """
 
 from __future__ import annotations
@@ -18,6 +13,7 @@ import uuid
 from typing import Any
 
 from lan_node import discover_peers, request_task
+from liveness_field import LivenessField
 from reference_node import body, execute, node_id, now, persist
 
 
@@ -54,6 +50,11 @@ def candidate_view(candidate: dict[str, Any]) -> dict[str, Any]:
         "battery_percent": power.get("battery_percent"),
         "charging": power.get("charging"),
         "power_source": power.get("source"),
+        "field_state": candidate.get("field_state"),
+        "last_seen": candidate.get("last_seen"),
+        "age_seconds": candidate.get("age_seconds"),
+        "consecutive_failures": candidate.get("consecutive_failures", 0),
+        "quarantine_until": candidate.get("quarantine_until"),
     }
 
 
@@ -84,6 +85,12 @@ def evaluate_candidate(
     excluded = excluded_node_ids or set()
     if candidate["node_id"] in excluded:
         rejected.append("excluded after earlier failed attempt")
+
+    field_state = candidate.get("field_state")
+    if field_state != "awake":
+        rejected.append(f"body liveness state is {field_state or 'unknown'}, not awake")
+    else:
+        reasons.append("body is awake in liveness field")
 
     if not offers_capability(body_record, capability):
         rejected.append("required capability not offered")
@@ -134,32 +141,40 @@ def evaluate_candidate(
     }
 
 
-def gather_candidates(timeout: float) -> list[dict[str, Any]]:
+def gather_candidates(
+    timeout: float,
+    *,
+    field: LivenessField | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    field_store = field or LivenessField()
     local_body = body()
     local_id = local_body["node_id"]
 
-    candidates: list[dict[str, Any]] = [{
+    observations: list[dict[str, Any]] = [{
         "node_id": local_id,
-        "location": "local",
-        "url": None,
         "body": local_body,
+        "url": None,
+        "address": None,
     }]
+    observations.extend(discover_peers(timeout))
+    snapshot = field_store.refresh_observations(observations)
 
-    seen = {local_id}
-    for peer in discover_peers(timeout):
-        peer_body = peer.get("body") or {}
-        peer_id = peer.get("node_id") or peer_body.get("node_id")
-        if not peer_id or peer_id in seen:
-            continue
-        seen.add(peer_id)
+    candidates: list[dict[str, Any]] = []
+    for entry in snapshot["bodies"]:
+        body_record = entry.get("body") or {"node_id": entry["node_id"], "offers": []}
         candidates.append({
-            "node_id": peer_id,
-            "location": "remote",
-            "url": peer.get("url"),
-            "body": peer_body,
+            "node_id": entry["node_id"],
+            "location": "local" if entry["node_id"] == local_id else "remote",
+            "url": entry.get("url"),
+            "body": body_record,
+            "field_state": entry.get("state"),
+            "last_seen": entry.get("last_seen"),
+            "age_seconds": entry.get("age_seconds"),
+            "consecutive_failures": entry.get("consecutive_failures", 0),
+            "quarantine_until": entry.get("quarantine_until"),
         })
 
-    return candidates
+    return candidates, snapshot
 
 
 def compose_plan(
@@ -174,8 +189,11 @@ def compose_plan(
     composition_id: str | None = None,
     parent_plan_id: str | None = None,
     recomposition_reason: str | None = None,
+    field: LivenessField | None = None,
 ) -> dict[str, Any]:
     excluded = excluded_node_ids or set()
+    candidates, field_snapshot = gather_candidates(timeout, field=field)
+
     evaluated = [
         evaluate_candidate(
             candidate,
@@ -186,7 +204,7 @@ def compose_plan(
             prefer_memory=prefer_memory,
             excluded_node_ids=excluded,
         )
-        for candidate in gather_candidates(timeout)
+        for candidate in candidates
     ]
 
     eligible = [candidate for candidate in evaluated if candidate["eligible"]]
@@ -217,12 +235,14 @@ def compose_plan(
         "capability": capability,
         "constraints": {
             "min_battery_percent": min_battery,
+            "required_liveness_state": "awake",
         },
         "preferences": {
             "prefer_local": prefer_local,
             "prefer_plugged_in": prefer_plugged_in,
             "prefer_memory": prefer_memory,
         },
+        "field_policy": field_snapshot.get("policy") or {},
         "excluded_node_ids": sorted(excluded),
         "candidates": evaluated,
         "selected": selected,
@@ -250,6 +270,7 @@ def execute_plan(
         "composition_id": plan.get("composition_id"),
         "plan_id": plan["plan_id"],
         "selected_node_id": selected["node_id"],
+        "selected_field_state": selected.get("field_state"),
         "why_selected": selected["why_selected"],
     }
 
