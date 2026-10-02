@@ -206,6 +206,8 @@ class HoldQueue:
             if lease_id is not None:
                 if current_claim is None or current_claim.get("lease_id") != lease_id:
                     return hold
+                if leases.is_claim_expired(current_claim, at=when):
+                    return hold
 
             hold["status"] = "released"
             hold["released_at"] = iso_at(when)
