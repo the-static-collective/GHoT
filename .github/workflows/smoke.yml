@@ -44,3 +44,6 @@ jobs:
 
       - name: Hold queue wake simulation
         run: python3 ghot/wake_sim.py
+
+      - name: Atomic work lease simulation
+        run: python3 ghot/lease_sim.py
