@@ -38,3 +38,6 @@ jobs:
         run: |
           GHOT_POWER_SOURCE=battery GHOT_BATTERY_PERCENT=9 GHOT_CHARGING=0 python3 ghot/reference_node.py probe
           GHOT_POWER_SOURCE=solar GHOT_RENEWABLE_SURPLUS=1 GHOT_BATTERY_PERCENT=90 GHOT_CHARGING=1 python3 ghot/reference_node.py power
+
+      - name: Energy-aware scheduling simulation
+        run: python3 ghot/energy_sim.py
