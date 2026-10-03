@@ -1,0 +1,51 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.organ-daemon@5",
+  "version": "5",
+  "owner_project": "GHoT",
+  "description": "One-process GHoT organ supervisor with durable state, presence, authority work, HOLD-only parcel porch, grammar exchange, and a loopback-only read-only Curious Doors projection surface.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/body.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/organ-state.v1.json",
+    "https://the-static-collective.github.io/GHoT/schemas/curiosity-surface.v0.json"
+  ],
+  "allowed_dispositions": [
+    "OBSERVE",
+    "RETRY",
+    "SERVE",
+    "POLL",
+    "HOLD_STATE",
+    "HOLD_PLUGIN_PACKAGE",
+    "SERVE_GRAMMAR_EXCHANGE",
+    "SERVE_CURIOUS_DOORS"
+  ],
+  "effect_classes": ["none","local-state-change"],
+  "receipt_kinds": [],
+  "authority_scope": "supervisor-only",
+  "dependencies": [
+    "ghot.organ-daemon@4",
+    "ghot.curious-doors@0"
+  ],
+  "implementation_refs": [
+    "ghot/organ.py",
+    "ghot/curious_doors.py"
+  ],
+  "non_authorities": [
+    "curiosity surface supervision is not request authority",
+    "curiosity surface supervision is not want authority",
+    "curiosity surface supervision is not refresh authority",
+    "surface visibility is not priority",
+    "new candidate visibility is not notification authority"
+  ],
+  "extensions": {
+    "curious_doors_host_default": "127.0.0.1",
+    "curious_doors_port_default": 7794,
+    "curious_doors_read_only": true,
+    "curious_doors_auto_want": false,
+    "curious_doors_auto_refresh": false,
+    "curious_doors_auto_request": false,
+    "curious_doors_auto_offer": false,
+    "curious_doors_auto_install": false
+  }
+}
