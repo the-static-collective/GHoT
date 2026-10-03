@@ -384,6 +384,10 @@ def main() -> int:
     work = sub.add_parser("work")
     work.add_argument("--lease-seconds", type=float, default=60.0)
 
+    watch = sub.add_parser("watch")
+    watch.add_argument("--lease-seconds", type=float, default=60.0)
+    watch.add_argument("--interval", type=float, default=5.0)
+
     args = parser.parse_args()
     worker_id = args.worker_id or node_id()
     signer = body_signer()
@@ -407,6 +411,23 @@ def main() -> int:
         )
         print(json.dumps(result, indent=2))
         return 0 if result.get("status") in {"completed", "no-dispatch"} else 1
+
+    if args.command == "watch":
+        if args.interval <= 0:
+            raise SystemExit("--interval must be > 0")
+        try:
+            while True:
+                result = work_one(
+                    args.authority_url,
+                    worker_id=worker_id,
+                    lease_seconds=args.lease_seconds,
+                )
+                if result.get("status") != "no-dispatch":
+                    print(json.dumps(result, indent=2))
+                import time
+                time.sleep(args.interval)
+        except KeyboardInterrupt:
+            return 0
 
     return 2
 
