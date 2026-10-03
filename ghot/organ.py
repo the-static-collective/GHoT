@@ -805,6 +805,9 @@ def main() -> int:
     parser.add_argument("--health-port", type=int, default=7791)
     parser.add_argument("--state-host", default="0.0.0.0")
     parser.add_argument("--state-port", type=int, default=7792)
+    parser.add_argument("--grammar-exchange-host", default="0.0.0.0")
+    parser.add_argument("--grammar-exchange-port", type=int, default=7793)
+    parser.add_argument("--grammar-discovery-port", type=int, default=47890)
     parser.add_argument(
         "--no-health",
         action="store_true",
@@ -814,6 +817,11 @@ def main() -> int:
         "--no-state-porch",
         action="store_true",
         help="disable the HOLD-only state parcel receiving porch",
+    )
+    parser.add_argument(
+        "--no-grammar-exchange",
+        action="store_true",
+        help="disable the signed grammar exchange table service",
     )
     parser.add_argument(
         "--no-auto-migrate",
@@ -885,6 +893,7 @@ def main() -> int:
     services: OrganServices | None = None
     presence_service: PresenceHTTPService | None = None
     state_parcel_service: StateParcelHTTPService | None = None
+    grammar_exchange_service: OrganGrammarExchangeService | None = None
 
     if not args.no_serve:
         services = OrganServices(
@@ -911,6 +920,26 @@ def main() -> int:
                     "state": "failed",
                     "host": args.state_host,
                     "port": args.state_port,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+
+        if not args.no_grammar_exchange:
+            grammar_exchange_service = OrganGrammarExchangeService(
+                daemon,
+                root=ROOT,
+                host=args.grammar_exchange_host,
+                port=args.grammar_exchange_port,
+                discovery_port=args.grammar_discovery_port,
+                parcel_port=args.state_port,
+            )
+            try:
+                grammar_exchange_service.start()
+            except Exception as exc:
+                daemon.service_state["grammar_exchange"] = {
+                    "state": "failed",
+                    "host": args.grammar_exchange_host,
+                    "port": args.grammar_exchange_port,
+                    "discovery_port": args.grammar_discovery_port,
                     "error": f"{type(exc).__name__}: {exc}",
                 }
 
@@ -978,6 +1007,8 @@ def main() -> int:
                 presence_service.supervise()
             if state_parcel_service is not None:
                 state_parcel_service.supervise()
+            if grammar_exchange_service is not None:
+                grammar_exchange_service.supervise()
             state = daemon.cycle()
             work_status = (state.get("work") or {}).get("status")
             if (
@@ -992,6 +1023,8 @@ def main() -> int:
     except KeyboardInterrupt:
         return 0
     finally:
+        if grammar_exchange_service is not None:
+            grammar_exchange_service.close()
         if state_parcel_service is not None:
             state_parcel_service.close()
         if presence_service is not None:
