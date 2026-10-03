@@ -62,3 +62,6 @@ jobs:
 
       - name: Organ daemon lifecycle simulation
         run: python3 ghot/organ_sim.py
+
+      - name: Bootable organ installation simulation
+        run: python3 ghot/install_organ_sim.py
