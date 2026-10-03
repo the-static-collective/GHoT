@@ -469,11 +469,27 @@ def work_available(
 
 
 def _normalized_argv(argv: list[str]) -> list[str]:
-    """Preserve the 012 form: lease_remote.py URL watch ..."""
+    """Preserve 012 URL-first forms, including options before the command."""
     if len(argv) >= 3 and argv[1].startswith(("http://", "https://")):
         url = argv[1]
-        command = argv[2]
-        return [argv[0], command, "--authority-url", url, *argv[3:]]
+        rest = argv[2:]
+        commands = {"poll", "work", "watch"}
+        command_index = next(
+            (index for index, value in enumerate(rest) if value in commands),
+            None,
+        )
+        if command_index is not None:
+            before = rest[:command_index]
+            command = rest[command_index]
+            after = rest[command_index + 1:]
+            return [
+                argv[0],
+                *before,
+                command,
+                "--authority-url",
+                url,
+                *after,
+            ]
     return argv
 
 
