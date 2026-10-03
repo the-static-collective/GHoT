@@ -493,3 +493,66 @@ python3 ghot/organ_sim.py
 ```
 
 See `docs/ORGAN-DAEMON.md` and `experiments/014-organ-daemon.md`.
+
+
+## Wake as an organ
+
+015 packages the organ daemon into reversible startup surfaces.
+
+Linux user service:
+
+```bash
+python3 ghot/install_organ.py systemd-user --enable-now
+```
+
+This installs `~/.config/systemd/user/ghot-organ.service` and points it at a
+stable explicit `GHOT_HOME`. It is rootless by default and starts only
+`ghot/organ.py`.
+
+A user unit starting before interactive login depends on the host's systemd user
+manager / linger policy. GHoT does not change that OS policy automatically.
+
+Termux / Android:
+
+```bash
+python3 ghot/install_organ.py termux
+```
+
+This installs `~/.termux/boot/ghot-organ`. Actual Android boot execution
+requires Termux:Boot to be installed/configured on the device. The launcher has
+a PID guard to avoid duplicate live daemon starts.
+
+Live-USB/image bundle:
+
+```bash
+python3 ghot/install_organ.py live-usb \
+  --output-dir build/ghot-live \
+  --target-repo-root /opt/GHoT
+```
+
+That command only renders an image-integration bundle; it does not modify the
+current host.
+
+Uninstall the Linux or Termux startup hook:
+
+```bash
+python3 ghot/install_organ.py systemd-user --uninstall
+python3 ghot/install_organ.py termux --uninstall
+```
+
+Uninstall preserves durable GHoT state and body identity.
+
+```text
+STARTUP != AUTHORITY
+INSTALL != IDENTITY
+UNINSTALL STARTUP != FORGET BODY
+```
+
+Deterministic proof:
+
+```bash
+python3 ghot/install_organ_sim.py
+```
+
+See `docs/BOOTABLE-ORGAN.md` and
+`experiments/015-bootable-organ.md`.
