@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/merge-plugin-install-receipt.v0.json",
+  "title": "GHoT Merge Plugin Install Receipt V0",
+  "type": "object",
+  "required": [
+    "kind","version","receipt_id","package_id","package_version",
+    "package_address","contract_id","installed_path","installed_at",
+    "particular","conformance","signing"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.merge-plugin.install-receipt" },
+    "version": { "const": "0" },
+    "receipt_id": { "type": "string", "minLength": 1 },
+    "package_id": { "type": "string", "minLength": 1 },
+    "package_version": { "type": "string", "minLength": 1 },
+    "package_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "contract_id": { "type": "string", "minLength": 1 },
+    "installed_path": { "type": "string", "minLength": 1 },
+    "installed_at": { "type": "string" },
+    "particular": { "type": "string", "minLength": 1 },
+    "conformance": {
+      "type": "object",
+      "required": ["passed","fixture_count"],
+      "properties": {
+        "passed": { "const": true },
+        "fixture_count": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "signing": {
+      "type": "object",
+      "required": ["algorithm","public_key","signature","domain"],
+      "properties": {
+        "algorithm": { "const": "ECDSA-P256-SHA256" },
+        "public_key": { "type": "object" },
+        "signature": { "type": "string", "minLength": 1 },
+        "domain": { "const": "ghot.merge-plugin-install-receipt-signature/v0" }
+      }
+    }
+  }
+}
