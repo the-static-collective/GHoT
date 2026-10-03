@@ -645,7 +645,6 @@ class CuriousDoorsSurface:
                         "source_particular": candidate.get(
                             "source_particular"
                         ),
-                        "exchange_url": candidate.get("exchange_url"),
                     },
                     effect_if_executed="signed-023-request",
                 ))
