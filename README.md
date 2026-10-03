@@ -837,3 +837,82 @@ python3 ghot/state_merge_sim.py
 ```
 
 See `docs/STATE-MERGES.md` and `experiments/019-state-merges.md`.
+
+
+## Discover merge grammars before choosing one
+
+020 adds a merge-contract pantry between ADMIT and the 019 merge-plan engine.
+
+List locally installed merge grammars:
+
+```bash
+python3 ghot/merge_contract_pantry.py list
+```
+
+Inspect one ADMITTED parcel:
+
+```bash
+python3 ghot/merge_contract_pantry.py inspect <parcel-id>
+```
+
+020 currently ships two bounded observational grammars:
+
+```text
+/body/offers
+  -> ghot.foreign-offer-catalog/v0
+
+/presence
+  -> ghot.foreign-presence-catalog/v0
+```
+
+Inspection explains compatibility using source schema/version, selector, payload
+shape, local-target readiness, and already-merged state. There is no generic
+fallback.
+
+Select explicitly:
+
+```bash
+python3 ghot/merge_contract_pantry.py select \
+  <parcel-id> \
+  <contract-id>
+```
+
+Selection is persisted and content-addressed. It creates neither a merge plan
+nor target state.
+
+Create the proposal only afterward:
+
+```bash
+python3 ghot/merge_contract_pantry.py propose <selection-id>
+```
+
+020 revalidates the admitted parcel and selected contract descriptor, then
+creates a normal 019 merge plan plus a durable content-addressed
+selection-to-plan link.
+
+Actual mutation remains in 019:
+
+```bash
+python3 ghot/state_merge.py apply <plan-id>
+python3 ghot/state_merge.py reject <plan-id>
+```
+
+The presence catalog is historical provenance memory, not liveness.
+
+```text
+DISCOVERY != SELECTION
+COMPATIBLE != RECOMMENDED
+SELECTION != PROPOSAL
+PROPOSAL != APPLY
+FOREIGN PRESENCE CATALOG != LIVENESS
+NO CONTRACT != GUESS A MERGE
+```
+
+Deterministic proof:
+
+```bash
+python3 ghot/merge_contract_pantry_sim.py
+```
+
+See `docs/MERGE-CONTRACT-PANTRY.md` and
+`experiments/020-merge-contract-pantry.md`.
