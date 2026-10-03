@@ -447,6 +447,7 @@ def _request_body(request: dict[str, Any]) -> dict[str, Any]:
         "kind": request.get("kind"),
         "version": request.get("version"),
         "target_particular": request.get("target_particular"),
+        "nonce": request.get("nonce"),
         "package_id": request.get("package_id"),
         "package_address": request.get("package_address"),
         "requester": {
@@ -509,6 +510,7 @@ def make_exchange_request(
         "version": REQUEST_VERSION,
         "request_id": "",
         "target_particular": advert["particular"],
+        "nonce": f"grammar-request-{uuid.uuid4()}",
         "package_id": package_id,
         "package_address": package_address,
         "requester": {
@@ -552,6 +554,8 @@ def verify_exchange_request(request: dict[str, Any]) -> bool:
         if request.get("version") != REQUEST_VERSION:
             return False
         requester = request.get("requester") or {}
+        if not isinstance(request.get("nonce"), str) or not request.get("nonce"):
+            return False
         public_key = normalize_public_jwk(
             requester.get("public_key") or {}
         )
