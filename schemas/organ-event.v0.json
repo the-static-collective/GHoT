@@ -19,7 +19,10 @@
         "body.stale",
         "body.departed",
         "body.quarantine_expired",
-        "body.state_changed"
+        "body.state_changed",
+        "body.failure",
+        "body.quarantined",
+        "body.recovered"
       ]
     },
     "node_id": { "type": ["string","null"] },
