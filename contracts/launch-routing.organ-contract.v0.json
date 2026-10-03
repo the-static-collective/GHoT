@@ -1,0 +1,57 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.launch-routing@0",
+  "version": "0",
+  "owner_project": "GHoT",
+  "description": "Route typed non-executing Static-OS launch descriptors to an owning destination for fresh preflight revalidation without execution, consent, authorization, or permission transfer.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/launch-descriptor.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/launch-preflight.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/launch-invocation-proposal.v0.json"
+  ],
+  "allowed_dispositions": [
+    "VERIFY_DESCRIPTOR",
+    "ROUTE_TO_DESTINATION",
+    "PREFLIGHT_CONTEXT",
+    "PROPOSE_INVOCATION"
+  ],
+  "effect_classes": ["none"],
+  "receipt_kinds": [],
+  "authority_scope": "routing-and-preflight-only",
+  "dependencies": [
+    "ghot.composition-wants@0",
+    "ghot.merge-plugin-parcel-inbox@0",
+    "ghot.merge-contract-pantry@0",
+    "ghot.grammar-exchange@0"
+  ],
+  "implementation_refs": [
+    "ghot/launch_descriptor.py",
+    "ghot/launch_preflight.py"
+  ],
+  "non_authorities": [
+    "launch is not execute",
+    "context is not consent",
+    "route is not permission",
+    "descriptor is not command",
+    "preflight ready is not authorization",
+    "invocation proposal is not execution",
+    "shell selection is not destination consent",
+    "destination preflight does not grant authority",
+    "destination must revalidate again at execution",
+    "remote advert read is not request"
+  ],
+  "extensions": {
+    "descriptor_contains_argv": false,
+    "descriptor_contains_executable_url": false,
+    "descriptor_grants_consent": false,
+    "descriptor_transfers_permission": false,
+    "preflight_executes": false,
+    "preflight_authorization_granted": false,
+    "preflight_consent_granted": false,
+    "destination_revalidation_required": true,
+    "execution_revalidation_required": true,
+    "candidate_request_preflight_may_read_network": true,
+    "candidate_request_preflight_may_write_network": false
+  }
+}
