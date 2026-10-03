@@ -96,7 +96,8 @@ class ActivationBroker:
             "required_phrase": CONSENT_PHRASE,
             "ticket_default_ttl_seconds": DEFAULT_TTL_SECONDS,
             "ticket_max_ttl_seconds": MAX_TTL_SECONDS,
-            "broker_executes": False,
+            "preview_executes": False,
+            "broker_executes_without_act": False,
             "broker_grants_consent": False,
             "ui_click_grants_consent": False,
             "act_binds_exact_proposal_address": True,
@@ -367,6 +368,15 @@ def broker_handler(
             self.end_headers()
             self.wfile.write(raw)
 
+        def _browser_origin_allowed(self) -> bool:
+            origin = self.headers.get("Origin")
+            if not origin:
+                return True
+            host = self.headers.get("Host")
+            if not host:
+                return False
+            return origin == "http://" + host
+
         def do_GET(self) -> None:
             parsed = urlparse(self.path)
             if parsed.path == "/health":
@@ -377,6 +387,7 @@ def broker_handler(
                     "preview_read_only": True,
                     "click_grants_consent": False,
                     "act_required": True,
+                    "browser_post_same_origin_required": True,
                 }).encode("utf-8")
                 self._send(200, raw, "application/json")
                 return
@@ -415,6 +426,13 @@ def broker_handler(
 
         def do_POST(self) -> None:
             parsed = urlparse(self.path)
+            if not self._browser_origin_allowed():
+                self._send(
+                    403,
+                    b'{"error":"cross-origin browser activation refused"}',
+                    "application/json",
+                )
+                return
             if parsed.path != "/act":
                 self._send(
                     405,
