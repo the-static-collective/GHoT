@@ -23,6 +23,7 @@ from typing import Any
 
 from executor_pantry import derive_offers, execute_adapter, pantry_report, probe_executors
 from power_field import apply_power_policy, probe_power
+from relatte_identity import ALGORITHM, IdentityKey
 
 ROOT = Path(os.environ.get("GHOT_HOME", ".ghot"))
 RECORDS = ROOT / "records"
@@ -79,6 +80,28 @@ def _base_offers(executors: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return builtins + derive_offers(executors)
 
 
+def body_identity() -> dict[str, Any]:
+    try:
+        key = IdentityKey.load_or_create(ROOT / "identity" / "body-p256.pem")
+        public_key = key.public_jwk()
+        return {
+            "available": True,
+            "profile": "relatte.identity-signature/v0",
+            "algorithm": ALGORITHM,
+            "particular": key.particular(),
+            "public_key": public_key,
+        }
+    except Exception as exc:
+        return {
+            "available": False,
+            "profile": "relatte.identity-signature/v0",
+            "algorithm": ALGORITHM,
+            "particular": None,
+            "public_key": None,
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+
+
 def body() -> dict[str, Any]:
     usage = shutil.disk_usage(Path.cwd())
     executors = probe_executors()
@@ -100,6 +123,7 @@ def body() -> dict[str, Any]:
             "free_disk_bytes": usage.free,
             "python": platform.python_version(),
         },
+        "identity": body_identity(),
         "power": power,
         "executors": executors,
         "offers": offers,
