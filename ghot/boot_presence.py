@@ -24,6 +24,7 @@ from relatte_identity import (
     ALGORITHM,
     IdentityKey,
     b64url,
+    identity_safe,
     jcs_bytes,
     timestamp_now,
     unb64url,
@@ -297,7 +298,7 @@ def create_boot_manifest(
     state_root = root or ROOT
     code_root = repo_root or Path(__file__).resolve().parents[1]
     record = body_record or body()
-    manifest = {
+    manifest = identity_safe({
         "kind": MANIFEST_KIND,
         "version": MANIFEST_VERSION,
         "boot_id": f"boot-{uuid.uuid4()}",
@@ -320,7 +321,7 @@ def create_boot_manifest(
         "state_home": str(state_root),
         "state": inspect_state(state_root),
         "dependencies": dependency_readiness(),
-    }
+    })
     manifest["manifest_address"] = derive_manifest_address(manifest)
     return manifest
 
