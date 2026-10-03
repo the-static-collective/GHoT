@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/grammar-exchange-request-inbox.v0.json",
+  "title": "GHoT Grammar Exchange Request Inbox V0",
+  "type": "object",
+  "required": [
+    "kind","version","request_id","package_id","package_address",
+    "requester_node_id","requester_particular","requester_observed_ip",
+    "return_parcel_port","status","received_at","updated_at",
+    "offer_record","note"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.grammar.exchange.request-inbox" },
+    "version": { "const": "0" },
+    "request_id": { "type": "string", "minLength": 1 },
+    "package_id": { "type": "string", "minLength": 1 },
+    "package_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "requester_node_id": { "type": "string", "minLength": 1 },
+    "requester_particular": { "type": "string", "minLength": 1 },
+    "requester_observed_ip": { "type": "string", "minLength": 1 },
+    "return_parcel_port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+    "status": { "enum": ["REQUESTED","OFFERED","DECLINED"] },
+    "received_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "offer_record": { "type": ["string","null"] },
+    "note": { "type": ["string","null"] }
+  }
+}
