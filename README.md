@@ -556,3 +556,77 @@ python3 ghot/install_organ_sim.py
 
 See `docs/BOOTABLE-ORGAN.md` and
 `experiments/015-bootable-organ.md`.
+
+
+## Morning presence check
+
+016 makes every normal organ wake leave a boot manifest plus a body-signed
+startup receipt.
+
+Start the organ:
+
+```bash
+python3 ghot/organ.py
+```
+
+Then, on the same machine:
+
+```bash
+curl http://127.0.0.1:7791/health
+curl http://127.0.0.1:7791/presence
+```
+
+The startup artifacts live under:
+
+```text
+GHOT_HOME/startup/manifest.v0.json
+GHOT_HOME/startup/receipt.v0.json
+GHOT_HOME/startup/receipts/
+```
+
+The manifest records the stable BODY identity, code revision, Python/platform,
+explicit boot surface, durable-state compatibility, and dependency readiness.
+The startup receipt is signed by the BODY P-256 key and witnesses the manifest
+content address.
+
+Health is intentionally bounded:
+
+```text
+healthy
+degraded
+blocked
+```
+
+Unknown durable-state versions, missing required identity/signing support, or
+manifest/receipt integrity failure block health rather than triggering a silent
+rewrite.
+
+The richer presence server is loopback-only by default and separate from the
+LAN BODY service.
+
+015 startup hooks now stamp their origin:
+
+```text
+systemd-user
+termux-boot
+live-usb-systemd
+```
+
+so the body reports how it woke instead of inferring that from process trivia.
+
+```text
+PRESENCE != AUTHORITY
+HEALTH != AUTHORITY
+STARTUP RECEIPT != EXECUTION RECEIPT
+CODE REVISION != TRUST
+UNKNOWN STATE != SAFE TO REWRITE
+```
+
+Deterministic proof:
+
+```bash
+python3 ghot/presence_sim.py
+```
+
+See `docs/BOOT-PRESENCE.md` and
+`experiments/016-boot-presence.md`.
