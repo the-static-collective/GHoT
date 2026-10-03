@@ -351,6 +351,7 @@ class ActivationStore:
         *,
         consent_phrase: str,
         ttl_seconds: int = DEFAULT_TTL_SECONDS,
+        expected_proposal_address: str | None = None,
     ) -> dict[str, Any]:
         if consent_phrase != CONSENT_PHRASE:
             raise ValueError(
@@ -373,6 +374,15 @@ class ActivationStore:
         proposal = preflight.get("proposal")
         if not isinstance(proposal, dict):
             raise ValueError("ready preflight did not produce a proposal")
+        proposal_address = _proposal_address(proposal)
+        if (
+            expected_proposal_address is not None
+            and proposal_address != expected_proposal_address
+        ):
+            raise ValueError(
+                "current READY proposal differs from explicitly previewed "
+                "proposal"
+            )
 
         ticket = {
             "kind": TICKET_KIND,
@@ -382,7 +392,7 @@ class ActivationStore:
             "launch_id": descriptor["launch_id"],
             "descriptor": descriptor,
             "descriptor_address": _descriptor_address(descriptor),
-            "proposal_address": _proposal_address(proposal),
+            "proposal_address": proposal_address,
             "destination": descriptor["destination"],
             "issued_at": timestamp_now(),
             "ttl_seconds": ttl,
@@ -724,6 +734,7 @@ def main() -> int:
     issue.add_argument("descriptor_file")
     issue.add_argument("--confirm", required=True)
     issue.add_argument("--ttl", type=int, default=DEFAULT_TTL_SECONDS)
+    issue.add_argument("--expected-proposal-address", default=None)
 
     execute = sub.add_parser("execute")
     execute.add_argument("ticket_id")
@@ -745,6 +756,7 @@ def main() -> int:
             descriptor,
             consent_phrase=args.confirm,
             ttl_seconds=args.ttl,
+            expected_proposal_address=args.expected_proposal_address,
         )
         print(json.dumps(result, indent=2))
         return 0
