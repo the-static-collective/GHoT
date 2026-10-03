@@ -1,0 +1,50 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.merge-plugin-parcel-inbox@0",
+  "version": "0",
+  "owner_project": "GHoT",
+  "description": "Receive portable declarative merge-plugin packages into HOLD, preserve optional author provenance, allow local validation, and require explicit local installation through the 021 plugin store.",
+  "accepted_crossing_kinds": ["GHOT_MERGE_PLUGIN_PACKAGE"],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/merge-plugin-parcel.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/merge-plugin-author-signature.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/merge-plugin-parcel-bundle.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/merge-plugin-parcel-inbox.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/merge-plugin-parcel-validation.v0.json",
+    "relatte.crossing-envelope/v0",
+    "relatte.receipt/v0"
+  ],
+  "allowed_dispositions": ["HOLD","VALIDATE","INSTALL","REJECT"],
+  "effect_classes": ["none","local-state-change"],
+  "receipt_kinds": ["HELD","VALIDATED","INSTALLED","REJECTED","REFUSED"],
+  "authority_scope": "owner-local",
+  "dependencies": [
+    "ghot.merge-plugin-store@0",
+    "relatte.identity-signature/v0"
+  ],
+  "implementation_refs": [
+    "ghot/merge_plugin_parcel.py",
+    "ghot/state_parcel.py"
+  ],
+  "non_authorities": [
+    "arrival is not installation",
+    "HOLD is not validation",
+    "validation is not installation",
+    "author signature is not trust",
+    "transport sender is not necessarily package author",
+    "unsigned package is not automatically rejected",
+    "network receive cannot validate or install",
+    "install receipt is local receiver authority evidence only"
+  ],
+  "extensions": {
+    "shared_parcel_porch_port": 7792,
+    "network_endpoint": "/merge-plugin-package",
+    "automatic_network_disposition": "HOLD",
+    "network_validate": false,
+    "network_install": false,
+    "optional_author_signature": true,
+    "author_signature_survives_retransport": true,
+    "explicit_local_validation_required_before_install": true,
+    "021_installer_revalidates_package_on_install": true
+  }
+}
