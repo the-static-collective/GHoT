@@ -117,6 +117,7 @@ def render_termux_boot_script(
 ) -> str:
     log_dir = state_home / "logs"
     log_path = log_dir / "organ.log"
+    pid_path = state_home / "organ.pid"
     return f"""#!/data/data/com.termux/files/usr/bin/sh
 set -eu
 
@@ -126,12 +127,21 @@ export PYTHONUNBUFFERED=1
 mkdir -p {shlex.quote(str(state_home))} {shlex.quote(str(log_dir))}
 cd {shlex.quote(str(repo_root))}
 
+PID_FILE={shlex.quote(str(pid_path))}
+if [ -f "$PID_FILE" ]; then
+  PID="$(cat "$PID_FILE" 2>/dev/null || true)"
+  if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
+    exit 0
+  fi
+  rm -f "$PID_FILE"
+fi
+
 # Termux:Boot launches this file. nohup keeps the organ alive after the boot
-# launcher returns. One pid file is advisory only; GHoT identity remains in
-# GHOT_HOME, not in the process id.
+# launcher returns. The pid witness prevents duplicate launches; GHoT identity
+# remains in GHOT_HOME, not in the process id.
 nohup {shlex.quote(str(python))} {shlex.quote(str(repo_root / "ghot" / "organ.py"))} \
   >> {shlex.quote(str(log_path))} 2>&1 &
-echo $! > {shlex.quote(str(state_home / "organ.pid"))}
+echo $! > "$PID_FILE"
 """
 
 
@@ -370,6 +380,9 @@ def main() -> int:
 
     live = sub.add_parser("live-usb")
     live.add_argument("--output-dir", required=True)
+    live.add_argument("--target-repo-root", required=True)
+    live.add_argument("--target-python", default="/usr/bin/python3")
+    live.add_argument("--target-state-home", default="/var/lib/ghot")
     live.add_argument("--user", default="ghot")
 
     sub.add_parser("status")
@@ -425,9 +438,9 @@ def main() -> int:
     if args.command == "live-usb":
         result = render_live_usb_bundle(
             output_dir=Path(args.output_dir).expanduser().resolve(),
-            python=python,
-            repo_root=repo_root,
-            state_home=state_home,
+            python=Path(args.target_python),
+            repo_root=Path(args.target_repo_root),
+            state_home=Path(args.target_state_home),
             user=args.user,
         )
         print(json.dumps(result, indent=2))
