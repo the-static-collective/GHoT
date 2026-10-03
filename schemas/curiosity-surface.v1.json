@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/curiosity-surface.v1.json",
+  "title": "GHoT Curiosity Surface V1",
+  "type": "object",
+  "required": [
+    "kind","version","generated_at","ordering","ordering_is_priority",
+    "read_only","network_refresh_performed","automatic_want",
+    "automatic_refresh","automatic_request","automatic_offer",
+    "automatic_install","navigation_executes",
+    "navigation_transfers_permission","counts","doors"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.curiosity.surface" },
+    "version": { "const": "1" },
+    "generated_at": { "type": "string" },
+    "ordering": { "const": "chronological-created-at-then-door-id" },
+    "ordering_is_priority": { "const": false },
+    "read_only": { "const": true },
+    "network_refresh_performed": { "const": false },
+    "automatic_want": { "const": false },
+    "automatic_refresh": { "const": false },
+    "automatic_request": { "const": false },
+    "automatic_offer": { "const": false },
+    "automatic_install": { "const": false },
+    "navigation_executes": { "const": false },
+    "navigation_transfers_permission": { "const": false },
+    "counts": { "type": "object" },
+    "doors": {
+      "type": "array",
+      "items": { "$ref": "curiosity-door.v1.json" }
+    }
+  }
+}

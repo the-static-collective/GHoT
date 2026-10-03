@@ -1,0 +1,45 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.organ-daemon@6",
+  "version": "6",
+  "owner_project": "GHoT",
+  "description": "One-process GHoT organ supervisor including a loopback-only Curious Doors v1 surface whose navigation is GET-only evidence plus inert command intents.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/curiosity-surface.v1.json"
+  ],
+  "allowed_dispositions": [
+    "OBSERVE",
+    "RETRY",
+    "SERVE",
+    "POLL",
+    "HOLD_STATE",
+    "HOLD_PLUGIN_PACKAGE",
+    "SERVE_GRAMMAR_EXCHANGE",
+    "SERVE_CURIOUS_DOORS"
+  ],
+  "effect_classes": ["none","local-state-change"],
+  "receipt_kinds": [],
+  "authority_scope": "supervisor-only",
+  "dependencies": [
+    "ghot.organ-daemon@5",
+    "ghot.curious-doors@1"
+  ],
+  "implementation_refs": [
+    "ghot/organ.py",
+    "ghot/curious_doors.py"
+  ],
+  "non_authorities": [
+    "supervising navigable surface does not execute navigation",
+    "surface link does not transfer subsystem permission",
+    "command intent does not grant shell authority",
+    "evidence GET does not mutate subsystem state"
+  ],
+  "extensions": {
+    "curious_doors_host_default": "127.0.0.1",
+    "curious_doors_port_default": 7794,
+    "navigation_executes": false,
+    "permission_transfer": false,
+    "evidence_get_only": true
+  }
+}

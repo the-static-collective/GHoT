@@ -1,0 +1,59 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.curious-doors@1",
+  "version": "1",
+  "owner_project": "GHoT",
+  "description": "Project 024 wants as read-only Curious Doors with internal GET-only evidence navigation and inert subsystem-owned command intents that never execute or transfer permission.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/curiosity-navigation.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/curiosity-door.v1.json",
+    "https://the-static-collective.github.io/GHoT/schemas/curiosity-surface.v1.json"
+  ],
+  "allowed_dispositions": [
+    "SNAPSHOT",
+    "RENDER_HTML",
+    "SERVE_READ_ONLY",
+    "NAVIGATE_EVIDENCE",
+    "DISPLAY_COMMAND_INTENT"
+  ],
+  "effect_classes": ["none"],
+  "receipt_kinds": [],
+  "authority_scope": "projection-and-navigation-only",
+  "dependencies": [
+    "ghot.curious-doors@0",
+    "ghot.composition-wants@0",
+    "ghot.merge-plugin-parcel-inbox@0",
+    "ghot.merge-contract-pantry@0"
+  ],
+  "implementation_refs": [
+    "ghot/curious_doors.py"
+  ],
+  "non_authorities": [
+    "navigation is not action",
+    "link is not authority",
+    "surface context is not subsystem permission",
+    "command intent is not execution",
+    "display command is not shell invocation",
+    "evidence link is GET-only",
+    "action intent has no executable href",
+    "surface does not infer permission from ownership metadata",
+    "surface does not choose among candidate-specific request intents",
+    "surface does not execute validation or installation intents"
+  ],
+  "extensions": {
+    "default_host": "127.0.0.1",
+    "default_port": 7794,
+    "evidence_get_only": true,
+    "navigation_executes": false,
+    "navigation_transfers_permission": false,
+    "command_intents_are_argv": true,
+    "command_intents_have_href": false,
+    "mutation_methods_refused": ["POST","PUT","DELETE"],
+    "automatic_want": false,
+    "automatic_refresh": false,
+    "automatic_request": false,
+    "automatic_offer": false,
+    "automatic_install": false
+  }
+}

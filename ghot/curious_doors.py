@@ -18,20 +18,34 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import shlex
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs, quote, urlparse
 
-from composition_want import CompositionWantStore
+from composition_want import (
+    derive_observation_id,
+    derive_request_link_id,
+    derive_want_id,
+)
+from merge_plugin import (
+    compile_package,
+    validate_package,
+    verify_install_receipt,
+)
 from reference_node import ROOT
 from relatte_identity import identity_safe, timestamp_now
+from state_merge import MERGE_CONTRACTS, merge_payload_type
+from state_migration import semantic_address
+from state_parcel import verify_bundle
 
 
 SURFACE_KIND = "ghot.curiosity.surface"
-SURFACE_VERSION = "0"
+SURFACE_VERSION = "1"
 DOOR_KIND = "ghot.curiosity.door"
-DOOR_VERSION = "0"
+DOOR_VERSION = "1"
 
 STATE_OPEN = "open-gap"
 STATE_CANDIDATE = "candidate-observed"
@@ -53,6 +67,42 @@ def _read_object(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError(f"JSON object required: {path}")
     return value
+
+
+def _evidence_destination(
+    *,
+    want_id: str,
+    label: str = "Inspect door evidence",
+) -> dict[str, Any]:
+    return {
+        "kind": "evidence-link",
+        "label": label,
+        "owner_contract": "ghot.curious-doors@1",
+        "href": "/door?want_id=" + quote(want_id, safe=""),
+        "method": "GET",
+        "effect": "none",
+        "executes": False,
+        "permission_transfer": False,
+    }
+
+
+def _command_intent(
+    *,
+    label: str,
+    owner_contract: str,
+    argv: list[str],
+    effect_if_run: str,
+) -> dict[str, Any]:
+    return {
+        "kind": "command-intent",
+        "label": label,
+        "owner_contract": owner_contract,
+        "argv": argv,
+        "display_command": shlex.join(argv),
+        "effect_if_run": effect_if_run,
+        "executes": False,
+        "permission_transfer": False,
+    }
 
 
 def _candidate_index(
@@ -120,10 +170,439 @@ def _candidate_index(
     return rows, new_in_latest
 
 
+class ReadOnlyCuriosityStore:
+    """Read 024/020 state without constructing any write-capable helper."""
+
+    def __init__(self, root: Path) -> None:
+        self.root = root
+        self.base = self.root / "composition-wants"
+        self.wants_dir = self.base / "wants"
+        self.observations_dir = self.base / "observations"
+        self.request_links_dir = self.base / "request-links"
+
+    def load_want(self, want_id: str) -> dict[str, Any]:
+        path = self.wants_dir / (
+            want_id.replace(":", "_").replace("/", "_") + ".json"
+        )
+        if not path.exists():
+            raise ValueError("unknown composition want")
+        want = _read_object(path)
+        if want.get("want_id") != derive_want_id(want):
+            raise ValueError("composition want content address mismatch")
+        return want
+
+    def observations(
+        self,
+        *,
+        want_id: str,
+    ) -> list[dict[str, Any]]:
+        if not self.observations_dir.is_dir():
+            return []
+        result = []
+        for path in sorted(self.observations_dir.glob("*.json")):
+            try:
+                value = _read_object(path)
+            except Exception:
+                continue
+            if value.get("want_id") != want_id:
+                continue
+            if value.get("observation_id") != derive_observation_id(value):
+                continue
+            result.append(value)
+        result.sort(key=lambda item: str(item.get("observed_at") or ""))
+        return result
+
+    def request_links(
+        self,
+        *,
+        want_id: str,
+    ) -> list[dict[str, Any]]:
+        if not self.request_links_dir.is_dir():
+            return []
+        result = []
+        for path in sorted(self.request_links_dir.glob("*.json")):
+            try:
+                value = _read_object(path)
+            except Exception:
+                continue
+            if value.get("want_id") != want_id:
+                continue
+            if value.get("link_id") != derive_request_link_id(value):
+                continue
+            result.append(value)
+        result.sort(key=lambda item: str(item.get("requested_at") or ""))
+        return result
+
+    def _installed_contract_registry(self) -> dict[str, dict[str, Any]]:
+        registry = dict(MERGE_CONTRACTS)
+        packages_dir = self.root / "merge-plugins" / "packages"
+        receipts_dir = self.root / "merge-plugins" / "receipts"
+        if not packages_dir.is_dir():
+            return registry
+
+        for manifest_path in sorted(
+            packages_dir.glob("*/manifest.v0.json")
+        ):
+            try:
+                package = _read_object(manifest_path)
+                checked = validate_package(package)
+                package_id = checked["package_id"]
+                receipt_path = receipts_dir / (
+                    package_id.replace("/", "_").replace(":", "_")
+                    + ".json"
+                )
+                if not receipt_path.exists():
+                    continue
+                receipt = _read_object(receipt_path)
+                if not verify_install_receipt(receipt):
+                    continue
+                if (
+                    receipt.get("package_address")
+                    != checked["package_address"]
+                ):
+                    continue
+                spec, _initial, _apply = compile_package(package)
+                contract_id = str(spec["contract_id"])
+                if contract_id in registry:
+                    raise ValueError(
+                        "installed plugin contract collides with existing contract"
+                    )
+                registry[contract_id] = spec
+            except Exception:
+                continue
+        return registry
+
+    def _admitted_context(self, parcel_id: str) -> dict[str, Any]:
+        safe = parcel_id.replace(":", "_").replace("/", "_")
+        inbox_path = (
+            self.root / "state-parcels" / "inbox" / f"{safe}.json"
+        )
+        raw_path = (
+            self.root / "state-parcels" / "raw" / f"{safe}.json"
+        )
+        admitted_path = (
+            self.root / "state-parcels" / "admitted" / f"{safe}.json"
+        )
+        for path in (inbox_path, raw_path, admitted_path):
+            if not path.exists():
+                raise ValueError("parcel is not locally ADMITTED")
+
+        inbox = _read_object(inbox_path)
+        if inbox.get("status") != "ADMIT":
+            raise ValueError("parcel is not locally ADMITTED")
+
+        bundle = _read_object(raw_path)
+        if not verify_bundle(bundle):
+            raise ValueError("stored parcel bundle no longer verifies")
+        parcel = bundle.get("parcel") or {}
+        if parcel.get("parcel_id") != parcel_id:
+            raise ValueError("raw parcel id mismatch")
+
+        admitted = _read_object(admitted_path)
+        if admitted.get("parcel_id") != parcel_id:
+            raise ValueError("admitted parcel id mismatch")
+        expected = {
+            "kind": admitted.get("kind"),
+            "version": admitted.get("version"),
+            "parcel_id": admitted.get("parcel_id"),
+            "admitted_at": admitted.get("admitted_at"),
+            "source": parcel.get("source"),
+            "migration": parcel.get("migration"),
+            "payload": parcel.get("payload"),
+            "note": admitted.get("note"),
+            "canonical_state_mutated": False,
+        }
+        if identity_safe(admitted) != identity_safe(expected):
+            raise ValueError(
+                "admitted materialization no longer matches raw parcel"
+            )
+        return {
+            "parcel": parcel,
+            "admitted": admitted,
+            "admitted_ref": semantic_address(identity_safe(admitted)),
+        }
+
+    def inspect(self, parcel_id: str) -> dict[str, Any]:
+        context = self._admitted_context(parcel_id)
+        parcel = context["parcel"]
+        source = parcel.get("source") or {}
+        payload = parcel.get("payload") or {}
+        value_type = merge_payload_type(payload.get("value"))
+
+        rows = []
+        for contract_id, spec in sorted(
+            self._installed_contract_registry().items()
+        ):
+            reasons = []
+            if source.get("state_kind") != spec.get("parcel_state_kind"):
+                reasons.append("state-kind-mismatch")
+            if (
+                source.get("state_version")
+                != spec.get("parcel_state_version")
+            ):
+                reasons.append("state-version-mismatch")
+            if payload.get("selector") != spec.get("parcel_selector"):
+                reasons.append("selector-mismatch")
+            if value_type != spec.get("payload_type"):
+                reasons.append("payload-type-mismatch")
+
+            target_status = "not-checked"
+            local_address = None
+            if not reasons:
+                try:
+                    local_path = self.root / str(spec["local_rel"])
+                    if local_path.exists():
+                        local_state = _read_object(local_path)
+                        if (
+                            local_state.get("kind")
+                            != spec.get("local_kind")
+                            or local_state.get("version")
+                            != spec.get("local_version")
+                        ):
+                            raise ValueError(
+                                "local merge target has unsupported kind/version"
+                            )
+                        existed = True
+                    else:
+                        local_state = identity_safe(spec["initial"]())
+                        existed = False
+                    target_status = "merge" if existed else "create"
+                    local_address = semantic_address(
+                        identity_safe(local_state)
+                    )
+                    if parcel_id in (
+                        local_state.get("merged_parcels") or []
+                    ):
+                        reasons.append("already-merged")
+                except Exception as exc:
+                    target_status = "blocked"
+                    reasons.append(
+                        f"local-target-blocked:{type(exc).__name__}"
+                    )
+
+            rows.append({
+                "contract_id": contract_id,
+                "compatible": len(reasons) == 0,
+                "reasons": reasons,
+                "target_status": target_status,
+                "local_before_address": local_address,
+            })
+
+        return {
+            "kind": "ghot.merge-contract.inspection",
+            "version": "0",
+            "parcel_id": parcel_id,
+            "parcel_address": parcel.get("parcel_address"),
+            "payload_address": payload.get("address"),
+            "admitted_ref": context["admitted_ref"],
+            "source": {
+                "state_kind": source.get("state_kind"),
+                "state_version": source.get("state_version"),
+                "selector": payload.get("selector"),
+                "payload_type": value_type,
+            },
+            "contracts": rows,
+            "compatible_contract_ids": [
+                row["contract_id"]
+                for row in rows
+                if row["compatible"] is True
+            ],
+        }
+
+
 class CuriousDoorsSurface:
     def __init__(self, root: Path | None = None) -> None:
         self.root = root or ROOT
-        self.store = CompositionWantStore(self.root)
+        self.store = ReadOnlyCuriosityStore(self.root)
+
+    def _matching_plugin_parcels(
+        self,
+        *,
+        package_addresses: set[str],
+    ) -> list[dict[str, Any]]:
+        rows = []
+        inbox_dir = self.root / "merge-plugin-parcels" / "inbox"
+        if not inbox_dir.is_dir():
+            return rows
+        for path in sorted(inbox_dir.glob("*.json")):
+            try:
+                item = _read_object(path)
+            except Exception:
+                continue
+            address = item.get("package_address")
+            if not isinstance(address, str) or address not in package_addresses:
+                continue
+            rows.append(identity_safe({
+                "parcel_id": item.get("parcel_id"),
+                "parcel_address": item.get("parcel_address"),
+                "package_id": item.get("package_id"),
+                "package_version": item.get("package_version"),
+                "package_address": address,
+                "author_particular": item.get("author_particular"),
+                "author_signature_status": item.get("author_signature_status"),
+                "status": item.get("status"),
+                "received_at": item.get("received_at"),
+                "updated_at": item.get("updated_at"),
+                "validation_address": item.get("validation_address"),
+                "install_receipt_id": item.get("install_receipt_id"),
+            }))
+        rows.sort(
+            key=lambda item: (
+                str(item.get("package_address") or ""),
+                str(item.get("parcel_id") or ""),
+            )
+        )
+        return rows
+
+    def _navigation(
+        self,
+        *,
+        want: dict[str, Any],
+        state: str,
+        candidates: list[dict[str, Any]],
+        links: list[dict[str, Any]],
+        plugin_parcels: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        want_id = str(want["want_id"])
+        destinations: list[dict[str, Any]] = [
+            _evidence_destination(want_id=want_id),
+            _command_intent(
+                label="Inspect this WANT in the owning subsystem",
+                owner_contract="ghot.composition-wants@0",
+                argv=[
+                    "python3",
+                    "ghot/composition_want.py",
+                    "show",
+                    want_id,
+                ],
+                effect_if_run="read-only",
+            ),
+        ]
+
+        if state in {STATE_OPEN, STATE_CANDIDATE}:
+            destinations.append(_command_intent(
+                label="Refresh observed grammar candidates",
+                owner_contract="ghot.composition-wants@0",
+                argv=[
+                    "python3",
+                    "ghot/composition_want.py",
+                    "refresh",
+                    want_id,
+                    "--scan",
+                ],
+                effect_if_run="network-read+local-observation-write",
+            ))
+
+        if state == STATE_CANDIDATE:
+            for candidate in candidates:
+                candidate_id = candidate.get("candidate_id")
+                if not isinstance(candidate_id, str) or not candidate_id:
+                    continue
+                destinations.append(_command_intent(
+                    label=(
+                        "Request candidate "
+                        + str(candidate.get("package_id") or candidate_id)
+                    ),
+                    owner_contract="ghot.composition-wants@0",
+                    argv=[
+                        "python3",
+                        "ghot/composition_want.py",
+                        "request",
+                        want_id,
+                        candidate_id,
+                    ],
+                    effect_if_run="signed-023-request",
+                ))
+
+        if state == STATE_REQUESTED:
+            for parcel in plugin_parcels:
+                parcel_id = parcel.get("parcel_id")
+                status = parcel.get("status")
+                if not isinstance(parcel_id, str) or not parcel_id:
+                    continue
+                destinations.append(_command_intent(
+                    label="Inspect received plugin parcel",
+                    owner_contract="ghot.merge-plugin-parcel-inbox@0",
+                    argv=[
+                        "python3",
+                        "ghot/merge_plugin_parcel.py",
+                        "show",
+                        parcel_id,
+                    ],
+                    effect_if_run="read-only",
+                ))
+                if status == "HOLD":
+                    destinations.append(_command_intent(
+                        label="Validate held plugin parcel locally",
+                        owner_contract="ghot.merge-plugin-parcel-inbox@0",
+                        argv=[
+                            "python3",
+                            "ghot/merge_plugin_parcel.py",
+                            "validate",
+                            parcel_id,
+                        ],
+                        effect_if_run="local-validation-state-change",
+                    ))
+                elif status == "VALIDATED":
+                    destinations.append(_command_intent(
+                        label="Install validated plugin parcel locally",
+                        owner_contract="ghot.merge-plugin-parcel-inbox@0",
+                        argv=[
+                            "python3",
+                            "ghot/merge_plugin_parcel.py",
+                            "install",
+                            parcel_id,
+                        ],
+                        effect_if_run="local-plugin-install",
+                    ))
+
+        if state == STATE_RESOLVED:
+            parcel_id = want.get("parcel_id")
+            if isinstance(parcel_id, str) and parcel_id:
+                destinations.append(_command_intent(
+                    label="Inspect current local merge compatibility",
+                    owner_contract="ghot.merge-contract-pantry@0",
+                    argv=[
+                        "python3",
+                        "ghot/merge_contract_pantry.py",
+                        "inspect",
+                        parcel_id,
+                    ],
+                    effect_if_run="read-only",
+                ))
+
+        return destinations
+
+    def evidence(self, want_id: str) -> dict[str, Any]:
+        want = self.store.load_want(want_id)
+        observations = self.store.observations(want_id=want_id)
+        links = self.store.request_links(want_id=want_id)
+        candidates, _new = _candidate_index(want, observations)
+        package_addresses = {
+            str(candidate.get("package_address"))
+            for candidate in candidates
+            if isinstance(candidate.get("package_address"), str)
+        }
+        plugin_parcels = self._matching_plugin_parcels(
+            package_addresses=package_addresses,
+        )
+        try:
+            current = self.store.inspect(str(want["parcel_id"]))
+            current_error = None
+        except Exception as exc:
+            current = None
+            current_error = f"{type(exc).__name__}: {exc}"
+        return identity_safe({
+            "kind": "ghot.curiosity.evidence",
+            "version": "0",
+            "want": want,
+            "current_local_inspection": current,
+            "current_local_inspection_error": current_error,
+            "observations": observations,
+            "request_links": links,
+            "matching_plugin_parcels": plugin_parcels,
+            "read_only": True,
+        })
 
     def _door(self, want: dict[str, Any]) -> dict[str, Any]:
         want_id = str(want["want_id"])
@@ -137,7 +616,7 @@ class CuriousDoorsSurface:
         compatible: list[str] = []
         projection_error: str | None = None
         try:
-            current = self.store.pantry.inspect(str(want["parcel_id"]))
+            current = self.store.inspect(str(want["parcel_id"]))
             compatible = list(
                 current.get("compatible_contract_ids") or []
             )
@@ -161,6 +640,21 @@ class CuriousDoorsSurface:
             for link in links
             if isinstance(link.get("candidate_id"), str)
         })
+        requested_package_addresses = {
+            str(link.get("package_address"))
+            for link in links
+            if isinstance(link.get("package_address"), str)
+        }
+        plugin_parcels = self._matching_plugin_parcels(
+            package_addresses=requested_package_addresses,
+        )
+        navigation = self._navigation(
+            want=want,
+            state=state,
+            candidates=candidates,
+            links=links,
+            plugin_parcels=plugin_parcels,
+        )
 
         return identity_safe({
             "kind": DOOR_KIND,
@@ -189,6 +683,8 @@ class CuriousDoorsSurface:
             "observation_count": len(observations),
             "request_count": len(links),
             "requested_candidate_ids": requested_candidate_ids,
+            "matching_plugin_parcels": plugin_parcels,
+            "navigation": navigation,
             "projection_error": projection_error,
             "read_only": True,
         })
@@ -223,6 +719,8 @@ class CuriousDoorsSurface:
                         "observation_count": 0,
                         "request_count": 0,
                         "requested_candidate_ids": [],
+                        "matching_plugin_parcels": [],
+                        "navigation": [],
                         "projection_error": (
                             f"{type(exc).__name__}: {exc}"
                         ),
@@ -264,6 +762,8 @@ class CuriousDoorsSurface:
             "automatic_request": False,
             "automatic_offer": False,
             "automatic_install": False,
+            "navigation_executes": False,
+            "navigation_transfers_permission": False,
             "counts": counts,
             "doors": doors,
         })
@@ -271,6 +771,72 @@ class CuriousDoorsSurface:
 
 def _esc(value: Any) -> str:
     return html.escape("" if value is None else str(value))
+
+
+def _render_navigation(navigation: list[dict[str, Any]]) -> str:
+    if not navigation:
+        return "<p>No navigation destinations available.</p>"
+    rows = []
+    for item in navigation:
+        kind = item.get("kind")
+        label = _esc(item.get("label"))
+        owner = _esc(item.get("owner_contract"))
+        if kind == "evidence-link":
+            href = _esc(item.get("href"))
+            rows.append(
+                "<li><a href=\"" + href + "\">" + label + "</a>"
+                + " <small>owned by <code>" + owner + "</code></small></li>"
+            )
+        elif kind == "command-intent":
+            command = _esc(item.get("display_command"))
+            effect = _esc(item.get("effect_if_run"))
+            rows.append(
+                "<li><div>" + label
+                + " <small>owned by <code>" + owner + "</code></small></div>"
+                + "<pre>" + command + "</pre>"
+                + "<small>Would have effect if separately run: "
+                + effect + ". This surface does not execute it.</small></li>"
+            )
+    return "<ul class=\"navigation\">" + "".join(rows) + "</ul>"
+
+
+def render_evidence_html(
+    evidence: dict[str, Any],
+    navigation: list[dict[str, Any]],
+) -> str:
+    want = evidence.get("want") or {}
+    title = "Curious Door Evidence — " + str(want.get("want_id") or "")
+    pretty = _esc(json.dumps(evidence, indent=2, sort_keys=True))
+    nav = _render_navigation(navigation)
+    return """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>""" + _esc(title) + """</title>
+<style>
+:root { color-scheme: dark; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+body { margin: 0; background: #0d0f12; color: #e8eaed; }
+main { max-width: 980px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+a { color: inherit; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #15191e; padding: .8rem; border-radius: 8px; }
+.navigation li { margin: 1rem 0; }
+small { color: #aeb7c2; }
+</style>
+</head>
+<body>
+<main>
+<p><a href="/">← Curious Doors</a></p>
+<h1>Evidence</h1>
+<p>Read-only projection. Links navigate; command intents are inert text.</p>
+<h2>Possible next places</h2>
+""" + nav + """
+<h2>Durable local evidence</h2>
+<pre>""" + pretty + """</pre>
+</main>
+</body>
+</html>
+"""
 
 
 def render_html(snapshot: dict[str, Any]) -> str:
@@ -315,6 +881,9 @@ def render_html(snapshot: dict[str, Any]) -> str:
             + "<details><summary>Observed candidates</summary><ul>"
             + candidate_rows
             + "</ul></details>"
+            + "<details><summary>Navigate without acting</summary>"
+            + _render_navigation(door.get("navigation") or [])
+            + "</details>"
             + (
                 "<p class=\"error\"><strong>Projection error:</strong> "
                 + _esc(door.get("projection_error"))
@@ -363,6 +932,10 @@ h1 { font-size: 1.8rem; margin-bottom: .35rem; }
 h2 { font-size: 1.15rem; line-height: 1.4; }
 code { overflow-wrap: anywhere; }
 details { margin-top: .75rem; }
+.navigation li { margin: 1rem 0; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #0d0f12; padding: .6rem; border-radius: 8px; }
+a { color: inherit; }
+small { color: #aeb7c2; }
 .error { border-left: 3px solid currentColor; padding-left: .7rem; }
 footer { margin-top: 2rem; color: #8e98a5; font-size: .85rem; }
 </style>
@@ -409,18 +982,61 @@ def surface_handler(
             self.wfile.write(raw)
 
         def do_GET(self) -> None:
-            if self.path in {"/", "/curious-doors.html"}:
+            parsed = urlparse(self.path)
+            if parsed.path in {"/", "/curious-doors.html"}:
                 raw = render_html(surface.snapshot()).encode("utf-8")
                 self._send(200, raw, "text/html; charset=utf-8")
                 return
-            if self.path == "/curious-doors":
+            if parsed.path == "/curious-doors":
                 raw = json.dumps(
                     surface.snapshot(),
                     indent=2,
                 ).encode("utf-8")
                 self._send(200, raw, "application/json")
                 return
-            if self.path == "/health":
+            if parsed.path in {"/door", "/evidence"}:
+                params = parse_qs(parsed.query)
+                want_id = (params.get("want_id") or [None])[0]
+                if not isinstance(want_id, str) or not want_id:
+                    self._send(
+                        400,
+                        b'{"error":"want_id required"}',
+                        "application/json",
+                    )
+                    return
+                try:
+                    snapshot = surface.snapshot()
+                    door = next(
+                        (
+                            item
+                            for item in snapshot.get("doors") or []
+                            if item.get("want_id") == want_id
+                        ),
+                        None,
+                    )
+                    if not isinstance(door, dict):
+                        raise ValueError("unknown curious door")
+                    evidence = surface.evidence(want_id)
+                except Exception as exc:
+                    raw = json.dumps({
+                        "error": f"{type(exc).__name__}: {exc}",
+                    }).encode("utf-8")
+                    self._send(404, raw, "application/json")
+                    return
+                if parsed.path == "/evidence":
+                    raw = json.dumps(
+                        evidence,
+                        indent=2,
+                    ).encode("utf-8")
+                    self._send(200, raw, "application/json")
+                else:
+                    raw = render_evidence_html(
+                        evidence,
+                        door.get("navigation") or [],
+                    ).encode("utf-8")
+                    self._send(200, raw, "text/html; charset=utf-8")
+                return
+            if parsed.path == "/health":
                 raw = json.dumps({
                     "kind": "ghot.curiosity.surface.health",
                     "version": "0",
@@ -543,6 +1159,8 @@ def main() -> int:
             "ATTENTION != PRIORITY",
             "NEW CANDIDATE != NOTIFICATION AUTHORITY",
             "DISPLAY ORDER != RANK",
+            "NAVIGATION != ACTION",
+            "LINK != AUTHORITY",
         ],
     }, indent=2))
     try:

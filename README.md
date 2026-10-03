@@ -1333,3 +1333,88 @@ python3 ghot/curious_doors_sim.py
 
 See `docs/CURIOUS-DOORS.md` and
 `experiments/025-curious-doors.md`.
+
+
+## Navigate Curious Doors without acting
+
+026 adds typed navigation to the 025 read-only surface.
+
+A Curious Door may now contain:
+
+```text
+evidence-link
+command-intent
+```
+
+Evidence links are internal GET-only pages:
+
+```text
+/door?want_id=<want-id>
+/evidence?want_id=<want-id>
+```
+
+They expose durable local evidence only.
+
+Command intents are inert argv data owned by the subsystem that would perform the
+operation if the operator separately runs it:
+
+```json
+{
+  "kind": "command-intent",
+  "owner_contract": "ghot.composition-wants@0",
+  "argv": [
+    "python3",
+    "ghot/composition_want.py",
+    "refresh",
+    "<want-id>",
+    "--scan"
+  ],
+  "executes": false,
+  "permission_transfer": false
+}
+```
+
+Action intents deliberately have no executable `href`.
+
+The visible path changes with local state:
+
+```text
+open-gap
+  -> inspect evidence / REFRESH intent
+
+candidate-observed
+  -> candidate-specific REQUEST intent
+
+requested + HOLD
+  -> plugin parcel SHOW / VALIDATE intents
+
+requested + VALIDATED
+  -> plugin parcel INSTALL intent
+
+resolved-local
+  -> read-only pantry INSPECT intent
+```
+
+Curious Doors itself executes none of them.
+
+The HTML still has no form, button, or script. Only ordinary GET evidence links
+are clickable. POST, PUT, and DELETE remain HTTP 405.
+
+A pristine-root snapshot creates no identity or state files.
+
+```text
+NAVIGATION != ACTION
+LINK != AUTHORITY
+SURFACE CONTEXT != SUBSYSTEM PERMISSION
+COMMAND INTENT != EXECUTION
+ACTION INTENT != EXECUTABLE URL
+```
+
+Deterministic proof:
+
+```bash
+python3 ghot/curious_navigation_sim.py
+```
+
+See `docs/CURIOUS-DOOR-NAVIGATION.md` and
+`experiments/026-curious-door-navigation.md`.
