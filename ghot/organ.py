@@ -47,6 +47,7 @@ from relatte_identity import IdentityKey
 from state_migration import StateMigrator
 from state_parcel import parcel_handler
 from grammar_exchange import GrammarExchangeService
+from curious_doors import CuriousDoorsHTTPService
 
 
 BodyProbe = Callable[[], dict[str, Any]]
@@ -110,6 +111,7 @@ class OrganDaemon:
             "presence_http": {"state": "not-started"},
             "state_parcel_http": {"state": "not-started"},
             "grammar_exchange": {"state": "not-started"},
+            "curious_doors": {"state": "not-started"},
         }
 
     def _write_state(self, state: dict[str, Any]) -> None:
@@ -788,6 +790,83 @@ class OrganGrammarExchangeService:
             self.service.close()
         self.daemon.service_state["grammar_exchange"] = {
             **self.daemon.service_state.get("grammar_exchange", {}),
+            "state": "stopped",
+        }
+
+
+class OrganCuriousDoorsService:
+    """Supervise the loopback-only read-only curiosity surface."""
+
+    def __init__(
+        self,
+        daemon: OrganDaemon,
+        *,
+        root: Path,
+        host: str,
+        port: int,
+    ) -> None:
+        self.daemon = daemon
+        self.root = root
+        self.host = host
+        self.port = port
+        self.service: CuriousDoorsHTTPService | None = None
+
+    def start(self) -> None:
+        self.service = CuriousDoorsHTTPService(
+            root=self.root,
+            host=self.host,
+            port=self.port,
+        )
+        self.service.start()
+        live_port = (
+            self.service.server.server_port
+            if self.service.server is not None
+            else self.port
+        )
+        self.daemon.service_state["curious_doors"] = {
+            "state": "awake",
+            "host": self.host,
+            "port": live_port,
+            "read_only": True,
+            "auto_want": False,
+            "auto_refresh": False,
+            "auto_request": False,
+            "auto_offer": False,
+            "auto_install": False,
+        }
+
+    def supervise(self) -> None:
+        alive = (
+            self.service is not None
+            and self.service.thread is not None
+            and self.service.thread.is_alive()
+        )
+        if alive:
+            return
+        if self.service is not None:
+            self.service.close()
+        try:
+            self.start()
+            self.daemon._event("organ.service_restarted", {
+                "node_id": node_id(),
+                "service": "curious_doors",
+                "host": self.host,
+                "port": self.port,
+            })
+        except Exception as exc:
+            self.daemon.service_state["curious_doors"] = {
+                "state": "failed",
+                "host": self.host,
+                "port": self.port,
+                "read_only": True,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+
+    def close(self) -> None:
+        if self.service is not None:
+            self.service.close()
+        self.daemon.service_state["curious_doors"] = {
+            **self.daemon.service_state.get("curious_doors", {}),
             "state": "stopped",
         }
 
