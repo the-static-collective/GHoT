@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 import importlib.util
+import sys
 import unittest
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "ghot"))
 
 
 def load(name, path):
