@@ -47,3 +47,6 @@ jobs:
 
       - name: Atomic work lease simulation
         run: python3 ghot/lease_sim.py
+
+      - name: Portable lease authority crossing simulation
+        run: python3 ghot/portable_lease_sim.py
