@@ -426,17 +426,36 @@ class PresenceStore:
         *,
         repo_root: Path | None = None,
         body_record: dict[str, Any] | None = None,
-    ) -> tuple[dict[str, Any], dict[str, Any]]:
+    ) -> tuple[dict[str, Any], dict[str, Any] | None]:
         manifest = create_boot_manifest(
             root=self.root,
             repo_root=repo_root,
             body_record=body_record,
         )
-        signer = IdentityKey.load_or_create(
-            self.root / "identity" / "body-p256.pem"
-        )
-        receipt = sign_startup_receipt(manifest, signer=signer)
         _write_atomic(self.manifest_path, manifest)
+
+        try:
+            signer = IdentityKey.load_or_create(
+                self.root / "identity" / "body-p256.pem"
+            )
+            receipt = sign_startup_receipt(manifest, signer=signer)
+        except Exception as exc:
+            failure = {
+                "kind": "ghot.startup.receipt.failure",
+                "version": "0",
+                "boot_id": manifest["boot_id"],
+                "manifest_address": manifest["manifest_address"],
+                "observed_at": timestamp_now(),
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+            _write_atomic(
+                self.startup_root / "receipt-failure.v0.json",
+                failure,
+            )
+            if self.latest_receipt_path.exists():
+                self.latest_receipt_path.unlink()
+            return manifest, None
+
         _write_atomic(self.latest_receipt_path, receipt)
         self.receipts_dir.mkdir(parents=True, exist_ok=True)
         _write_atomic(
@@ -490,10 +509,24 @@ class PresenceStore:
                     "detail": "no startup manifest has been persisted",
                 }],
             }
-        return health_from(
+        health = health_from(
             manifest=manifest,
             runtime_state=self.runtime_state(),
         )
+        receipt = self.receipt()
+        if receipt is None:
+            health["status"] = "blocked"
+            health["reasons"].append({
+                "kind": "startup-receipt-missing",
+                "detail": "body did not produce a signed startup receipt",
+            })
+        elif not verify_startup_receipt(receipt):
+            health["status"] = "blocked"
+            health["reasons"].append({
+                "kind": "startup-receipt-invalid",
+                "detail": "persisted startup receipt failed signature verification",
+            })
+        return health
 
     def presence(self) -> dict[str, Any]:
         return {
