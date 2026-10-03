@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/merge-plugin-parcel-inbox.v0.json",
+  "title": "GHoT Merge Plugin Parcel Inbox V0",
+  "type": "object",
+  "required": [
+    "kind","version","parcel_id","parcel_address","package_id",
+    "package_version","package_address","crossing_id","source_particular",
+    "target_particular","author_particular","author_signature_status",
+    "status","received_at","updated_at","validation_address",
+    "install_receipt_id","decision_note"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.merge-plugin.parcel.inbox" },
+    "version": { "const": "0" },
+    "parcel_id": { "type": "string", "minLength": 1 },
+    "parcel_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "package_id": { "type": "string", "minLength": 1 },
+    "package_version": { "type": "string", "minLength": 1 },
+    "package_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "crossing_id": { "type": "string", "minLength": 1 },
+    "source_particular": { "type": "string", "minLength": 1 },
+    "target_particular": { "type": ["string","null"] },
+    "author_particular": { "type": ["string","null"] },
+    "author_signature_status": { "enum": ["verified","unsigned"] },
+    "status": { "enum": ["HOLD","VALIDATED","INSTALLED","REJECT"] },
+    "received_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "validation_address": { "type": ["string","null"] },
+    "install_receipt_id": { "type": ["string","null"] },
+    "decision_note": { "type": ["string","null"] }
+  }
+}
