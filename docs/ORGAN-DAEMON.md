@@ -1,3 +1,5 @@
+> **023 note:** A normal organ now supervises a non-authoritative grammar exchange service on HTTP 7793 / UDP 47890. The service advertises only explicitly shared package metadata and can record signed requests, but it never auto-shares, auto-requests, auto-offers, or auto-installs. See `docs/GRAMMAR-EXCHANGE.md`.
+
 > **022 note:** Port 7792 is now a shared HOLD-only parcel porch with separate `/state-parcel` and `/merge-plugin-package` protocols. Sharing the supervised HTTP service does not merge their inbox, validation, admission, or installation authority. See `docs/PORTABLE-MERGE-PLUGINS.md`.
 
 > **018 note:** The default organ now also supervises a dedicated HOLD-only state parcel porch on port 7792. BODY discovery advertises that porch separately from the normal task service. Network receive may HOLD valid parcels but cannot ADMIT them. See `docs/STATE-PARCELS.md`.
