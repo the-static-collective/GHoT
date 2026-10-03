@@ -29,6 +29,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
+from lan_node import discover_peers
 from reference_node import ROOT
 from relatte_identity import (
     ALGORITHM,
@@ -957,6 +958,44 @@ def serve_parcel_porch(
         server.server_close()
 
 
+def send_bundle_to_node(
+    bundle: dict[str, Any],
+    selected_node_id: str,
+    *,
+    timeout: float = 2.0,
+) -> dict[str, Any]:
+    if not verify_bundle(bundle):
+        raise ValueError("refusing to send invalid state parcel bundle")
+    peers = discover_peers(timeout)
+    peer = next(
+        (
+            item for item in peers
+            if item.get("node_id") == selected_node_id
+        ),
+        None,
+    )
+    if peer is None:
+        raise RuntimeError("selected body is not currently discoverable")
+    url = peer.get("state_parcel_url")
+    if not isinstance(url, str) or not url:
+        raise RuntimeError("selected body does not advertise a state parcel porch")
+    body_record = peer.get("body") or {}
+    identity = body_record.get("identity") or {}
+    discovered_particular = identity.get("particular")
+    target_particular = (
+        (bundle.get("parcel") or {})
+        .get("target", {})
+        .get("particular")
+    )
+    if not isinstance(discovered_particular, str) or not discovered_particular:
+        raise RuntimeError("selected body has no usable cryptographic identity")
+    if target_particular != discovered_particular:
+        raise RuntimeError(
+            "parcel target particular does not match currently discovered body identity"
+        )
+    return send_bundle(bundle, url)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Export, cross, and disposition GHoT state parcels.")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -973,6 +1012,11 @@ def main() -> int:
     send = sub.add_parser("send")
     send.add_argument("bundle_file")
     send.add_argument("base_url")
+
+    send_node = sub.add_parser("send-node")
+    send_node.add_argument("bundle_file")
+    send_node.add_argument("node_id")
+    send_node.add_argument("--timeout", type=float, default=2.0)
 
     receive = sub.add_parser("receive")
     receive.add_argument("bundle_file")
@@ -1026,6 +1070,20 @@ def main() -> int:
         if not isinstance(bundle, dict):
             raise SystemExit("bundle file must contain an object")
         print(json.dumps(send_bundle(bundle, args.base_url), indent=2))
+        return 0
+
+    if args.command == "send-node":
+        bundle = _read_json(Path(args.bundle_file).expanduser())
+        if not isinstance(bundle, dict):
+            raise SystemExit("bundle file must contain an object")
+        print(json.dumps(
+            send_bundle_to_node(
+                bundle,
+                args.node_id,
+                timeout=args.timeout,
+            ),
+            indent=2,
+        ))
         return 0
 
     if args.command == "serve":
