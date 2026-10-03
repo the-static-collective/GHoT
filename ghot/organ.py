@@ -753,6 +753,9 @@ class OrganGrammarExchangeService:
             "auto_request": False,
             "auto_offer": False,
             "auto_install": False,
+            "navigation_executes": False,
+            "permission_transfer": False,
+            "evidence_get_only": True,
         }
 
     def supervise(self) -> None:
