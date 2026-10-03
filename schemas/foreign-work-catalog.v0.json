@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/foreign-work-catalog.v0.json",
+  "title": "Example Foreign Work Catalog V0",
+  "type": "object",
+  "required": ["kind","version","entries","merged_parcels"],
+  "properties": {
+    "kind": { "const": "ghot.foreign-work-catalog" },
+    "version": { "const": "0" },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "source_particular","source_node_id","status",
+          "parcel_id","payload_address"
+        ],
+        "properties": {
+          "source_particular": { "type": "string", "minLength": 1 },
+          "source_node_id": { "type": "string", "minLength": 1 },
+          "status": {},
+          "parcel_id": { "type": "string", "minLength": 1 },
+          "payload_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+        }
+      }
+    },
+    "merged_parcels": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  }
+}
