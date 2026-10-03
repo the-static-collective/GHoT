@@ -10,6 +10,7 @@ from typing import Any
 
 from merge_contract_pantry import (
     MergeContractPantry,
+    derive_proposal_link_id,
     derive_selection_id,
 )
 from relatte_identity import IdentityKey
@@ -151,8 +152,13 @@ def main() -> int:
         assert not offers_target.exists()
         assert engine.list_plans() == []
 
-        plan = pantry.propose(selection["selection_id"])
+        proposal = pantry.propose(selection["selection_id"])
+        plan = proposal["plan"]
+        link = proposal["link"]
         assert plan["contract_id"] == OFFERS_CONTRACT
+        assert link["selection_id"] == selection["selection_id"]
+        assert link["plan_id"] == plan["plan_id"]
+        assert link["link_id"] == derive_proposal_link_id(link)
         assert not offers_target.exists()
 
         applied = engine.apply(plan["plan_id"], note="020 selected offers grammar")
@@ -189,7 +195,12 @@ def main() -> int:
         presence_target = receiver_root / "knowledge" / "foreign-presence.v0.json"
         presence_selection = pantry.select(presence_id, PRESENCE_CONTRACT)
         assert not presence_target.exists()
-        presence_plan = pantry.propose(presence_selection["selection_id"])
+        presence_proposal = pantry.propose(presence_selection["selection_id"])
+        presence_plan = presence_proposal["plan"]
+        assert (
+            presence_proposal["link"]["selection_id"]
+            == presence_selection["selection_id"]
+        )
         assert not presence_target.exists()
         presence_receipt = engine.apply(
             presence_plan["plan_id"],
