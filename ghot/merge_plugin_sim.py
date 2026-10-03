@@ -88,6 +88,21 @@ def admit_work(
     return bundle
 
 
+def variant(
+    package: dict[str, Any],
+    *,
+    package_id: str,
+    contract_id: str,
+) -> dict[str, Any]:
+    value = copy.deepcopy(package)
+    value["package_id"] = package_id
+    value["contract"]["contract_id"] = contract_id
+    value["contract"]["target"]["relative_path"] = (
+        f"knowledge/plugins/{package_id}/catalog.v0.json"
+    )
+    return value
+
+
 def expect_install_refused(
     store: MergePluginStore,
     package: dict[str, Any],
@@ -275,10 +290,10 @@ def main() -> int:
         assert store.list_installed()[0]["status"] == "installed"
 
         # F — invalid package classes are rejected before installation.
-        unknown_operation = copy.deepcopy(package)
-        unknown_operation["package_id"] = "ghot.plugin.unknown-operation"
-        unknown_operation["contract"]["contract_id"] = (
-            "ghot.test.unknown-operation/v0"
+        unknown_operation = variant(
+            package,
+            package_id="ghot.plugin.unknown-operation",
+            contract_id="ghot.test.unknown-operation/v0",
         )
         unknown_operation["operation"]["kind"] = "python.eval/v0"
         unknown_operation_refused = expect_install_refused(
@@ -287,18 +302,22 @@ def main() -> int:
         )
         assert unknown_operation_refused
 
-        bad_fixture = copy.deepcopy(package)
-        bad_fixture["package_id"] = "ghot.plugin.bad-fixture"
-        bad_fixture["contract"]["contract_id"] = "ghot.test.bad-fixture/v0"
+        bad_fixture = variant(
+            package,
+            package_id="ghot.plugin.bad-fixture",
+            contract_id="ghot.test.bad-fixture/v0",
+        )
         bad_fixture["fixtures"][0]["expected_after"]["entries"][0]["status"] = (
             "not-the-output"
         )
         bad_fixture_refused = expect_install_refused(store, bad_fixture)
         assert bad_fixture_refused
 
-        path_traversal = copy.deepcopy(package)
-        path_traversal["package_id"] = "ghot.plugin.path-traversal"
-        path_traversal["contract"]["contract_id"] = "ghot.test.path/v0"
+        path_traversal = variant(
+            package,
+            package_id="ghot.plugin.path-traversal",
+            contract_id="ghot.test.path/v0",
+        )
         path_traversal["contract"]["target"]["relative_path"] = (
             "../outside.json"
         )
@@ -308,9 +327,11 @@ def main() -> int:
         )
         assert path_traversal_refused
 
-        authority_claim = copy.deepcopy(package)
-        authority_claim["package_id"] = "ghot.plugin.authority"
-        authority_claim["contract"]["contract_id"] = "ghot.test.authority/v0"
+        authority_claim = variant(
+            package,
+            package_id="ghot.plugin.authority",
+            contract_id="ghot.test.authority/v0",
+        )
         authority_claim["contract"]["authority_effect"] = "grant"
         authority_claim_refused = expect_install_refused(
             store,
@@ -318,10 +339,10 @@ def main() -> int:
         )
         assert authority_claim_refused
 
-        built_in_collision = copy.deepcopy(package)
-        built_in_collision["package_id"] = "ghot.plugin.collision"
-        built_in_collision["contract"]["contract_id"] = next(
-            iter(MERGE_CONTRACTS)
+        built_in_collision = variant(
+            package,
+            package_id="ghot.plugin.collision",
+            contract_id=next(iter(MERGE_CONTRACTS)),
         )
         collision_refused = expect_install_refused(
             store,
@@ -331,9 +352,11 @@ def main() -> int:
 
         # G — package bytes cannot smuggle arbitrary source paths or nested
         # expression traversal through the bounded DSL.
-        bad_expression = copy.deepcopy(package)
-        bad_expression["package_id"] = "ghot.plugin.bad-expression"
-        bad_expression["contract"]["contract_id"] = "ghot.test.expression/v0"
+        bad_expression = variant(
+            package,
+            package_id="ghot.plugin.bad-expression",
+            contract_id="ghot.test.expression/v0",
+        )
         bad_expression["operation"]["entry_fields"]["status"] = (
             "payload.__class__.__mro__"
         )
