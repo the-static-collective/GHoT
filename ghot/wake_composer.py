@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""GHoT Wake Composer — Experiments 009/010.
+"""GHoT Wake Composer — Experiments 009/010/012.
 
 Re-evaluates durable HOLDs against the current field. When a HOLD becomes
 runnable, the worker must acquire an exclusive expiring lease before execution.
 
-A healthy worker renews its lease while work runs. If the worker dies, renewal
-stops and another worker may recover the expired claim.
+A healthy local worker renews its lease while work runs. If the selected body
+is remote, the owner automatically emits an identity-bound portable DISPATCH
+instead of executing through the older direct task transport.
 """
 
 from __future__ import annotations
@@ -24,6 +25,7 @@ from capability_composer import gather_candidates
 from energy_scheduler import decide_from_candidates
 from hold_queue import HoldQueue, iso_at
 from lan_node import request_task
+from lease_authority import LeaseAuthority
 from reference_node import execute, node_id, persist
 from work_lease import WorkLeaseStore
 
@@ -256,6 +258,94 @@ def reevaluate_hold(
             "action": decision["action"],
             "hold": current,
             "energy_plan": child_plan,
+            "execution": None,
+        }
+
+    selected = decision.get("selected") or {}
+    if selected.get("location") == "remote":
+        target_particular = selected.get("identity_particular")
+        target_public_key = selected.get("identity_public_key")
+        if (
+            selected.get("identity_available") is not True
+            or not target_particular
+            or not isinstance(target_public_key, dict)
+        ):
+            reason = "selected remote body has no usable P-256 identity"
+            current = queue.note_recheck(
+                hold_id,
+                child_energy_plan_id=child_plan["energy_plan_id"],
+                reason=reason,
+                at=when,
+            )
+            return {
+                "hold_id": hold_id,
+                "status": "held",
+                "action": "remote-identity-unavailable",
+                "hold": current,
+                "energy_plan": child_plan,
+                "execution": None,
+            }
+
+        authority = LeaseAuthority(queue.root)
+        existing_dispatch = authority.get_dispatch(hold_id, at=when)
+        if (
+            existing_dispatch is not None
+            and existing_dispatch.get("status") in {"offered", "claimed"}
+        ):
+            return {
+                "hold_id": hold_id,
+                "status": "held",
+                "action": "remote-dispatch-active",
+                "hold": queue.get(hold_id),
+                "energy_plan": child_plan,
+                "dispatch": existing_dispatch,
+                "execution": None,
+            }
+
+        try:
+            dispatch = authority.prepare_dispatch(
+                hold_id,
+                target_worker_id=str(selected["node_id"]),
+                target_node_id=str(selected["node_id"]),
+                target_particular=str(target_particular),
+                target_public_key=target_public_key,
+                child_energy_plan_id=child_plan["energy_plan_id"],
+                at=when,
+            )
+        except Exception as exc:
+            reason = f"automatic remote dispatch failed: {type(exc).__name__}: {exc}"
+            current = queue.note_recheck(
+                hold_id,
+                child_energy_plan_id=child_plan["energy_plan_id"],
+                reason=reason,
+                at=when,
+            )
+            return {
+                "hold_id": hold_id,
+                "status": "held",
+                "action": "remote-dispatch-failed",
+                "hold": current,
+                "energy_plan": child_plan,
+                "execution": None,
+                "error": reason,
+            }
+
+        current = queue.note_recheck(
+            hold_id,
+            child_energy_plan_id=child_plan["energy_plan_id"],
+            reason=(
+                "owner automatically dispatched selected remote body "
+                + str(selected["node_id"])
+            ),
+            at=when,
+        )
+        return {
+            "hold_id": hold_id,
+            "status": "held",
+            "action": "remote-dispatched",
+            "hold": current,
+            "energy_plan": child_plan,
+            "dispatch": dispatch,
             "execution": None,
         }
 
