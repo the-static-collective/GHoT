@@ -1,3 +1,5 @@
+> **017 note:** The canonical daemon current-state record is now `ghot.organ.state/v1` at `.ghot/organ/state.v1.json`, linked to the current boot presence. Valid v0 state crosses through the signed migration path in `docs/STATE-MIGRATIONS.md`.
+
 # Organ Daemon
 
 Experiment 014 makes joining the local GHoT organism a one-command operation:
@@ -40,7 +42,7 @@ Is work addressed to this body?
 The daemon maintains one replaceable current-state record:
 
 ```text
-.ghot/organ/state.v0.json
+.ghot/organ/state.v1.json
 ```
 
 It includes:
@@ -51,7 +53,8 @@ It includes:
 - currently resolved trusted authorities;
 - latest lease-worker result;
 - supervised service states;
-- local subsystem errors.
+- local subsystem errors;
+- current boot id / manifest address / startup receipt linkage.
 
 This file is a current view, not immutable history.
 
