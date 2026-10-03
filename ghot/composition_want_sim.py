@@ -218,8 +218,9 @@ def main() -> int:
             assert empty_want["candidates"] == []
             assert empty_want["want_id"] == derive_want_id(empty_want)
 
-            # B — observation finds exactly one structural candidate even though
-            # the source advertises two packages.
+            # B — REFRESH the same zero-candidate WANT. Observation finds
+            # exactly one structural candidate even though the source advertises
+            # two packages. REFRESH mutates neither WANT nor network state.
             observations = collect_observations(
                 exchange_urls=[exchange_url],
             )
@@ -229,7 +230,13 @@ def main() -> int:
             )
             assert gap["status"] == "gap"
             assert gap["candidate_count"] == 1
-            candidate = gap["candidates"][0]
+
+            refreshed = wants.refresh(
+                empty_want["want_id"],
+                observations=observations,
+            )
+            assert len(refreshed["candidates"]) == 1
+            candidate = refreshed["candidates"][0]
             assert candidate["package_id"] == WORK_PACKAGE_ID
             assert candidate["contract_id"] == WORK_CONTRACT
             assert candidate["source"]["selector"] == "/work"
@@ -238,15 +245,11 @@ def main() -> int:
             assert "score" not in candidate
             assert "recommended" not in candidate
 
-            want = wants.declare_want(
-                parcel_id,
-                observations=observations,
-                note="operator wants a lawful /work merge grammar",
-            )
-            assert len(want["candidates"]) == 1
+            want = wants.load_want(empty_want["want_id"])
+            assert want["candidates"] == []
             assert want["want_id"] == derive_want_id(want)
 
-            # One candidate still causes no request.
+            # One refreshed candidate still causes no request.
             source_requests = GrammarRequestInbox(source_root)
             assert source_requests.list() == []
             assert MergePluginParcelInbox(requester_root).list() == []
@@ -349,6 +352,7 @@ def main() -> int:
                 verify_install_receipt(installed["install_receipt"]),
                 satisfied["status"] == "satisfied-local",
                 satisfied_gap_blocks_request,
+                len(shown["observations"]) == 1,
                 len(shown["request_links"]) == 1,
             ])
 
@@ -359,6 +363,9 @@ def main() -> int:
                     "source": gap["source"],
                     "zero_candidate_want_valid": (
                         len(empty_want["candidates"]) == 0
+                    ),
+                    "same_want_refresh_candidates": (
+                        len(refreshed["candidates"])
                     ),
                 },
                 "matching": {
@@ -371,7 +378,9 @@ def main() -> int:
                 "want": {
                     "want_id": want["want_id"],
                     "request_links_before_request": 0,
-                    "candidate_count": len(want["candidates"]),
+                    "candidate_count_at_declaration": len(want["candidates"]),
+                    "candidate_count_after_refresh": len(refreshed["candidates"]),
+                    "want_mutated_by_refresh": len(want["candidates"]) != 0,
                 },
                 "revalidation": {
                     "unshare_blocks_request": stale_candidate_refused,
