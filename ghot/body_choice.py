@@ -11,12 +11,14 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
-import uuid
+from pathlib import Path
 from typing import Any
 
 from capability_composer import candidate_view, gather_candidates, offers_capability
 from lan_node import request_task
-from reference_node import execute, node_id, now, persist
+from reference_node import ROOT, execute, node_id, now, persist
+
+ASSIGNMENTS = ROOT / "body-choice-assignments"
 
 
 def _encoded(value: Any) -> bytes:
@@ -149,6 +151,69 @@ def _current_candidate(
     return current
 
 
+def _assignment_request(
+    offer: dict[str, Any],
+    selected_node_id: str,
+    payload: Any,
+    selection_source: str,
+) -> dict[str, Any]:
+    return {
+        "offer_id": offer["offer_id"],
+        "capability": offer["capability"],
+        "requester_node_id": offer["requester_node_id"],
+        "selected_node_id": selected_node_id,
+        "payload_sha256": _sha256(payload),
+        "selection_source": selection_source,
+    }
+
+
+def _assignment_id(request: dict[str, Any]) -> str:
+    return f"assignment-v0:{_sha256(request)}"
+
+
+def _assignment_path(assignment_id: str) -> Path:
+    safe = assignment_id.replace(":", "-")
+    return ASSIGNMENTS / f"{safe}.json"
+
+
+def _write_assignment_state(path: Path, value: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(
+        json.dumps(value, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    temporary.replace(path)
+
+
+def _existing_assignment_result(
+    path: Path,
+    assignment_id: str,
+    request_sha256: str,
+) -> dict[str, Any] | None:
+    if not path.is_file():
+        return None
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if (
+        value.get("kind") != "ghot.body-choice.assignment-state"
+        or value.get("version") != "0"
+        or value.get("assignment_id") != assignment_id
+        or value.get("request_sha256") != request_sha256
+    ):
+        raise RuntimeError("INVALID_STORED_BODY_ASSIGNMENT")
+    if value.get("state") == "completed":
+        result = value.get("result")
+        if not isinstance(result, dict):
+            raise RuntimeError("INVALID_STORED_BODY_ASSIGNMENT_RESULT")
+        return result
+    if value.get("state") == "prepared":
+        raise RuntimeError(
+            "ASSIGNMENT_OUTCOME_UNKNOWN: prepared assignment exists; "
+            "refusing automatic re-execution"
+        )
+    raise RuntimeError("INVALID_STORED_BODY_ASSIGNMENT_STATE")
+
+
 def assign(
     offer_value: Any,
     selected_node_id: str,
@@ -173,13 +238,29 @@ def assign(
     if offered.get("eligible") is not True:
         raise ValueError("selected body was not eligible in the offer set")
 
+    request_identity = _assignment_request(
+        offer,
+        selected_node_id,
+        payload,
+        selection_source,
+    )
+    request_sha256 = _sha256(request_identity)
+    assignment_id = _assignment_id(request_identity)
+    state_path = _assignment_path(assignment_id)
+    existing = _existing_assignment_result(
+        state_path,
+        assignment_id,
+        request_sha256,
+    )
+    if existing is not None:
+        return existing
+
     current = _current_candidate(
         selected_node_id,
         offer["capability"],
         timeout=timeout,
     )
 
-    assignment_id = f"assignment-{uuid.uuid4()}"
     assignment = {
         "kind": "ghot.assignment",
         "version": "0",
@@ -198,6 +279,14 @@ def assign(
         ],
     }
     persist("assignment", assignment)
+    _write_assignment_state(state_path, {
+        "kind": "ghot.body-choice.assignment-state",
+        "version": "0",
+        "assignment_id": assignment_id,
+        "request_sha256": request_sha256,
+        "state": "prepared",
+        "assignment": assignment,
+    })
 
     constraints = {
         "assignment_id": assignment_id,
@@ -242,6 +331,15 @@ def assign(
         ],
     }
     persist("body-choice-result", result)
+    _write_assignment_state(state_path, {
+        "kind": "ghot.body-choice.assignment-state",
+        "version": "0",
+        "assignment_id": assignment_id,
+        "request_sha256": request_sha256,
+        "state": "completed",
+        "assignment": assignment,
+        "result": result,
+    })
     return result
 
 
