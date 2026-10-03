@@ -894,7 +894,7 @@ def parcel_handler(root: Path) -> type[BaseHTTPRequestHandler]:
     plugin_inbox = MergePluginParcelInbox(root)
 
     class ParcelHandler(BaseHTTPRequestHandler):
-        server_version = "GHoTStateParcel/0"
+        server_version = "GHoTParcelPorch/0"
 
         def log_message(self, fmt: str, *args: Any) -> None:
             return
