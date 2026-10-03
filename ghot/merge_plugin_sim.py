@@ -193,7 +193,13 @@ def main() -> int:
         plan = proposal["plan"]
         assert plan["contract_id"] == PLUGIN_CONTRACT
 
-        target = receiver_root / "knowledge" / "foreign-work.v0.json"
+        target = (
+            receiver_root
+            / "knowledge"
+            / "plugins"
+            / "ghot.plugin.foreign-work-memory"
+            / "foreign-work.v0.json"
+        )
         assert not target.exists()
         merge_receipt = engine.apply(
             plan["plan_id"],
