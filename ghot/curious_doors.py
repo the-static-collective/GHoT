@@ -26,7 +26,6 @@ from typing import Any
 from urllib.parse import parse_qs, quote, urlparse
 
 from composition_want import CompositionWantStore
-from merge_plugin_parcel import MergePluginParcelInbox
 from reference_node import ROOT
 from relatte_identity import identity_safe, timestamp_now
 
@@ -163,7 +162,6 @@ class CuriousDoorsSurface:
     def __init__(self, root: Path | None = None) -> None:
         self.root = root or ROOT
         self.store = CompositionWantStore(self.root)
-        self.plugin_inbox = MergePluginParcelInbox(self.root)
 
     def _matching_plugin_parcels(
         self,
@@ -171,7 +169,14 @@ class CuriousDoorsSurface:
         package_addresses: set[str],
     ) -> list[dict[str, Any]]:
         rows = []
-        for item in self.plugin_inbox.list():
+        inbox_dir = self.root / "merge-plugin-parcels" / "inbox"
+        if not inbox_dir.is_dir():
+            return rows
+        for path in sorted(inbox_dir.glob("*.json")):
+            try:
+                item = _read_object(path)
+            except Exception:
+                continue
             address = item.get("package_address")
             if not isinstance(address, str) or address not in package_addresses:
                 continue
