@@ -21,6 +21,26 @@
         "free_disk_bytes": { "type": ["integer", "null"], "minimum": 0 }
       }
     },
+    "identity": {
+      "type": "object",
+      "required": ["available", "profile", "algorithm", "particular", "public_key"],
+      "properties": {
+        "available": { "type": "boolean" },
+        "profile": { "const": "relatte.identity-signature/v0" },
+        "algorithm": { "const": "ECDSA-P256-SHA256" },
+        "particular": { "type": ["string", "null"] },
+        "public_key": {
+          "type": ["object", "null"],
+          "properties": {
+            "kty": { "const": "EC" },
+            "crv": { "const": "P-256" },
+            "x": { "type": "string" },
+            "y": { "type": "string" }
+          }
+        },
+        "error": { "type": ["string", "null"] }
+      }
+    },
     "power": {
       "type": "object",
       "required": ["willingness", "willingness_reasons", "thermal_state"],
