@@ -1,3 +1,5 @@
+> **017 note:** Experiment 017 makes `ghot.organ.state/v1` canonical and adds an exact v0→v1 migration with backup + BODY-signed migration receipt. Normal startup applies registered migrations before the 016 boot manifest is signed; unknown versions still block. See `docs/STATE-MIGRATIONS.md`.
+
 # Morning Presence / Boot Manifest / Startup Receipt
 
 Experiment 016 gives a booted GHoT body a bounded answer to:
@@ -123,7 +125,7 @@ starts.
 Current known compatible state:
 
 ```text
-ghot.organ.state / 0
+ghot.organ.state / 1
 ghot.field / 0
 ```
 
