@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/curiosity-door.v2.json",
+  "title": "GHoT Curious Door V2",
+  "type": "object",
+  "required": [
+    "kind","version","door_id","want_id","gap_id","state","message",
+    "created_at","note","parcel","source","local_compatible_contract_ids",
+    "candidate_count","candidates","new_candidate_ids_in_latest_observation",
+    "new_candidate_count_in_latest_observation","observation_count",
+    "request_count","requested_candidate_ids","matching_plugin_parcels",
+    "navigation","launches","projection_error","read_only"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.curiosity.door" },
+    "version": { "const": "2" },
+    "door_id": { "type": "string", "minLength": 1 },
+    "want_id": { "type": ["string","null"] },
+    "gap_id": { "type": ["string","null"] },
+    "state": {
+      "enum": [
+        "open-gap",
+        "candidate-observed",
+        "requested",
+        "resolved-local",
+        "blocked"
+      ]
+    },
+    "message": { "type": "string", "minLength": 1 },
+    "created_at": { "type": ["string","null"] },
+    "note": { "type": ["string","null"] },
+    "parcel": { "type": ["object","null"] },
+    "source": { "type": ["object","null"] },
+    "local_compatible_contract_ids": { "type": "array" },
+    "candidate_count": { "type": "integer", "minimum": 0 },
+    "candidates": { "type": "array" },
+    "new_candidate_ids_in_latest_observation": { "type": "array" },
+    "new_candidate_count_in_latest_observation": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "observation_count": { "type": "integer", "minimum": 0 },
+    "request_count": { "type": "integer", "minimum": 0 },
+    "requested_candidate_ids": { "type": "array" },
+    "matching_plugin_parcels": { "type": "array" },
+    "navigation": {
+      "type": "array",
+      "items": { "$ref": "curiosity-navigation.v0.json" }
+    },
+    "launches": {
+      "type": "array",
+      "items": { "$ref": "launch-descriptor.v0.json" }
+    },
+    "projection_error": { "type": ["string","null"] },
+    "read_only": { "const": true }
+  }
+}
