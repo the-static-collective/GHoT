@@ -10,16 +10,21 @@
     "https://the-static-collective.github.io/GHoT/schemas/composition-gap.v0.json",
     "https://the-static-collective.github.io/GHoT/schemas/composition-want.v0.json",
     "https://the-static-collective.github.io/GHoT/schemas/composition-want-request-link.v0.json",
-    "https://the-static-collective.github.io/GHoT/schemas/grammar-exchange-advert.v0.json"
+    "https://the-static-collective.github.io/GHoT/schemas/grammar-exchange-advert.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/composition-want-observation.v0.json"
   ],
   "allowed_dispositions": [
     "INSPECT_GAP",
     "DECLARE_WANT",
+    "REFRESH_WANT",
     "LIST_WANTS",
     "SHOW_WANT",
     "REQUEST_CANDIDATE"
   ],
-  "effect_classes": ["none","local-state-change"],
+  "effect_classes": [
+    "none",
+    "local-state-change"
+  ],
   "receipt_kinds": [],
   "authority_scope": "owner-local",
   "dependencies": [
@@ -41,7 +46,9 @@
     "request link is not offer",
     "request is not crossing",
     "gap disappearance blocks further request",
-    "candidate source title/category are not matching authority"
+    "candidate source title/category are not matching authority",
+    "refresh observation is not want mutation",
+    "refresh observation is not request"
   ],
   "extensions": {
     "gap_grounding": "one concrete ADMITTED state parcel",
@@ -53,6 +60,8 @@
     "automatic_install": false,
     "zero_candidate_want_allowed": true,
     "candidate_revalidation_before_request": true,
-    "local_gap_revalidation_before_request": true
+    "local_gap_revalidation_before_request": true,
+    "refresh_mutates_want": false,
+    "refresh_requests": false
   }
 }
