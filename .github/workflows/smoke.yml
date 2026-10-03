@@ -65,3 +65,6 @@ jobs:
 
       - name: Bootable organ installation simulation
         run: python3 ghot/install_organ_sim.py
+
+      - name: Morning presence startup simulation
+        run: python3 ghot/presence_sim.py
