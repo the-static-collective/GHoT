@@ -273,3 +273,50 @@ python3 ghot/lease_sim.py
 
 See `docs/WORK-LEASES.md` and
 `experiments/010-atomic-claim-work-lease.md`.
+
+
+## Cross leases between bodies
+
+010 made one shared queue safe for multiple workers. 011 keeps the queue owner
+authoritative while allowing execution to move to remote bodies through
+reLATTE-shaped crossing envelopes and receipts.
+
+Owner authority:
+
+```bash
+export GHOT_LEASE_SHARED_SECRET='development-only-value'
+python3 ghot/lease_authority.py serve --port 7790
+```
+
+The owner must explicitly dispatch a HOLD to a named worker before that worker
+can claim it:
+
+```bash
+python3 ghot/lease_authority.py prepare \
+  <hold-id> \
+  <worker-id> \
+  <child-energy-plan-id> \
+  --ttl 120
+```
+
+Selected remote worker:
+
+```bash
+export GHOT_LEASE_SHARED_SECRET='development-only-value'
+python3 ghot/lease_remote.py http://OWNER:7790 --worker-id <worker-id> work
+```
+
+The crossing objects use `relatte.crossing-envelope/v0`; authority responses
+use `relatte.receipt/v0`.
+
+V0 signs those records with a shared-secret HMAC profile. It explicitly does
+**not** claim public-key identity verification yet.
+
+Deterministic proof:
+
+```bash
+python3 ghot/portable_lease_sim.py
+```
+
+See `docs/PORTABLE-LEASE-AUTHORITY.md` and
+`experiments/011-portable-lease-authority.md`.
