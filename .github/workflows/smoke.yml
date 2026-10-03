@@ -1,0 +1,76 @@
+name: GHoT smoke
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python version
+        run: python3 --version
+
+      - name: Compile all Python modules
+        run: python3 -m py_compile ghot/*.py
+
+      - name: Phase 0 local body
+        run: |
+          python3 ghot/reference_node.py probe
+          python3 ghot/reference_node.py hash "the heap remembers"
+
+      - name: Executor pantry
+        run: python3 ghot/reference_node.py pantry
+
+      - name: Failure-aware recomposition simulation
+        run: python3 ghot/recomposition_sim.py
+
+      - name: Liveness field lifecycle simulation
+        run: python3 ghot/liveness_sim.py
+
+      - name: Power field policy simulation
+        run: python3 ghot/power_sim.py
+
+      - name: Power-aware BODY probe
+        run: |
+          GHOT_POWER_SOURCE=battery GHOT_BATTERY_PERCENT=9 GHOT_CHARGING=0 python3 ghot/reference_node.py probe
+          GHOT_POWER_SOURCE=solar GHOT_RENEWABLE_SURPLUS=1 GHOT_BATTERY_PERCENT=90 GHOT_CHARGING=1 python3 ghot/reference_node.py power
+
+      - name: Energy-aware scheduling simulation
+        run: python3 ghot/energy_sim.py
+
+      - name: Hold queue wake simulation
+        run: python3 ghot/wake_sim.py
+
+      - name: Atomic work lease simulation
+        run: python3 ghot/lease_sim.py
+
+      - name: reLATTE P-256 fixture conformance
+        run: python3 ghot/relatte_identity_sim.py
+
+      - name: Portable lease authority crossing simulation
+        run: python3 ghot/portable_lease_sim.py
+
+      - name: Automatic remote dispatch simulation
+        run: python3 ghot/auto_dispatch_sim.py
+
+      - name: Authority porch discovery simulation
+        run: python3 ghot/authority_discovery_sim.py
+
+      - name: Organ daemon lifecycle simulation
+        run: python3 ghot/organ_sim.py
+
+      - name: Bootable organ installation simulation
+        run: python3 ghot/install_organ_sim.py
+
+      - name: Morning presence startup simulation
+        run: python3 ghot/presence_sim.py
+
+      - name: State migration receipt simulation
+        run: python3 ghot/state_migration_sim.py
+
+      - name: Explicit body choice simulation
+        run: GHOT_HOME="$(mktemp -d)" python3 ghot/body_choice_sim.py

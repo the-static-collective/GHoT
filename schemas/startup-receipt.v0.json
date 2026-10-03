@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/startup-receipt.v0.json",
+  "title": "GHoT Startup Receipt V0",
+  "type": "object",
+  "required": [
+    "kind","version","receipt_id","boot_id","manifest_address","node_id",
+    "particular","created_at","initial_health","signing"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.startup.receipt" },
+    "version": { "const": "0" },
+    "receipt_id": { "type": "string", "minLength": 1 },
+    "boot_id": { "type": "string", "minLength": 1 },
+    "manifest_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "node_id": { "type": "string", "minLength": 1 },
+    "particular": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string" },
+    "initial_health": { "type": "object" },
+    "signing": {
+      "type": "object",
+      "required": ["algorithm","public_key","signature","domain"],
+      "properties": {
+        "algorithm": { "const": "ECDSA-P256-SHA256" },
+        "public_key": { "type": "object" },
+        "signature": { "type": "string", "minLength": 1 },
+        "domain": { "const": "ghot.startup-receipt-signature/v0" }
+      }
+    }
+  }
+}

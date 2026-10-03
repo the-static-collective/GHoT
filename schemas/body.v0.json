@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/body.v0.json",
+  "title": "GHoT Body V0",
+  "type": "object",
+  "required": ["kind", "version", "node_id", "observed_at", "system", "power", "offers"],
+  "properties": {
+    "kind": { "const": "ghot.body" },
+    "version": { "const": "0" },
+    "node_id": { "type": "string", "minLength": 1 },
+    "observed_at": { "type": "string" },
+    "system": {
+      "type": "object",
+      "required": ["os", "architecture", "cpu_count"],
+      "properties": {
+        "os": { "type": "string" },
+        "architecture": { "type": "string" },
+        "cpu_count": { "type": "integer", "minimum": 1 },
+        "hostname": { "type": "string" },
+        "memory_bytes": { "type": ["integer", "null"], "minimum": 0 },
+        "free_disk_bytes": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "required": ["available", "profile", "algorithm", "particular", "public_key"],
+      "properties": {
+        "available": { "type": "boolean" },
+        "profile": { "const": "relatte.identity-signature/v0" },
+        "algorithm": { "const": "ECDSA-P256-SHA256" },
+        "particular": { "type": ["string", "null"] },
+        "public_key": {
+          "type": ["object", "null"],
+          "properties": {
+            "kty": { "const": "EC" },
+            "crv": { "const": "P-256" },
+            "x": { "type": "string" },
+            "y": { "type": "string" }
+          }
+        },
+        "error": { "type": ["string", "null"] }
+      }
+    },
+    "power": {
+      "type": "object",
+      "required": ["willingness", "willingness_reasons", "thermal_state"],
+      "properties": {
+        "battery_percent": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+        "charging": { "type": ["boolean", "null"] },
+        "source": { "type": ["string", "null"] },
+        "renewable_surplus": { "type": ["boolean", "null"] },
+        "temperature_c": { "type": ["number", "null"] },
+        "thermal_state": { "enum": ["unknown", "normal", "warm", "hot", "critical"] },
+        "load_per_cpu_1m": { "type": ["number", "null"] },
+        "willingness": { "enum": ["abundant", "normal", "conserve", "critical"] },
+        "willingness_reasons": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "executors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "available"],
+        "properties": {
+          "name": { "type": "string" },
+          "available": { "type": "boolean" },
+          "path": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "offers": {
+      "type": "array",
+      "items": { "type": "object" }
+    }
+  }
+}

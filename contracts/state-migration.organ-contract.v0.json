@@ -1,0 +1,44 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.state-migration@0",
+  "version": "0",
+  "owner_project": "GHoT",
+  "description": "Declared, bounded durable-state migrations with semantic before/after addresses, preserved source state, exact backup, and BODY-signed migration receipts.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/state-migration-plan.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/state-migration-receipt.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/state-migration-run.v0.json"
+  ],
+  "allowed_dispositions": ["INSPECT","PLAN","APPLY","RECONCILE","BLOCK"],
+  "effect_classes": ["none","local-state-change"],
+  "receipt_kinds": [],
+  "authority_scope": "local-state-only",
+  "dependencies": [
+    "ghot.boot-presence@0",
+    "relatte.identity-signature/v0"
+  ],
+  "implementation_refs": [
+    "ghot/state_migration.py",
+    "ghot/boot_presence.py",
+    "ghot/organ.py"
+  ],
+  "non_authorities": [
+    "migration receipt is not task execution receipt",
+    "migration success is not lease authority",
+    "known migration is not permission to rewrite unknown versions",
+    "backup is not current canonical state",
+    "legacy source preservation does not make legacy state active",
+    "body signature witnesses the state transition but does not prove semantic correctness"
+  ],
+  "extensions": {
+    "first_real_migration": "ghot.organ.state/0->1",
+    "source_preserved": true,
+    "exact_source_backup": true,
+    "target_atomic_write": true,
+    "before_after_semantic_addresses": true,
+    "body_signed_receipt": true,
+    "interrupted_write_reconciliation": true,
+    "unknown_versions_block": true
+  }
+}

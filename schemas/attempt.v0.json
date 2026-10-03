@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/attempt.v0.json",
+  "title": "GHoT Attempt V0",
+  "type": "object",
+  "required": [
+    "kind",
+    "version",
+    "attempt_id",
+    "composition_id",
+    "ordinal",
+    "plan_id",
+    "started_at",
+    "finished_at",
+    "outcome"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.attempt" },
+    "version": { "const": "0" },
+    "attempt_id": { "type": "string", "minLength": 1 },
+    "composition_id": { "type": "string", "minLength": 1 },
+    "ordinal": { "type": "integer", "minimum": 1 },
+    "plan_id": { "type": ["string", "null"] },
+    "selected_node_id": { "type": ["string", "null"] },
+    "selected_location": { "type": ["string", "null"] },
+    "started_at": { "type": "string" },
+    "finished_at": { "type": "string" },
+    "outcome": { "type": "string", "minLength": 1 },
+    "receipt_id": { "type": ["string", "null"] },
+    "receipt_status": { "type": ["string", "null"] },
+    "error": { "type": ["string", "null"] },
+    "next_action": { "type": ["string", "null"] }
+  }
+}

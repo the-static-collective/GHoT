@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lease-authority.v0.json",
+  "title": "GHoT Lease Authority V0",
+  "type": "object",
+  "required": [
+    "kind",
+    "version",
+    "authority_id",
+    "owner_node_id",
+    "world_id",
+    "capability_ref",
+    "crossing_schema",
+    "receipt_schema",
+    "signing_profile",
+    "key_id",
+    "public_key_identity_claimed"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.lease.authority" },
+    "version": { "const": "0" },
+    "authority_id": { "type": "string", "minLength": 1 },
+    "owner_node_id": { "type": "string", "minLength": 1 },
+    "world_id": { "type": "string", "minLength": 1 },
+    "capability_ref": { "const": "ghot.work-lease/v0" },
+    "crossing_schema": { "const": "relatte.crossing-envelope/v0" },
+    "receipt_schema": { "const": "relatte.receipt/v0" },
+    "signing_profile": { "const": "shared-secret-hmac-v0" },
+    "key_id": { "type": "string", "minLength": 1 },
+    "public_key_identity_claimed": { "const": false }
+  }
+}

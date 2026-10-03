@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/organ-state.v1.json",
+  "title": "GHoT Organ State V1",
+  "type": "object",
+  "required": [
+    "kind","version","node_id","started_at","updated_at","cycle",
+    "body","field","authorities","work","services","errors","presence"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.organ.state" },
+    "version": { "const": "1" },
+    "node_id": { "type": "string", "minLength": 1 },
+    "started_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "cycle": { "type": "integer", "minimum": 1 },
+    "body": { "type": "object" },
+    "field": { "type": "object" },
+    "authorities": { "type": "array", "items": { "type": "object" } },
+    "work": { "type": "object" },
+    "services": { "type": "object" },
+    "errors": { "type": "array", "items": { "type": "object" } },
+    "presence": {
+      "type": "object",
+      "required": ["boot_id","manifest_address","startup_receipt_id"],
+      "properties": {
+        "boot_id": { "type": ["string","null"] },
+        "manifest_address": { "type": ["string","null"] },
+        "startup_receipt_id": { "type": ["string","null"] }
+      }
+    }
+  }
+}

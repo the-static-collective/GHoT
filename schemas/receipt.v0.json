@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/receipt.v0.json",
+  "title": "GHoT Receipt V0",
+  "type": "object",
+  "required": ["kind", "version", "receipt_id", "task_id", "executor_node_id", "capability", "status", "started_at", "finished_at"],
+  "properties": {
+    "kind": { "const": "ghot.receipt" },
+    "version": { "const": "0" },
+    "receipt_id": { "type": "string", "minLength": 1 },
+    "task_id": { "type": "string", "minLength": 1 },
+    "requester_node_id": { "type": ["string", "null"] },
+    "executor_node_id": { "type": "string", "minLength": 1 },
+    "capability": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["ok", "error", "rejected"] },
+    "started_at": { "type": "string" },
+    "finished_at": { "type": "string" },
+    "output": {},
+    "output_sha256": { "type": ["string", "null"] },
+    "error": { "type": ["string", "null"] }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/boot-manifest.v0.json",
+  "title": "GHoT Boot Manifest V0",
+  "type": "object",
+  "required": [
+    "kind","version","boot_id","created_at","node_id","body","code",
+    "boot_surface","state_home","state","dependencies","manifest_address"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.boot.manifest" },
+    "version": { "const": "0" },
+    "boot_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string" },
+    "node_id": { "type": "string", "minLength": 1 },
+    "body": { "type": "object" },
+    "code": { "type": "object" },
+    "boot_surface": {
+      "type": "object",
+      "required": ["surface","instance","pid","parent_pid"],
+      "properties": {
+        "surface": { "type": "string", "minLength": 1 },
+        "instance": { "type": ["string","null"] },
+        "pid": { "type": "integer", "minimum": 1 },
+        "parent_pid": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "state_home": { "type": "string", "minLength": 1 },
+    "state": {
+      "type": "object",
+      "required": ["status","migration_required","checks","automatic_migrations_applied"],
+      "properties": {
+        "status": { "enum": ["compatible","migration-required"] },
+        "migration_required": { "type": "boolean" },
+        "checks": { "type": "array", "items": { "type": "object" } },
+        "automatic_migrations_applied": { "type": "array" }
+      }
+    },
+    "dependencies": { "type": "object" },
+    "manifest_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

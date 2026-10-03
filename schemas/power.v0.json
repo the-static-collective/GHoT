@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/power.v0.json",
+  "title": "GHoT Power State V0",
+  "type": "object",
+  "required": [
+    "battery_percent",
+    "charging",
+    "source",
+    "renewable_surplus",
+    "temperature_c",
+    "thermal_state",
+    "load_per_cpu_1m",
+    "willingness",
+    "willingness_reasons"
+  ],
+  "properties": {
+    "battery_percent": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+    "charging": { "type": ["boolean", "null"] },
+    "source": { "type": ["string", "null"] },
+    "renewable_surplus": { "type": ["boolean", "null"] },
+    "temperature_c": { "type": ["number", "null"] },
+    "thermal_state": { "enum": ["unknown", "normal", "warm", "hot", "critical"] },
+    "load_1m": { "type": ["number", "null"] },
+    "load_5m": { "type": ["number", "null"] },
+    "load_15m": { "type": ["number", "null"] },
+    "load_per_cpu_1m": { "type": ["number", "null"] },
+    "willingness": { "enum": ["abundant", "normal", "conserve", "critical"] },
+    "willingness_reasons": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "probe": { "type": "object" }
+  }
+}

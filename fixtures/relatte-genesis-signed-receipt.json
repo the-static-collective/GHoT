@@ -1,0 +1,30 @@
+{
+  "schema": "relatte.receipt/v0",
+  "crossing_id": "relatte-crossing-v0:d12ecb2b583a6531814797d1ec71a38543fe5ea20d12da0e99ac97debb9d9670",
+  "world_id": "world:beta",
+  "receiver_particular": "particular:genesis-b",
+  "kind": "VERIFIED",
+  "semantic_effect": "none",
+  "contract_ref": "relatte.genesis.echo-receiver@0.0.1",
+  "pre_state_ref": null,
+  "post_state_ref": null,
+  "descendant_refs": [],
+  "residual_refs": [],
+  "note": "Synthetic verification-only receipt; no admission or semantic effect claimed.",
+  "created_at": "2026-09-29T17:01:00.000Z",
+  "extensions": {
+    "fixture": "genesis-signed-receipt"
+  },
+  "receipt_id": "relatte-receipt-v0:f0834456f3be4e9976db0e20da3c355997dfd0727c1d12eb6baa7624dd156c9a",
+  "signing": {
+    "algorithm": "ECDSA-P256-SHA256",
+    "public_key": {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "J3EhbE_h24wSE6o9cH2aQwsSNIAUCCd5pT7HH_ekDV0",
+      "y": "YaR5Xk0IHBDHQ_MjdqMEJXZbdGRbbmG5iWGDC2wUZLU"
+    },
+    "signature": "BwN8smrJj8Sek73cSJQAAh8V2lcaHz0uRrHFN4Z0KWFnHxln-pbT1RzuxRlqnh4nZJMjLl--dLtiQBgikWki2Q",
+    "domain": "relatte.receipt-signature/v0"
+  }
+}

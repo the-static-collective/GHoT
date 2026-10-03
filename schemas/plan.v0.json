@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/plan.v0.json",
+  "title": "GHoT Plan V0",
+  "type": "object",
+  "required": [
+    "kind",
+    "version",
+    "plan_id",
+    "created_at",
+    "requester_node_id",
+    "capability",
+    "constraints",
+    "preferences",
+    "excluded_node_ids",
+    "candidates"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.plan" },
+    "version": { "const": "0" },
+    "plan_id": { "type": "string", "minLength": 1 },
+    "composition_id": { "type": ["string", "null"] },
+    "parent_plan_id": { "type": ["string", "null"] },
+    "recomposition_reason": { "type": ["string", "null"] },
+    "created_at": { "type": "string" },
+    "requester_node_id": { "type": "string", "minLength": 1 },
+    "capability": { "type": "string", "minLength": 1 },
+    "constraints": { "type": "object" },
+    "preferences": { "type": "object" },
+    "excluded_node_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "candidates": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "selected": {
+      "type": ["object", "null"]
+    }
+  }
+}

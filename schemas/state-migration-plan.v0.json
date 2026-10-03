@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/state-migration-plan.v0.json",
+  "title": "GHoT State Migration Plan V0",
+  "type": "object",
+  "required": [
+    "kind","version","migration_id","state_kind","from_version","to_version",
+    "source_path","target_path","before_address","proposed_after_address",
+    "mode","available"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.state.migration.plan" },
+    "version": { "const": "0" },
+    "migration_id": { "type": "string", "minLength": 1 },
+    "state_kind": { "type": "string", "minLength": 1 },
+    "from_version": { "type": "string", "minLength": 1 },
+    "to_version": { "type": "string", "minLength": 1 },
+    "source_path": { "type": "string", "minLength": 1 },
+    "target_path": { "type": "string", "minLength": 1 },
+    "before_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "proposed_after_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "mode": { "enum": ["apply","reconcile-receipt"] },
+    "available": { "const": true }
+  }
+}

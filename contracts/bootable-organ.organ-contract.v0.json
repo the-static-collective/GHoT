@@ -1,0 +1,43 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.bootable-organ@0",
+  "version": "0",
+  "owner_project": "GHoT",
+  "description": "Reversible startup surfaces that cause a machine/user environment to launch the GHoT organ daemon without granting lease authority.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/install-result.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/organ-state.v0.json"
+  ],
+  "allowed_dispositions": ["INSTALL", "ENABLE", "RENDER", "UNINSTALL", "OBSERVE"],
+  "effect_classes": ["none", "local-state-change"],
+  "receipt_kinds": [],
+  "authority_scope": "startup-only",
+  "dependencies": [
+    "ghot.organ-daemon@0",
+    "systemd-user",
+    "termux-boot",
+    "systemd-system-render"
+  ],
+  "implementation_refs": [
+    "ghot/install_organ.py",
+    "ghot/organ.py"
+  ],
+  "non_authorities": [
+    "startup hook is not body identity",
+    "startup hook is not lease authority",
+    "service enablement is not authority admission",
+    "install path is not identity",
+    "process id is not identity",
+    "uninstalling startup does not delete body identity or durable state",
+    "rendering a live image unit does not modify the current host"
+  ],
+  "extensions": {
+    "default_linux_scope": "systemd-user",
+    "rootless_by_default": true,
+    "termux_boot_requires_external_boot_app": true,
+    "live_usb_is_render_only": true,
+    "state_survives_uninstall": true,
+    "authority_autoinstall": false
+  }
+}

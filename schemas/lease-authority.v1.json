@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lease-authority.v1.json",
+  "title": "GHoT Lease Authority V1",
+  "type": "object",
+  "required": [
+    "kind", "version", "authority_id", "owner_node_id", "world_id",
+    "particular", "public_key", "capability_ref", "crossing_schema",
+    "receipt_schema", "signing_profile", "algorithm",
+    "public_key_identity_claimed"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.lease.authority" },
+    "version": { "const": "1" },
+    "authority_id": { "type": "string", "minLength": 1 },
+    "owner_node_id": { "type": "string", "minLength": 1 },
+    "world_id": { "type": "string", "minLength": 1 },
+    "particular": { "type": "string", "minLength": 1 },
+    "public_key": {
+      "type": "object",
+      "required": ["kty", "crv", "x", "y"],
+      "properties": {
+        "kty": { "const": "EC" },
+        "crv": { "const": "P-256" },
+        "x": { "type": "string", "minLength": 1 },
+        "y": { "type": "string", "minLength": 1 }
+      }
+    },
+    "capability_ref": { "const": "ghot.work-lease/v0" },
+    "crossing_schema": { "const": "relatte.crossing-envelope/v0" },
+    "receipt_schema": { "const": "relatte.receipt/v0" },
+    "signing_profile": { "const": "relatte.identity-signature/v0" },
+    "algorithm": { "const": "ECDSA-P256-SHA256" },
+    "public_key_identity_claimed": { "const": true }
+  }
+}
