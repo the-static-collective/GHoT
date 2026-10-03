@@ -13,6 +13,7 @@ import uuid
 from typing import Any
 
 from lan_node import discover_peers, request_task
+from epistemic_policy import posture_matching_offers
 from liveness_field import LivenessField
 from reference_node import body, execute, node_id, now, persist
 
@@ -99,14 +100,11 @@ def evaluate_candidate(
     else:
         reasons.append("body is awake in liveness field")
 
-    capability_offers = [
-        offer for offer in body_record.get("offers", [])
-        if offer.get("capability") == capability
-    ]
-    matching_offers = [
-        offer for offer in capability_offers
-        if context_posture is None or offer.get("context_posture") == context_posture
-    ]
+    capability_offers, matching_offers = posture_matching_offers(
+        body_record,
+        capability,
+        context_posture,
+    )
     if not capability_offers:
         rejected.append("required capability not offered")
     elif context_posture is not None and not matching_offers:
