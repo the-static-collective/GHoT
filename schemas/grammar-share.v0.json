@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/grammar-share.v0.json",
+  "title": "GHoT Grammar Share V0",
+  "type": "object",
+  "required": [
+    "kind","version","package_id","package_version","package_address",
+    "contract_id","title","category","shared_at","shareable"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.grammar.share" },
+    "version": { "const": "0" },
+    "package_id": { "type": "string", "minLength": 1 },
+    "package_version": { "type": "string", "minLength": 1 },
+    "package_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "contract_id": { "type": "string", "minLength": 1 },
+    "title": { "type": ["string","null"] },
+    "category": { "type": ["string","null"] },
+    "shared_at": { "type": "string" },
+    "shareable": { "const": true }
+  }
+}
