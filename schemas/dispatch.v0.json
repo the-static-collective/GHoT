@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/dispatch.v0.json",
+  "title": "GHoT Dispatch V0",
+  "type": "object",
+  "required": [
+    "kind",
+    "version",
+    "dispatch_id",
+    "authority_id",
+    "hold_id",
+    "target_worker_id",
+    "child_energy_plan_id",
+    "created_at",
+    "expires_at",
+    "status"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.dispatch" },
+    "version": { "const": "0" },
+    "dispatch_id": { "type": "string", "minLength": 1 },
+    "authority_id": { "type": "string", "minLength": 1 },
+    "hold_id": { "type": "string", "minLength": 1 },
+    "target_worker_id": { "type": "string", "minLength": 1 },
+    "child_energy_plan_id": { "type": "string", "minLength": 1 },
+    "capability": { "type": ["string", "null"] },
+    "payload": {},
+    "payload_address": { "type": "string", "minLength": 1 },
+    "created_at_epoch": { "type": "number" },
+    "created_at": { "type": "string" },
+    "expires_at_epoch": { "type": "number" },
+    "expires_at": { "type": "string" },
+    "status": {
+      "enum": ["offered", "claimed", "completed", "abandoned", "failed", "expired", "lease-expired"]
+    },
+    "lease_id": { "type": ["string", "null"] },
+    "claimed_at": { "type": ["string", "null"] },
+    "completed_at": { "type": ["string", "null"] },
+    "expired_at": { "type": ["string", "null"] },
+    "updated_at": { "type": "string" }
+  }
+}
