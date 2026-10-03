@@ -25,6 +25,7 @@ import json
 import os
 import urllib.request
 import uuid
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
@@ -877,6 +878,85 @@ def send_bundle(bundle: dict[str, Any], base_url: str) -> dict[str, Any]:
     return receipt
 
 
+def _send_json(handler: BaseHTTPRequestHandler, status: int, value: Any) -> None:
+    data = json.dumps(value, indent=2).encode("utf-8")
+    handler.send_response(status)
+    handler.send_header("Content-Type", "application/json")
+    handler.send_header("Content-Length", str(len(data)))
+    handler.end_headers()
+    handler.wfile.write(data)
+
+
+def parcel_handler(root: Path) -> type[BaseHTTPRequestHandler]:
+    inbox = StateParcelInbox(root)
+
+    class ParcelHandler(BaseHTTPRequestHandler):
+        server_version = "GHoTStateParcel/0"
+
+        def log_message(self, fmt: str, *args: Any) -> None:
+            return
+
+        def do_GET(self) -> None:
+            if self.path == "/state-parcels":
+                _send_json(self, 200, {
+                    "kind": "ghot.state.parcel.porch",
+                    "version": "0",
+                    "receiver_node_id": inbox.node_id,
+                    "receiver_particular": inbox.signer.particular(),
+                    "dispositions": sorted(DISPOSITIONS),
+                    "automatic_disposition": "HOLD",
+                    "admit_over_network": False,
+                })
+                return
+            _send_json(self, 404, {"error": "not found"})
+
+        def do_POST(self) -> None:
+            if self.path != "/state-parcel":
+                _send_json(self, 404, {"error": "not found"})
+                return
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                if length <= 0 or length > 2 * 1024 * 1024:
+                    raise ValueError("invalid state parcel request size")
+                raw = self.rfile.read(length)
+                incoming = json.loads(raw.decode("utf-8"))
+                if not isinstance(incoming, dict):
+                    raise ValueError("state parcel bundle must be an object")
+                receipt = inbox.receive(incoming)
+                _send_json(self, 202, receipt)
+            except Exception as exc:
+                _send_json(self, 400, {
+                    "error": f"{type(exc).__name__}: {exc}",
+                })
+
+    return ParcelHandler
+
+
+def serve_parcel_porch(
+    *,
+    root: Path | None = None,
+    host: str = "0.0.0.0",
+    port: int = 7792,
+) -> int:
+    state_root = root or ROOT
+    server = ThreadingHTTPServer(
+        (host, port),
+        parcel_handler(state_root),
+    )
+    print(json.dumps({
+        "event": "ghot.state.parcel.porch.started",
+        "listen": f"http://{host}:{server.server_port}",
+        "endpoint": "/state-parcel",
+        "policy": "valid parcels enter HOLD only",
+    }, indent=2))
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        return 0
+    finally:
+        server.server_close()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Export, cross, and disposition GHoT state parcels.")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -896,6 +976,10 @@ def main() -> int:
 
     receive = sub.add_parser("receive")
     receive.add_argument("bundle_file")
+
+    serve = sub.add_parser("serve")
+    serve.add_argument("--host", default="0.0.0.0")
+    serve.add_argument("--port", type=int, default=7792)
 
     sub.add_parser("inbox")
 
@@ -943,6 +1027,9 @@ def main() -> int:
             raise SystemExit("bundle file must contain an object")
         print(json.dumps(send_bundle(bundle, args.base_url), indent=2))
         return 0
+
+    if args.command == "serve":
+        return serve_parcel_porch(host=args.host, port=args.port)
 
     inbox = StateParcelInbox()
 
