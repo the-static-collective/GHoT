@@ -153,10 +153,12 @@ def main() -> int:
         assert third_peer["state"] == "departed"
 
         persisted = json.loads(
-            (root / "organ" / "state.v0.json").read_text(encoding="utf-8")
+            (root / "organ" / "state.v1.json").read_text(encoding="utf-8")
         )
+        assert persisted["version"] == "1"
         assert persisted["cycle"] == 3
         assert persisted["work"]["status"] == "completed"
+        assert "presence" in persisted
 
         events = list((root / "records").glob("*-organ-event-*.json"))
         assert events
