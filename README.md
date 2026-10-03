@@ -1001,3 +1001,86 @@ python3 ghot/merge_plugin_sim.py
 
 See `docs/MERGE-PLUGINS.md` and
 `experiments/021-merge-plugins.md`.
+
+
+## Carry merge grammars between bodies
+
+022 lets a declarative 021 merge package cross to another BODY without remote
+installation authority.
+
+Optional independent author signature:
+
+```bash
+python3 ghot/merge_plugin_parcel.py sign-author \
+  examples/merge-plugins/foreign-work-memory.package.json \
+  --out foreign-work.author.json
+```
+
+A different transport BODY can preserve that authorship while creating its own
+signed crossing:
+
+```bash
+python3 ghot/merge_plugin_parcel.py export \
+  examples/merge-plugins/foreign-work-memory.package.json \
+  --author-signature-file foreign-work.author.json \
+  --target-particular <receiver-particular> \
+  --out foreign-work.parcel.json
+```
+
+Cross through the same supervised parcel porch:
+
+```bash
+python3 ghot/merge_plugin_parcel.py send \
+  foreign-work.parcel.json \
+  http://RECEIVER:7792
+```
+
+or by current BODY discovery:
+
+```bash
+python3 ghot/merge_plugin_parcel.py send-node \
+  foreign-work.parcel.json \
+  <receiver-node-id>
+```
+
+Network receive does exactly:
+
+```text
+VALID PACKAGE PARCEL -> HOLD
+```
+
+There is no remote validate or install endpoint.
+
+On the receiver:
+
+```bash
+python3 ghot/merge_plugin_parcel.py inbox
+python3 ghot/merge_plugin_parcel.py show <parcel-id>
+python3 ghot/merge_plugin_parcel.py validate <parcel-id>
+python3 ghot/merge_plugin_parcel.py install <parcel-id>
+```
+
+VALIDATE runs the 021 structural checks and conformance fixtures but still does
+not activate the grammar. INSTALL must be explicitly invoked locally and then
+produces both the 021 BODY install receipt and a 022 parcel INSTALLED receipt.
+
+Unsigned packages may still be locally validated and explicitly installed.
+Invalid supplied author signatures invalidate the parcel.
+
+```text
+ARRIVAL != INSTALLATION
+HOLD != VALIDATION
+VALIDATION != INSTALLATION
+AUTHOR != TRANSPORT SENDER
+AUTHOR SIGNATURE != TRUST
+PORTABLE PACKAGE != PORTABLE CODE EXECUTION
+```
+
+Deterministic HTTP/relay proof:
+
+```bash
+python3 ghot/merge_plugin_parcel_sim.py
+```
+
+See `docs/PORTABLE-MERGE-PLUGINS.md` and
+`experiments/022-portable-merge-plugins.md`.

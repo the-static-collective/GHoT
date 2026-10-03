@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/merge-plugin-parcel-bundle.v0.json",
+  "title": "GHoT Merge Plugin Parcel Bundle V0",
+  "type": "object",
+  "required": ["kind","version","parcel","crossing"],
+  "properties": {
+    "kind": { "const": "ghot.merge-plugin.parcel.bundle" },
+    "version": { "const": "0" },
+    "parcel": { "type": "object" },
+    "crossing": { "type": "object" }
+  }
+}

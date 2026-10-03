@@ -86,3 +86,6 @@ jobs:
 
       - name: Declarative merge plugin simulation
         run: python3 ghot/merge_plugin_sim.py
+
+      - name: Portable merge plugin parcel simulation
+        run: python3 ghot/merge_plugin_parcel_sim.py

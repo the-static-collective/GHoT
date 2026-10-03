@@ -890,9 +890,11 @@ def _send_json(handler: BaseHTTPRequestHandler, status: int, value: Any) -> None
 
 def parcel_handler(root: Path) -> type[BaseHTTPRequestHandler]:
     inbox = StateParcelInbox(root)
+    from merge_plugin_parcel import MergePluginParcelInbox
+    plugin_inbox = MergePluginParcelInbox(root)
 
     class ParcelHandler(BaseHTTPRequestHandler):
-        server_version = "GHoTStateParcel/0"
+        server_version = "GHoTParcelPorch/0"
 
         def log_message(self, fmt: str, *args: Any) -> None:
             return
@@ -909,21 +911,35 @@ def parcel_handler(root: Path) -> type[BaseHTTPRequestHandler]:
                     "admit_over_network": False,
                 })
                 return
+            if self.path == "/merge-plugin-packages":
+                _send_json(self, 200, {
+                    "kind": "ghot.merge-plugin.parcel.porch",
+                    "version": "0",
+                    "receiver_node_id": plugin_inbox.node_id,
+                    "receiver_particular": plugin_inbox.signer.particular(),
+                    "automatic_disposition": "HOLD",
+                    "validate_over_network": False,
+                    "install_over_network": False,
+                })
+                return
             _send_json(self, 404, {"error": "not found"})
 
         def do_POST(self) -> None:
-            if self.path != "/state-parcel":
+            if self.path not in {"/state-parcel", "/merge-plugin-package"}:
                 _send_json(self, 404, {"error": "not found"})
                 return
             try:
                 length = int(self.headers.get("Content-Length", "0"))
                 if length <= 0 or length > 2 * 1024 * 1024:
-                    raise ValueError("invalid state parcel request size")
+                    raise ValueError("invalid parcel request size")
                 raw = self.rfile.read(length)
                 incoming = json.loads(raw.decode("utf-8"))
                 if not isinstance(incoming, dict):
-                    raise ValueError("state parcel bundle must be an object")
-                receipt = inbox.receive(incoming)
+                    raise ValueError("parcel bundle must be an object")
+                if self.path == "/merge-plugin-package":
+                    receipt = plugin_inbox.receive(incoming)
+                else:
+                    receipt = inbox.receive(incoming)
                 _send_json(self, 202, receipt)
             except Exception as exc:
                 _send_json(self, 400, {
@@ -947,8 +963,8 @@ def serve_parcel_porch(
     print(json.dumps({
         "event": "ghot.state.parcel.porch.started",
         "listen": f"http://{host}:{server.server_port}",
-        "endpoint": "/state-parcel",
-        "policy": "valid parcels enter HOLD only",
+        "endpoints": ["/state-parcel", "/merge-plugin-package"],
+        "policy": "valid state and merge-plugin parcels enter HOLD only",
     }, indent=2))
     try:
         server.serve_forever()
