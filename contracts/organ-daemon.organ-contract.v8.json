@@ -1,0 +1,54 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.organ-daemon@8",
+  "version": "8",
+  "owner_project": "GHoT",
+  "description": "One-process GHoT organ supervisor including a loopback Static-OS activation broker that may present current launches and destination preflight previews but cannot supply ACT, mint consent, or infer success.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/activation-broker-preview.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/activation-broker-result.v0.json"
+  ],
+  "allowed_dispositions": [
+    "OBSERVE",
+    "RETRY",
+    "SERVE",
+    "POLL",
+    "HOLD_STATE",
+    "HOLD_PLUGIN_PACKAGE",
+    "SERVE_GRAMMAR_EXCHANGE",
+    "SERVE_CURIOUS_DOORS",
+    "SERVE_ACTIVATION_BROKER"
+  ],
+  "effect_classes": ["none","local-state-change"],
+  "receipt_kinds": [],
+  "authority_scope": "supervisor-only",
+  "dependencies": [
+    "ghot.organ-daemon@7",
+    "ghot.activation-broker@0"
+  ],
+  "implementation_refs": [
+    "ghot/organ.py",
+    "ghot/activation_broker.py"
+  ],
+  "non_authorities": [
+    "broker supervision is not consent",
+    "daemon does not supply ACT",
+    "daemon does not bind previewed proposal on behalf of operator",
+    "daemon does not issue activation tickets",
+    "daemon does not infer success from HTTP response",
+    "broker availability is not operation authorization"
+  ],
+  "extensions": {
+    "activation_broker_host_default": "127.0.0.1",
+    "activation_broker_port_default": 7795,
+    "launch_index_read_only": true,
+    "preview_read_only": true,
+    "act_required": true,
+    "daemon_supplies_act": false,
+    "ui_click_grants_consent": false,
+    "broker_grants_consent": false,
+    "same_origin_browser_act_required": true,
+    "success_requires_verified_signed_receipt": true
+  }
+}
