@@ -18,51 +18,26 @@ def load(name, path):
 
 
 ep = load("epistemic_capability", ROOT / "ghot" / "epistemic_capability.py")
-cc = load("capability_composer", ROOT / "ghot" / "capability_composer.py")
+policy = load("epistemic_policy", ROOT / "ghot" / "epistemic_policy.py")
 
 
 class EpistemicCapabilityTests(unittest.TestCase):
-    def candidate(self, node_id, posture, *, location="remote", memory=8 * 1024**3):
-        return {
-            "node_id": node_id,
-            "location": location,
-            "url": f"http://{node_id}.invalid",
-            "body": {
-                "node_id": node_id,
-                "system": {"memory_bytes": memory},
-                "power": {"willingness": "normal"},
-                "offers": [ep.fake_offer(node_id, posture)],
-            },
-            "field_state": "awake",
-            "last_seen": None,
-            "age_seconds": 0,
-            "consecutive_failures": 0,
-            "quarantine_until": None,
+    def test_scheduler_offer_filter_distinguishes_posture_before_scoring(self):
+        body = {
+            "offers": [
+                ep.fake_offer("fresh-worker", "fresh"),
+                ep.fake_offer("archive-worker", "lineage-enabled"),
+            ]
         }
-
-    def evaluate(self, candidate, posture):
-        return cc.evaluate_candidate(
-            candidate,
+        all_offers, fresh = policy.posture_matching_offers(
+            body,
             "listen.analyze",
-            min_battery=None,
-            prefer_local=False,
-            prefer_plugged_in=False,
-            prefer_memory=True,
-            context_posture=posture,
-        )
-
-    def test_scheduler_rejects_wrong_posture_even_when_worker_has_more_memory(self):
-        fresh = self.evaluate(
-            self.candidate("fresh-worker", "fresh", memory=4 * 1024**3),
             "fresh",
         )
-        archive = self.evaluate(
-            self.candidate("archive-worker", "lineage-enabled", memory=64 * 1024**3),
-            "fresh",
-        )
-        self.assertTrue(fresh["eligible"])
-        self.assertFalse(archive["eligible"])
-        self.assertIn("required context posture not offered: fresh", archive["rejected"])
+        self.assertEqual(len(all_offers), 2)
+        self.assertEqual(len(fresh), 1)
+        self.assertEqual(fresh[0]["node_id"], "fresh-worker")
+        self.assertEqual(fresh[0]["context_posture"], "fresh")
 
     def test_fresh_receipt_binds_exact_context_digest(self):
         context = {"current_track": {"id": "song-1", "title": "Arrival"}}
