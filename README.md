@@ -702,3 +702,72 @@ python3 ghot/state_migration_sim.py
 
 See `docs/STATE-MIGRATIONS.md` and
 `experiments/017-state-migration-receipts.md`.
+
+
+## Carry state between bodies
+
+018 adds portable, content-addressed state parcels without introducing a shared
+database or foreign write authority.
+
+Export a bounded fragment:
+
+```bash
+python3 ghot/state_parcel.py export \
+  organ/state.v1.json \
+  --selector /body/offers \
+  --target-particular <receiver-particular> \
+  --out offers.parcel.json
+```
+
+A parcel carries source state kind/version/address, a bounded selector and
+payload address, migration provenance, a BODY-signed export receipt, a signed
+reLATTE crossing envelope, and an optional target BODY particular.
+
+A normal organ supervises a separate HOLD-only parcel porch on port 7792.
+BODY discovery exposes its current `state_parcel_url`.
+
+Cross directly:
+
+```bash
+python3 ghot/state_parcel.py send offers.parcel.json http://PEER:7792
+```
+
+Or by currently discovered body:
+
+```bash
+python3 ghot/state_parcel.py send-node offers.parcel.json <receiver-node-id>
+```
+
+`send-node` requires the parcel target particular to match the currently
+discovered BODY P-256 particular. A node name alone is not enough.
+
+Network receive can only produce HOLD. There is no network ADMIT endpoint.
+
+The receiver decides locally:
+
+```bash
+python3 ghot/state_parcel.py inbox
+python3 ghot/state_parcel.py show <parcel-id>
+python3 ghot/state_parcel.py decide <parcel-id> ADMIT
+python3 ghot/state_parcel.py decide <parcel-id> REJECT
+python3 ghot/state_parcel.py decide <parcel-id> SCAR
+```
+
+ADMIT copies the foreign fragment into a local admitted parcel corpus. SCAR
+preserves it as an inactive witness. Neither rewrites canonical live state.
+
+```text
+CROSSING != ADMISSION
+HOLD != MERGE
+ADMIT != OVERWRITE
+SIGNED EXPORT != TRUST
+FOREIGN STATE != LOCAL AUTHORITY
+```
+
+Deterministic HTTP proof:
+
+```bash
+python3 ghot/state_parcel_sim.py
+```
+
+See `docs/STATE-PARCELS.md` and `experiments/018-state-parcels.md`.
