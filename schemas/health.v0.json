@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/health.v0.json",
+  "title": "GHoT Health V0",
+  "type": "object",
+  "required": ["kind","version","status","observed_at","reasons"],
+  "properties": {
+    "kind": { "const": "ghot.health" },
+    "version": { "const": "0" },
+    "status": { "enum": ["healthy","degraded","blocked"] },
+    "observed_at": { "type": "string" },
+    "node_id": { "type": ["string","null"] },
+    "particular": { "type": ["string","null"] },
+    "boot_id": { "type": ["string","null"] },
+    "cycle": { "type": ["integer","null"] },
+    "services": { "type": "object" },
+    "reasons": { "type": "array", "items": { "type": "object" } }
+  }
+}
