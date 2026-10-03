@@ -210,6 +210,55 @@ def _esc(value: Any) -> str:
     return html.escape("" if value is None else str(value))
 
 
+def render_index(surface: CuriousDoorsSurface) -> str:
+    snapshot = surface.snapshot()
+    rows = []
+    for door in snapshot.get("doors") or []:
+        for descriptor in door.get("launches") or []:
+            launch_id = descriptor.get("launch_id")
+            destination = descriptor.get("destination") or {}
+            if not isinstance(launch_id, str) or not launch_id:
+                continue
+            href = "/preview?launch_id=" + quote(launch_id, safe="")
+            rows.append(
+                '<li><a href="' + _esc(href) + '">'
+                + _esc(descriptor.get("label"))
+                + "</a><br><small><code>"
+                + _esc(destination.get("app_id"))
+                + " / "
+                + _esc(destination.get("operation"))
+                + "</code> · selection only · no consent</small></li>"
+            )
+    if not rows:
+        rows.append("<li>No current typed launches.</li>")
+
+    return """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GHoT Activation Broker</title>
+<style>
+:root { color-scheme: dark; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+body { margin:0; background:#0d0f12; color:#e8eaed; }
+main { max-width:920px; margin:0 auto; padding:2rem 1rem 4rem; }
+li { margin:1.2rem 0; }
+a { color:inherit; }
+small { color:#aeb7c2; }
+</style>
+</head>
+<body>
+<main>
+<h1>Activation Broker</h1>
+<p>Selecting a launch opens a read-only destination preflight. Selection does not grant consent.</p>
+<ul>""" + "".join(rows) + """</ul>
+<p><small>BROKER != CONSENT · UI CLICK != ACT TICKET</small></p>
+</main>
+</body>
+</html>
+"""
+
+
 def render_preview(preview: dict[str, Any]) -> str:
     ready = preview.get("ready_to_act") is True
     proposal = preview.get("proposal")
@@ -379,6 +428,10 @@ def broker_handler(
 
         def do_GET(self) -> None:
             parsed = urlparse(self.path)
+            if parsed.path == "/":
+                raw = render_index(broker.surface).encode("utf-8")
+                self._send(200, raw, "text/html; charset=utf-8")
+                return
             if parsed.path == "/health":
                 raw = json.dumps({
                     "kind": "ghot.activation-broker.health",
