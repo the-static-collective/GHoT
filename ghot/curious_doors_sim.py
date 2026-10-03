@@ -348,7 +348,10 @@ def main() -> int:
                 assert "Curious Doors" in served_html
                 assert "<form" not in served_html.lower()
                 assert "<button" not in served_html.lower()
-                assert post_status(base_url + "/curious-doors") == 405
+                http_post_status = post_status(
+                    base_url + "/curious-doors"
+                )
+                assert http_post_status == 405
             finally:
                 server.close()
 
@@ -371,8 +374,7 @@ def main() -> int:
                 render_before == render_after,
                 final_before == final_after,
                 "<form" not in served_html.lower(),
-                post_status(base_url + "/curious-doors") == 405
-                if False else True,
+                http_post_status == 405,
             ])
 
             print(json.dumps({
@@ -406,7 +408,7 @@ def main() -> int:
                 },
                 "http": {
                     "loopback_host": "127.0.0.1",
-                    "post_status": 405,
+                    "post_status": http_post_status,
                     "has_form": "<form" in served_html.lower(),
                     "has_button": "<button" in served_html.lower(),
                     "has_script": "<script" in served_html.lower(),
