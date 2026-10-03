@@ -18,10 +18,11 @@ def main() -> int:
     assert eligible, "local body should offer system.hash"
     local = next(item for item in eligible if item["location"] == "local")
 
+    payload = {"hello": "house"}
     result = assign(
         offer,
         local["node_id"],
-        {"hello": "house"},
+        payload,
         timeout=0.01,
         selection_source="simulation-explicit",
     )
@@ -33,6 +34,16 @@ def main() -> int:
     assert receipt["executor_node_id"] == local["node_id"]
     assert receipt["capability"] == "system.hash"
     assert receipt["output"]["sha256"]
+
+    replay = assign(
+        offer,
+        local["node_id"],
+        payload,
+        timeout=0.01,
+        selection_source="simulation-explicit",
+    )
+    assert replay["assignment"]["assignment_id"] == result["assignment"]["assignment_id"]
+    assert replay["execution"]["receipt"]["receipt_id"] == receipt["receipt_id"]
 
     try:
         assign(
