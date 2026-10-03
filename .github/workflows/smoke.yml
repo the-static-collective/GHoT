@@ -83,3 +83,6 @@ jobs:
 
       - name: Merge-contract pantry simulation
         run: python3 ghot/merge_contract_pantry_sim.py
+
+      - name: Declarative merge plugin simulation
+        run: python3 ghot/merge_plugin_sim.py

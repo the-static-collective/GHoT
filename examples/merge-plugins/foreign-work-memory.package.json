@@ -1,0 +1,88 @@
+{
+  "kind": "ghot.merge-plugin.package",
+  "version": "0",
+  "package_id": "ghot.plugin.foreign-work-memory",
+  "package_version": "0",
+  "contract": {
+    "contract_id": "ghot.organ.work->foreign-work-catalog/v0",
+    "title": "Remember foreign work status",
+    "description": "Merge an admitted /work object into observational foreign work-status memory.",
+    "category": "observational-work-memory",
+    "source": {
+      "state_kind": "ghot.organ.state",
+      "state_version": "1",
+      "selector": "/work",
+      "payload_type": "object"
+    },
+    "target": {
+      "relative_path": "knowledge/plugins/ghot.plugin.foreign-work-memory/foreign-work.v0.json",
+      "state_kind": "ghot.foreign-work-catalog",
+      "state_version": "0"
+    },
+    "authority_effect": "none",
+    "freshness_effect": "none",
+    "selection_required": true
+  },
+  "schemas": {
+    "target": {
+      "kind": "ghot.foreign-work-catalog",
+      "version": "0",
+      "shape": "catalog"
+    }
+  },
+  "operation": {
+    "kind": "catalog-object-snapshot/v0",
+    "entry_fields": {
+      "source_particular": "source.particular",
+      "source_node_id": "source.node_id",
+      "status": "payload.status",
+      "parcel_id": "parcel.id",
+      "payload_address": "payload.address"
+    },
+    "key_fields": [
+      "source_particular",
+      "parcel_id"
+    ]
+  },
+  "fixtures": [
+    {
+      "name": "basic-work-status",
+      "local_before": {
+        "kind": "ghot.foreign-work-catalog",
+        "version": "0",
+        "entries": [],
+        "merged_parcels": []
+      },
+      "parcel": {
+        "parcel_id": "fixture-parcel-1",
+        "parcel_address": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "source": {
+          "particular": "fixture-particular",
+          "node_id": "fixture-node"
+        },
+        "payload": {
+          "address": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "value": {
+            "status": "no-dispatch"
+          }
+        }
+      },
+      "expected_after": {
+        "kind": "ghot.foreign-work-catalog",
+        "version": "0",
+        "entries": [
+          {
+            "source_particular": "fixture-particular",
+            "source_node_id": "fixture-node",
+            "status": "no-dispatch",
+            "parcel_id": "fixture-parcel-1",
+            "payload_address": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        ],
+        "merged_parcels": [
+          "fixture-parcel-1"
+        ]
+      }
+    }
+  ]
+}
