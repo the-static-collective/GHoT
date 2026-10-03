@@ -252,8 +252,8 @@ class AuthorityTrustStore:
         ]
 
     def trust(self, advert: dict[str, Any], *, route: str | None = None) -> dict[str, Any]:
-        if not verify_authority_advert(advert):
-            raise ValueError("authority advert signature/identity verification failed")
+        if not verify_authority_advert(advert) or not advert_is_fresh(advert):
+            raise ValueError("authority advert is invalid or stale")
         data = self._read()
         particular = str(advert["particular"])
         record = {
@@ -381,8 +381,12 @@ def discover_authorities(
 def fetch_authority_advert(url: str) -> dict[str, Any]:
     with urllib.request.urlopen(url.rstrip("/") + "/authority", timeout=5) as response:
         advert = json.loads(response.read().decode("utf-8"))
-    if not isinstance(advert, dict) or not verify_authority_advert(advert):
-        raise RuntimeError("authority endpoint did not return a valid signed advert")
+    if (
+        not isinstance(advert, dict)
+        or not verify_authority_advert(advert)
+        or not advert_is_fresh(advert)
+    ):
+        raise RuntimeError("authority endpoint did not return a valid fresh signed advert")
     return advert
 
 
