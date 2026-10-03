@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic simulation for GHoT Experiment 011."""
+"""Deterministic simulation for GHoT portable P-256 lease crossings."""
 
 from __future__ import annotations
 
@@ -12,9 +12,10 @@ from typing import Any
 
 from hold_queue import HoldQueue, iso_at
 from lease_authority import LeaseAuthority
-from portable_lease import make_crossing, verify_receipt
+from portable_lease import IdentityKey, make_crossing, verify_receipt
+from relatte_identity import timestamp_ms
 
-KEY = "test-key-material"
+
 AUTHORITY_ID = "authority-sim"
 
 
@@ -40,14 +41,20 @@ def make_hold() -> dict[str, Any]:
     }
 
 
-def msg(action: str, worker: str, at: float, **kwargs: Any) -> dict[str, Any]:
+def msg(
+    action: str,
+    signer: IdentityKey,
+    worker: str,
+    at: float,
+    **kwargs: Any,
+) -> dict[str, Any]:
     return make_crossing(
         action,
-        secret=KEY,
+        signer=signer,
         authority_id=AUTHORITY_ID,
         worker_id=worker,
         worker_node_id=f"node-{worker}",
-        created_at=iso_at(at),
+        created_at=timestamp_ms(at),
         nonce=f"nonce-{action}-{worker}-{at}",
         **kwargs,
     )
@@ -58,35 +65,65 @@ def main() -> int:
         root = Path(tmp)
         queue = HoldQueue(root)
         queue.enqueue(make_hold(), at=90.0)
-        authority = LeaseAuthority(root, authority_id=AUTHORITY_ID, secret=KEY)
+
+        authority_signer = IdentityKey.load_or_create(root / "authority.pem")
+        worker_a = IdentityKey.load_or_create(root / "worker-a.pem")
+        worker_b = IdentityKey.load_or_create(root / "worker-b.pem")
+
+        authority = LeaseAuthority(
+            root,
+            authority_id=AUTHORITY_ID,
+            signer=authority_signer,
+        )
+        authority_pub = authority_signer.public_jwk()
+        authority_particular = authority_signer.particular()
 
         dispatch_a = authority.prepare_dispatch(
             "hold-portable",
             target_worker_id="worker-a",
+            target_node_id="node-worker-a",
+            target_particular=worker_a.particular(),
+            target_public_key=worker_a.public_jwk(),
             child_energy_plan_id="energy-child-a",
             ttl_seconds=30.0,
             at=100.0,
         )
 
-        poll_a = authority.handle_crossing(msg("POLL", "worker-a", 101.0), at=101.0)
-        poll_b = authority.handle_crossing(msg("POLL", "worker-b", 101.0), at=101.0)
-        assert verify_receipt(KEY, poll_a)
+        poll_a = authority.handle_crossing(
+            msg("POLL", worker_a, "worker-a", 101.0),
+            at=101.0,
+        )
+        poll_b = authority.handle_crossing(
+            msg("POLL", worker_b, "worker-b", 101.0),
+            at=101.0,
+        )
+        assert verify_receipt(
+            poll_a,
+            expected_public_key=authority_pub,
+            expected_receiver_particular=authority_particular,
+        )
         assert len(poll_a["extensions"]["ghot_lease"]["dispatches"]) == 1
         assert poll_b["extensions"]["ghot_lease"]["dispatches"] == []
 
         wrong = authority.handle_crossing(msg(
-            "CLAIM", "worker-b", 102.0,
+            "CLAIM",
+            worker_b,
+            "worker-b",
+            102.0,
             hold_id="hold-portable",
             dispatch_id=dispatch_a["dispatch_id"],
-            lease_seconds=10.0,
+            lease_seconds=10,
         ), at=102.0)
         assert wrong["kind"] == "REFUSED"
 
         claim_a_msg = msg(
-            "CLAIM", "worker-a", 103.0,
+            "CLAIM",
+            worker_a,
+            "worker-a",
+            103.0,
             hold_id="hold-portable",
             dispatch_id=dispatch_a["dispatch_id"],
-            lease_seconds=10.0,
+            lease_seconds=10,
         )
         claim_a = authority.handle_crossing(claim_a_msg, at=103.0)
         assert claim_a["kind"] == "ADMITTED"
@@ -95,19 +132,25 @@ def main() -> int:
         lease_a = claim_a["extensions"]["ghot_lease"]["claim"]["lease_id"]
 
         renewed = authority.handle_crossing(msg(
-            "RENEW", "worker-a", 105.0,
+            "RENEW",
+            worker_a,
+            "worker-a",
+            105.0,
             hold_id="hold-portable",
             lease_id=lease_a,
-            lease_seconds=10.0,
+            lease_seconds=10,
         ), at=105.0)
         assert renewed["kind"] == "VERIFIED"
-        assert renewed["extensions"]["ghot_lease"]["claim"]["lease_until_epoch"] == 115.0
+        assert renewed["extensions"]["ghot_lease"]["claim"]["lease_until_epoch"] == 115
 
         blocked = False
         try:
             authority.prepare_dispatch(
                 "hold-portable",
                 target_worker_id="worker-b",
+                target_node_id="node-worker-b",
+                target_particular=worker_b.particular(),
+                target_public_key=worker_b.public_jwk(),
                 child_energy_plan_id="energy-child-b-early",
                 ttl_seconds=30.0,
                 at=111.0,
@@ -119,13 +162,19 @@ def main() -> int:
         dispatch_b = authority.prepare_dispatch(
             "hold-portable",
             target_worker_id="worker-b",
+            target_node_id="node-worker-b",
+            target_particular=worker_b.particular(),
+            target_public_key=worker_b.public_jwk(),
             child_energy_plan_id="energy-child-b",
             ttl_seconds=30.0,
             at=116.0,
         )
 
         stale = authority.handle_crossing(msg(
-            "COMPLETE", "worker-a", 117.0,
+            "COMPLETE",
+            worker_a,
+            "worker-a",
+            117.0,
             hold_id="hold-portable",
             lease_id=lease_a,
             child_energy_plan_id="energy-child-a",
@@ -135,27 +184,36 @@ def main() -> int:
         assert stale["kind"] == "REFUSED"
 
         claim_b = authority.handle_crossing(msg(
-            "CLAIM", "worker-b", 117.0,
+            "CLAIM",
+            worker_b,
+            "worker-b",
+            117.0,
             hold_id="hold-portable",
             dispatch_id=dispatch_b["dispatch_id"],
-            lease_seconds=10.0,
+            lease_seconds=10,
         ), at=117.0)
         assert claim_b["kind"] == "ADMITTED"
         lease_b = claim_b["extensions"]["ghot_lease"]["claim"]["lease_id"]
 
         tampered_msg = msg(
-            "RENEW", "worker-b", 117.5,
+            "RENEW",
+            worker_b,
+            "worker-b",
+            117.5,
             hold_id="hold-portable",
             lease_id=lease_b,
-            lease_seconds=10.0,
+            lease_seconds=10,
         )
         tampered_msg = copy.deepcopy(tampered_msg)
-        tampered_msg["requested_effect"]["lease_seconds"] = 999.0
+        tampered_msg["requested_effect"]["lease_seconds"] = "999"
         tampered = authority.handle_crossing(tampered_msg, at=117.5)
         assert tampered["kind"] == "REFUSED"
 
         complete_msg = msg(
-            "COMPLETE", "worker-b", 118.0,
+            "COMPLETE",
+            worker_b,
+            "worker-b",
+            118.0,
             hold_id="hold-portable",
             lease_id=lease_b,
             child_energy_plan_id="energy-child-b",
@@ -164,7 +222,11 @@ def main() -> int:
         )
         complete = authority.handle_crossing(complete_msg, at=118.0)
         assert complete["kind"] == "EXECUTED"
-        assert verify_receipt(KEY, complete)
+        assert verify_receipt(
+            complete,
+            expected_public_key=authority_pub,
+            expected_receiver_particular=authority_particular,
+        )
         replay_complete = authority.handle_crossing(complete_msg, at=119.0)
         assert replay_complete["receipt_id"] == complete["receipt_id"]
 
@@ -183,9 +245,10 @@ def main() -> int:
 
         print(json.dumps({
             "simulation_passed": passed,
-            "crossing_schema": claim_a_msg["schema"],
-            "receipt_schema": claim_a["schema"],
-            "wrong_worker_claim": wrong["kind"],
+            "crossing_algorithm": claim_a_msg["signing"]["algorithm"],
+            "authority_algorithm": complete["signing"]["algorithm"],
+            "worker_a_particular": worker_a.particular(),
+            "wrong_body_claim": wrong["kind"],
             "replay_receipt_stable": replay_a["receipt_id"] == claim_a["receipt_id"],
             "renewed_until": renewed["extensions"]["ghot_lease"]["claim"]["lease_until_epoch"],
             "redispatch_blocked_while_live": blocked,
