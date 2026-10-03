@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/launch-descriptor.v0.json",
+  "title": "GHoT Launch Descriptor V0",
+  "type": "object",
+  "required": [
+    "kind","version","launch_id","label","source","destination","context",
+    "effect_if_executed","requirements","executes","permission_transfer",
+    "consent_granted"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.launch.descriptor" },
+    "version": { "const": "0" },
+    "launch_id": { "type": "string", "minLength": 1 },
+    "label": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "object",
+      "required": [
+        "surface_contract","door_id","want_id","door_state"
+      ],
+      "properties": {
+        "surface_contract": { "const": "ghot.curious-doors@2" },
+        "door_id": { "type": "string", "minLength": 1 },
+        "want_id": { "type": "string", "minLength": 1 },
+        "door_state": { "type": "string", "minLength": 1 }
+      }
+    },
+    "destination": {
+      "type": "object",
+      "required": ["app_id","owner_contract","operation"],
+      "properties": {
+        "app_id": {
+          "enum": [
+            "composition-wants",
+            "merge-plugin-parcel",
+            "merge-contract-pantry"
+          ]
+        },
+        "owner_contract": { "type": "string", "minLength": 1 },
+        "operation": { "type": "string", "minLength": 1 }
+      },
+      "not": {
+        "anyOf": [
+          { "required": ["argv"] },
+          { "required": ["href"] },
+          { "required": ["command"] },
+          { "required": ["executable"] }
+        ]
+      }
+    },
+    "context": { "type": "object" },
+    "effect_if_executed": { "type": "string", "minLength": 1 },
+    "requirements": {
+      "type": "object",
+      "required": [
+        "explicit_user_selection",
+        "destination_revalidation",
+        "execution_revalidation",
+        "consent_required_for_effectful_action"
+      ],
+      "properties": {
+        "explicit_user_selection": { "const": true },
+        "destination_revalidation": { "const": true },
+        "execution_revalidation": { "const": true },
+        "consent_required_for_effectful_action": { "type": "boolean" }
+      }
+    },
+    "executes": { "const": false },
+    "permission_transfer": { "const": false },
+    "consent_granted": { "const": false }
+  },
+  "not": {
+    "anyOf": [
+      { "required": ["argv"] },
+      { "required": ["href"] },
+      { "required": ["command"] },
+      { "required": ["display_command"] },
+      { "required": ["shell"] },
+      { "required": ["executable"] },
+      { "required": ["consent_token"] },
+      { "required": ["authorization"] }
+    ]
+  }
+}
