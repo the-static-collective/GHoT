@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/state-migration-run.v0.json",
+  "title": "GHoT State Migration Run V0",
+  "type": "object",
+  "required": ["kind","version","applied","state"],
+  "properties": {
+    "kind": { "const": "ghot.state.migration.run" },
+    "version": { "const": "0" },
+    "applied": { "type": "array", "items": { "type": "object" } },
+    "state": { "type": "object" },
+    "error": { "type": "string" }
+  }
+}
