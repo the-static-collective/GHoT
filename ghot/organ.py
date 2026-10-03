@@ -383,56 +383,119 @@ class OrganServices:
         discovery_port: int,
     ) -> None:
         self.daemon = daemon
+        self.http_host = http_host
+        self.http_port = http_port
+        self.discovery_port = discovery_port
         self.stop = threading.Event()
-        self.http_server = ThreadingHTTPServer((http_host, http_port), Handler)
-        self.http_thread = threading.Thread(
-            target=self.http_server.serve_forever,
+        self.http_server: ThreadingHTTPServer | None = None
+        self.http_thread: threading.Thread | None = None
+        self.discovery: BodyDiscoveryService | None = None
+
+    def _start_http(self) -> None:
+        server = ThreadingHTTPServer(
+            (self.http_host, self.http_port),
+            Handler,
+        )
+        thread = threading.Thread(
+            target=server.serve_forever,
             daemon=True,
         )
-        self.discovery = BodyDiscoveryService(
-            http_port=http_port,
-            discovery_port=discovery_port,
-            stop=self.stop,
-        )
-
-    def start(self) -> None:
-        self.http_thread.start()
+        thread.start()
+        self.http_server = server
+        self.http_thread = thread
         self.daemon.service_state["body_http"] = {
             "state": "awake",
-            "port": self.http_server.server_port,
+            "port": server.server_port,
         }
 
+    def _start_discovery(self) -> None:
+        discovery = BodyDiscoveryService(
+            http_port=self.http_port,
+            discovery_port=self.discovery_port,
+            stop=self.stop,
+        )
+        discovery.start()
+        self.discovery = discovery
+        self.daemon.service_state["body_discovery"] = {
+            "state": "awake",
+            "port": self.discovery_port,
+        }
+
+    def start(self) -> None:
         try:
-            self.discovery.start()
-            self.daemon.service_state["body_discovery"] = {
-                "state": "awake",
-                "port": self.discovery.discovery_port,
+            self._start_http()
+        except Exception as exc:
+            self.daemon.service_state["body_http"] = {
+                "state": "failed",
+                "port": self.http_port,
+                "error": f"{type(exc).__name__}: {exc}",
             }
+
+        try:
+            self._start_discovery()
         except Exception as exc:
             self.daemon.service_state["body_discovery"] = {
                 "state": "failed",
-                "port": self.discovery.discovery_port,
+                "port": self.discovery_port,
                 "error": f"{type(exc).__name__}: {exc}",
             }
 
     def supervise(self) -> None:
-        if not self.http_thread.is_alive():
-            self.daemon.service_state["body_http"] = {
-                **self.daemon.service_state.get("body_http", {}),
-                "state": "failed",
-            }
-        if self.discovery.thread is not None and not self.discovery.thread.is_alive():
-            self.daemon.service_state["body_discovery"] = {
-                **self.daemon.service_state.get("body_discovery", {}),
-                "state": "failed",
-                "error": self.discovery.error,
-            }
+        if self.stop.is_set():
+            return
+
+        if self.http_thread is None or not self.http_thread.is_alive():
+            if self.http_server is not None:
+                try:
+                    self.http_server.server_close()
+                except OSError:
+                    pass
+            try:
+                self._start_http()
+                self.daemon._event("organ.service_restarted", {
+                    "node_id": node_id(),
+                    "service": "body_http",
+                    "port": self.http_port,
+                })
+            except Exception as exc:
+                self.daemon.service_state["body_http"] = {
+                    "state": "failed",
+                    "port": self.http_port,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+
+        discovery_alive = (
+            self.discovery is not None
+            and self.discovery.thread is not None
+            and self.discovery.thread.is_alive()
+        )
+        if not discovery_alive:
+            if self.discovery is not None:
+                self.discovery.close()
+            try:
+                self._start_discovery()
+                self.daemon._event("organ.service_restarted", {
+                    "node_id": node_id(),
+                    "service": "body_discovery",
+                    "port": self.discovery_port,
+                })
+            except Exception as exc:
+                self.daemon.service_state["body_discovery"] = {
+                    "state": "failed",
+                    "port": self.discovery_port,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
 
     def close(self) -> None:
         self.stop.set()
-        self.discovery.close()
-        self.http_server.shutdown()
-        self.http_server.server_close()
+        if self.discovery is not None:
+            self.discovery.close()
+        if self.http_server is not None:
+            try:
+                self.http_server.shutdown()
+            except OSError:
+                pass
+            self.http_server.server_close()
         self.daemon.service_state["body_http"] = {
             **self.daemon.service_state.get("body_http", {}),
             "state": "stopped",
