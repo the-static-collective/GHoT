@@ -366,14 +366,20 @@ class MergePluginParcelExporter:
         *,
         target_particular: str | None = None,
         author_sign: bool = False,
+        author: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         checked = validate_package(package)
         normalized = checked["normalized"]
-        author = (
-            sign_package_author(normalized, self.signer)
-            if author_sign
-            else None
-        )
+        if author_sign and author is not None:
+            raise ValueError("choose local author signing or supplied author signature, not both")
+        if author is not None:
+            if verify_package_author(author, normalized) is not True:
+                raise ValueError("supplied author signature does not verify for package")
+            author_value = identity_safe(author)
+        elif author_sign:
+            author_value = sign_package_author(normalized, self.signer)
+        else:
+            author_value = None
         parcel = {
             "kind": PARCEL_KIND,
             "version": PARCEL_VERSION,
@@ -391,7 +397,7 @@ class MergePluginParcelExporter:
             "package_version": checked["package_version"],
             "package_address": checked["package_address"],
             "package": normalized,
-            "author": author,
+            "author": author_value,
         }
         parcel["parcel_id"] = derive_parcel_id(parcel)
         parcel["parcel_address"] = derive_parcel_address(parcel)
@@ -881,7 +887,12 @@ def main() -> int:
     export.add_argument("package_file")
     export.add_argument("--target-particular", default=None)
     export.add_argument("--author-sign", action="store_true")
+    export.add_argument("--author-signature-file", default=None)
     export.add_argument("--out", default=None)
+
+    sign_author = sub.add_parser("sign-author")
+    sign_author.add_argument("package_file")
+    sign_author.add_argument("--out", default=None)
 
     verify = sub.add_parser("verify")
     verify.add_argument("bundle_file")
@@ -918,12 +929,36 @@ def main() -> int:
 
     args = parser.parse_args()
 
+    if args.command == "sign-author":
+        package = _read_object(Path(args.package_file).expanduser())
+        signer = IdentityKey.load_or_create(
+            ROOT / "identity" / "body-p256.pem"
+        )
+        author = sign_package_author(package, signer)
+        if args.out:
+            out = Path(args.out).expanduser()
+            _write_atomic(out, author)
+            print(json.dumps({
+                "author_signature_file": str(out),
+                "package_address": author["package_address"],
+                "author_particular": author["particular"],
+            }, indent=2))
+        else:
+            print(json.dumps(author, indent=2))
+        return 0
+
     if args.command == "export":
         package = _read_object(Path(args.package_file).expanduser())
+        supplied_author = (
+            _read_object(Path(args.author_signature_file).expanduser())
+            if args.author_signature_file
+            else None
+        )
         bundle = MergePluginParcelExporter().export(
             package,
             target_particular=args.target_particular,
             author_sign=args.author_sign,
+            author=supplied_author,
         )
         if args.out:
             out = Path(args.out).expanduser()
