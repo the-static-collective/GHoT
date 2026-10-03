@@ -1,0 +1,65 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.organ-daemon@4",
+  "version": "4",
+  "owner_project": "GHoT",
+  "description": "One-process GHoT organ supervisor with durable state, boot presence, authority work, shared HOLD-only parcel porch, and continuously reachable non-authoritative grammar exchange discovery.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/body.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/organ-state.v1.json",
+    "https://the-static-collective.github.io/GHoT/schemas/organ-event.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/state-parcel-bundle.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/merge-plugin-parcel-bundle.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/grammar-exchange-advert.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/grammar-exchange-request.v0.json"
+  ],
+  "allowed_dispositions": [
+    "OBSERVE",
+    "RETRY",
+    "SERVE",
+    "POLL",
+    "HOLD_STATE",
+    "HOLD_PLUGIN_PACKAGE",
+    "SERVE_GRAMMAR_EXCHANGE"
+  ],
+  "effect_classes": ["none","local-state-change"],
+  "receipt_kinds": [],
+  "authority_scope": "supervisor-only",
+  "dependencies": [
+    "ghot.body/v0",
+    "ghot.field/v0",
+    "ghot.authority.advert/v0",
+    "ghot.authority.trust/v0",
+    "ghot.work-lease/v0",
+    "ghot.boot-presence@0",
+    "ghot.state-migration@0",
+    "ghot.state-parcel-inbox@0",
+    "ghot.merge-plugin-parcel-inbox@0",
+    "ghot.grammar-exchange@0"
+  ],
+  "implementation_refs": [
+    "ghot/organ.py",
+    "ghot/state_parcel.py",
+    "ghot/merge_plugin_parcel.py",
+    "ghot/grammar_exchange.py"
+  ],
+  "non_authorities": [
+    "daemon supervision is not task authority",
+    "daemon liveness is not lease authority",
+    "exchange supervision is not share authority",
+    "exchange supervision is not request authority",
+    "exchange supervision is not offer authority",
+    "exchange supervision is not install authority",
+    "signed discovery is not trust"
+  ],
+  "extensions": {
+    "parcel_porch_port_default": 7792,
+    "grammar_exchange_http_port_default": 7793,
+    "grammar_exchange_discovery_port_default": 47890,
+    "grammar_exchange_auto_share": false,
+    "grammar_exchange_auto_request": false,
+    "grammar_exchange_auto_offer": false,
+    "grammar_exchange_auto_install": false
+  }
+}
