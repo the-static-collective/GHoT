@@ -27,12 +27,19 @@ import threading
 import time
 import uuid
 from datetime import datetime, timezone
-from http.server import ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Callable
 
 from authority_discovery import resolve_trusted_authorities
-from lan_node import DISCOVERY_MAGIC, DISCOVERY_PORT, Handler, discover_peers
+from boot_presence import PresenceStore
+from lan_node import (
+    DISCOVERY_MAGIC,
+    DISCOVERY_PORT,
+    Handler,
+    discover_peers,
+    send_json,
+)
 from lease_remote import work_available
 from liveness_field import LivenessField
 from reference_node import ROOT, body, node_id
@@ -90,6 +97,7 @@ class OrganDaemon:
         self.service_state: dict[str, Any] = {
             "body_http": {"state": "not-started"},
             "body_discovery": {"state": "not-started"},
+            "presence_http": {"state": "not-started"},
         }
 
     def _write_state(self, state: dict[str, Any]) -> None:
@@ -518,6 +526,96 @@ class OrganServices:
         }
 
 
+class PresenceHTTPService:
+    """Loopback-first health/presence endpoint for the local machine."""
+
+    def __init__(
+        self,
+        daemon: OrganDaemon,
+        store: PresenceStore,
+        *,
+        host: str,
+        port: int,
+    ) -> None:
+        self.daemon = daemon
+        self.store = store
+        self.host = host
+        self.port = port
+        service = self
+
+        class PresenceHandler(BaseHTTPRequestHandler):
+            server_version = "GHoTPresence/0"
+
+            def log_message(self, fmt: str, *args: Any) -> None:
+                return
+
+            def do_GET(self) -> None:
+                if self.path == "/health":
+                    send_json(self, 200, service.store.health())
+                    return
+                if self.path == "/presence":
+                    send_json(self, 200, service.store.presence())
+                    return
+                send_json(self, 404, {"error": "not found"})
+
+        self.handler = PresenceHandler
+        self.server: ThreadingHTTPServer | None = None
+        self.thread: threading.Thread | None = None
+
+    def start(self) -> None:
+        self.server = ThreadingHTTPServer(
+            (self.host, self.port),
+            self.handler,
+        )
+        self.thread = threading.Thread(
+            target=self.server.serve_forever,
+            daemon=True,
+        )
+        self.thread.start()
+        self.daemon.service_state["presence_http"] = {
+            "state": "awake",
+            "host": self.host,
+            "port": self.server.server_port,
+        }
+
+    def supervise(self) -> None:
+        alive = self.thread is not None and self.thread.is_alive()
+        if alive:
+            return
+        if self.server is not None:
+            try:
+                self.server.server_close()
+            except OSError:
+                pass
+        try:
+            self.start()
+            self.daemon._event("organ.service_restarted", {
+                "node_id": node_id(),
+                "service": "presence_http",
+                "host": self.host,
+                "port": self.port,
+            })
+        except Exception as exc:
+            self.daemon.service_state["presence_http"] = {
+                "state": "failed",
+                "host": self.host,
+                "port": self.port,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+
+    def close(self) -> None:
+        if self.server is not None:
+            try:
+                self.server.shutdown()
+            except OSError:
+                pass
+            self.server.server_close()
+        self.daemon.service_state["presence_http"] = {
+            **self.daemon.service_state.get("presence_http", {}),
+            "state": "stopped",
+        }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run one GHoT organ process.")
     parser.add_argument("--http-host", default="0.0.0.0")
@@ -527,6 +625,13 @@ def main() -> int:
     parser.add_argument("--discovery-timeout", type=float, default=2.0)
     parser.add_argument("--authority-timeout", type=float, default=2.0)
     parser.add_argument("--lease-seconds", type=float, default=60.0)
+    parser.add_argument("--health-host", default="127.0.0.1")
+    parser.add_argument("--health-port", type=int, default=7791)
+    parser.add_argument(
+        "--no-health",
+        action="store_true",
+        help="disable the loopback health/presence HTTP endpoint",
+    )
     parser.add_argument(
         "--no-serve",
         action="store_true",
@@ -547,7 +652,14 @@ def main() -> int:
         authority_timeout=args.authority_timeout,
         lease_seconds=args.lease_seconds,
     )
+    presence_store = PresenceStore(ROOT)
+    boot_manifest, startup_receipt = presence_store.wake(
+        repo_root=Path(__file__).resolve().parents[1],
+        body_record=body(),
+    )
+
     services: OrganServices | None = None
+    presence_service: PresenceHTTPService | None = None
 
     if not args.no_serve:
         services = OrganServices(
@@ -557,12 +669,48 @@ def main() -> int:
             discovery_port=args.discovery_port,
         )
         services.start()
+        if not args.no_health:
+            presence_service = PresenceHTTPService(
+                daemon,
+                presence_store,
+                host=args.health_host,
+                port=args.health_port,
+            )
+            try:
+                presence_service.start()
+            except Exception as exc:
+                daemon.service_state["presence_http"] = {
+                    "state": "failed",
+                    "host": args.health_host,
+                    "port": args.health_port,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
 
+    initial_health = presence_store.health()
     print(json.dumps({
         "event": "ghot.organ.started",
         "node_id": node_id(),
+        "boot_id": boot_manifest.get("boot_id"),
+        "manifest_address": boot_manifest.get("manifest_address"),
+        "startup_receipt_id": (
+            startup_receipt.get("receipt_id")
+            if isinstance(startup_receipt, dict)
+            else None
+        ),
+        "boot_surface": boot_manifest.get("boot_surface"),
+        "initial_health": initial_health.get("status"),
         "body_http_port": None if args.no_serve else args.http_port,
         "body_discovery_port": None if args.no_serve else args.discovery_port,
+        "health_endpoint": (
+            None
+            if args.no_serve or args.no_health
+            else f"http://{args.health_host}:{args.health_port}/health"
+        ),
+        "presence_endpoint": (
+            None
+            if args.no_serve or args.no_health
+            else f"http://{args.health_host}:{args.health_port}/presence"
+        ),
         "cycle_interval": args.interval,
         "authority_discovery": True,
     }, indent=2))
@@ -571,6 +719,8 @@ def main() -> int:
         while True:
             if services is not None:
                 services.supervise()
+            if presence_service is not None:
+                presence_service.supervise()
             state = daemon.cycle()
             work_status = (state.get("work") or {}).get("status")
             if (
@@ -585,6 +735,8 @@ def main() -> int:
     except KeyboardInterrupt:
         return 0
     finally:
+        if presence_service is not None:
+            presence_service.close()
         if services is not None:
             services.close()
 
