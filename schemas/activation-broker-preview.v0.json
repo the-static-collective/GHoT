@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/activation-broker-preview.v0.json",
+  "title": "GHoT Activation Broker Preview V0",
+  "type": "object",
+  "required": [
+    "kind","version","launch_id","descriptor_address","label","destination",
+    "context","effect_if_executed","preflight_status","preflight_checks",
+    "proposal","proposal_address","ready_to_act","required_phrase",
+    "ticket_default_ttl_seconds","ticket_max_ttl_seconds","preview_executes",
+    "broker_executes_without_act","broker_grants_consent",
+    "ui_click_grants_consent","act_binds_exact_proposal_address"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.activation-broker.preview" },
+    "version": { "const": "0" },
+    "launch_id": { "type": "string", "minLength": 1 },
+    "descriptor_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "label": { "type": ["string","null"] },
+    "destination": { "type": "object" },
+    "context": { "type": "object" },
+    "effect_if_executed": { "type": ["string","null"] },
+    "preflight_status": { "enum": ["ready","stale","blocked"] },
+    "preflight_checks": { "type": "array" },
+    "proposal": { "type": ["object","null"] },
+    "proposal_address": {
+      "type": ["string","null"],
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "ready_to_act": { "type": "boolean" },
+    "required_phrase": { "const": "ACT" },
+    "ticket_default_ttl_seconds": { "type": "integer", "minimum": 1 },
+    "ticket_max_ttl_seconds": { "type": "integer", "minimum": 1 },
+    "preview_executes": { "const": false },
+    "broker_executes_without_act": { "const": false },
+    "broker_grants_consent": { "const": false },
+    "ui_click_grants_consent": { "const": false },
+    "act_binds_exact_proposal_address": { "const": true }
+  }
+}
