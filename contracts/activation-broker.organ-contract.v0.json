@@ -1,0 +1,65 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.activation-broker@0",
+  "version": "0",
+  "owner_project": "GHoT",
+  "description": "Coordinate a Static-OS activation ceremony by listing current typed launches, performing read-only destination preflight previews, requiring an explicit same-origin browser or local API ACT bound to the exact previewed proposal address, delegating ticket issuance/execution to 028, and displaying only verified signed execution outcomes.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/launch-descriptor.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/launch-preflight.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/activation-ticket.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/activation-execution-receipt.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/activation-broker-preview.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/activation-broker-result.v0.json"
+  ],
+  "allowed_dispositions": [
+    "LIST_CURRENT_LAUNCHES",
+    "PREVIEW_DESTINATION",
+    "ACCEPT_EXPLICIT_ACT",
+    "DELEGATE_TICKET_ISSUANCE",
+    "DELEGATE_ONE_OPERATION_ATTEMPT",
+    "DISPLAY_VERIFIED_RECEIPT"
+  ],
+  "effect_classes": ["none","local-state-change","network-state-change"],
+  "receipt_kinds": [],
+  "authority_scope": "ceremony-coordination-only",
+  "dependencies": [
+    "ghot.curious-doors@2",
+    "ghot.launch-routing@0",
+    "ghot.activation-tickets@0"
+  ],
+  "implementation_refs": [
+    "ghot/activation_broker.py",
+    "ghot/activation_ticket.py"
+  ],
+  "non_authorities": [
+    "broker is not consent",
+    "UI click is not ACT ticket",
+    "launch selection is not consent",
+    "preview is not authority",
+    "previewed proposal does not authorize changed proposal",
+    "broker does not infer success",
+    "HTTP 200 is not success",
+    "result display is not success claim",
+    "broker does not prove human identity",
+    "browser same-origin check is not human identity",
+    "broker cannot activate a launch that is no longer current"
+  ],
+  "extensions": {
+    "default_host": "127.0.0.1",
+    "default_port": 7795,
+    "launch_index_read_only": true,
+    "preview_read_only": true,
+    "preview_may_read_network": true,
+    "preview_may_write_state": false,
+    "browser_act_same_origin_required": true,
+    "cli_api_without_origin_supported": true,
+    "explicit_consent_phrase": "ACT",
+    "act_binds_exact_previewed_proposal_address": true,
+    "ticket_issuance_owned_by": "ghot.activation-tickets@0",
+    "ticket_execution_owned_by": "ghot.activation-tickets@0",
+    "success_requires_verified_signed_receipt": true,
+    "broker_inferred_success": false
+  }
+}
