@@ -1,3 +1,5 @@
+> **012 note:** This document records the Experiment 011 shared-secret bridge. Experiment 012 supersedes its HMAC source-verification profile with reLATTE P-256 identity signatures and automatic identity-bound dispatch. See `docs/IDENTITY-AUTOMATIC-DISPATCH.md`.
+
 # Portable Lease Authority / reLATTE Crossing
 
 Experiment 010 made one shared queue safe for multiple local/shared-filesystem workers.
