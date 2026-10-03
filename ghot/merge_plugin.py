@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import shutil
 import uuid
 from pathlib import Path
@@ -132,6 +133,10 @@ def validate_package(package: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("unsupported merge plugin package version")
 
     package_id = _require_text(normalized.get("package_id"), "package_id")
+    if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", package_id) is None:
+        raise ValueError(
+            "package_id must use only letters, digits, dot, underscore, or hyphen"
+        )
     package_version = _require_text(
         normalized.get("package_version"),
         "package_version",
@@ -178,6 +183,14 @@ def validate_package(package: dict[str, Any]) -> dict[str, Any]:
     rel_path = Path(rel)
     if rel_path.is_absolute() or ".." in rel_path.parts:
         raise ValueError("plugin target path must be relative and non-traversing")
+    required_prefix = Path("knowledge") / "plugins" / package_id
+    try:
+        rel_path.relative_to(required_prefix)
+    except ValueError as exc:
+        raise ValueError(
+            "plugin target path must stay inside "
+            f"knowledge/plugins/{package_id}/"
+        ) from exc
     _require_text(target.get("state_kind"), "contract.target.state_kind")
     _require_text(target.get("state_version"), "contract.target.state_version")
 
