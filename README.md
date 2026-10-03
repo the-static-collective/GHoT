@@ -771,3 +771,69 @@ python3 ghot/state_parcel_sim.py
 ```
 
 See `docs/STATE-PARCELS.md` and `experiments/018-state-parcels.md`.
+
+
+## Merge admitted state locally
+
+019 adds schema-specific owner-local merge proposals over **ADMITTED** state
+parcels.
+
+The first contract accepts exactly:
+
+```text
+ghot.organ.state / v1
+selector = /body/offers
+```
+
+and proposes composition into:
+
+```text
+GHOT_HOME/knowledge/foreign-offers.v0.json
+ghot.foreign-offer-catalog / v0
+```
+
+Check eligibility and propose:
+
+```bash
+python3 ghot/state_merge.py eligible <parcel-id>
+python3 ghot/state_merge.py propose <parcel-id>
+```
+
+A proposal binds the exact admitted parcel, local BEFORE state address, and
+proposed AFTER state address. It changes nothing by itself.
+
+Inspect and decide:
+
+```bash
+python3 ghot/state_merge.py plans
+python3 ghot/state_merge.py apply <plan-id>
+python3 ghot/state_merge.py reject <plan-id> --note "not useful here"
+python3 ghot/state_merge.py receipts
+```
+
+APPLY revalidates the admitted parcel and the local BEFORE address before an
+atomic write. Existing target bytes are backed up exactly. If the target changed
+after proposal, the plan is refused.
+
+If a crash writes the exact proposed AFTER state but loses the receipt, retry
+can reconcile the missing receipt without rewriting the target.
+
+The first catalog is deliberately observational:
+
+```text
+REMEMBERED CAPABILITY != CURRENT CAPABILITY
+FOREIGN OFFER CATALOG != LIVE OFFER SET
+ADMIT != MERGE
+MERGE PROPOSAL != MERGE
+```
+
+Scheduling and execution still require current discovery, current offers, and
+the existing authority path.
+
+Deterministic proof:
+
+```bash
+python3 ghot/state_merge_sim.py
+```
+
+See `docs/STATE-MERGES.md` and `experiments/019-state-merges.md`.
