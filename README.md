@@ -1510,3 +1510,56 @@ python3 ghot/launch_descriptor_sim.py
 
 See `docs/TYPED-LAUNCH-DESCRIPTORS.md` and
 `experiments/027-typed-launch-descriptors.md`.
+
+
+## Activate exactly one destination operation
+
+028 adds explicit one-operation activation tickets after a 027 destination preflight.
+
+A READY launch still does nothing until the local operator explicitly issues:
+
+```bash
+python3 ghot/activation_ticket.py issue \
+  launch.json \
+  --confirm ACT
+```
+
+The ticket binds the exact launch descriptor and exact READY invocation proposal. Default lifetime is 120 seconds; maximum is 600 seconds.
+
+The BODY signs the ticket, but it explicitly records:
+
+```text
+human_identity_proven = false
+```
+
+Execution is separate:
+
+```bash
+python3 ghot/activation_ticket.py execute <ticket-id>
+```
+
+The ticket is atomically claimed first, then the destination runs the complete 027 preflight again.
+
+Signed outcomes:
+
+```text
+EXECUTED
+FAILED
+REFUSED_STALE
+REFUSED_PROPOSAL_CHANGED
+```
+
+Every outcome spends the ticket. There are no sessions, standing approvals, or remembered consent.
+
+```text
+READINESS != CONSENT
+CONSENT TICKET != BLANKET AUTHORITY
+ONE ACTION != SESSION AUTHORITY
+EXECUTION != SUCCESS
+BODY SIGNATURE != HUMAN IDENTITY
+SPENT TICKET != FUTURE CONSENT
+```
+
+Inspect with `python3 ghot/activation_ticket.py show <ticket-id>`.
+
+See `docs/ACTIVATION-TICKETS.md` and `experiments/028-activation-tickets.md`.
