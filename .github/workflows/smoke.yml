@@ -77,3 +77,6 @@ jobs:
 
       - name: Portable state parcel simulation
         run: python3 ghot/state_parcel_sim.py
+
+      - name: Owner-local state merge simulation
+        run: python3 ghot/state_merge_sim.py

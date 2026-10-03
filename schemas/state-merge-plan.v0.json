@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/state-merge-plan.v0.json",
+  "title": "GHoT State Merge Plan V0",
+  "type": "object",
+  "required": [
+    "kind","version","plan_id","contract_id","parcel_id","parcel_address",
+    "payload_address","admitted_ref","local_state_path","local_state_kind",
+    "local_state_version","local_state_existed","local_before_address",
+    "proposed_after_address","mode","created_at"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.state.merge.plan" },
+    "version": { "const": "0" },
+    "plan_id": { "type": "string", "minLength": 1 },
+    "contract_id": { "type": "string", "minLength": 1 },
+    "parcel_id": { "type": "string", "minLength": 1 },
+    "parcel_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "payload_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "admitted_ref": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "local_state_path": { "type": "string", "minLength": 1 },
+    "local_state_kind": { "type": "string", "minLength": 1 },
+    "local_state_version": { "type": "string", "minLength": 1 },
+    "local_state_existed": { "type": "boolean" },
+    "local_before_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "proposed_after_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "mode": { "const": "apply" },
+    "created_at": { "type": "string" }
+  }
+}

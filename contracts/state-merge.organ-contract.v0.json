@@ -1,0 +1,50 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.state-merge@0",
+  "version": "0",
+  "owner_project": "GHoT",
+  "description": "Owner-local, schema-specific state merge proposals over locally ADMITTED portable state parcels.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/state-merge-plan.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/state-merge-receipt.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/foreign-offer-catalog.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/state-parcel.v0.json"
+  ],
+  "allowed_dispositions": ["PROPOSE","APPLY","REJECT","RECONCILE"],
+  "effect_classes": ["none","local-state-change"],
+  "receipt_kinds": [],
+  "authority_scope": "owner-local",
+  "dependencies": [
+    "ghot.state-parcel-inbox@0",
+    "relatte.identity-signature/v0"
+  ],
+  "implementation_refs": [
+    "ghot/state_merge.py"
+  ],
+  "non_authorities": [
+    "ADMITTED parcel is not merge authorization",
+    "merge proposal is not merge",
+    "foreign offer catalog is not liveness",
+    "foreign offer catalog is not trust",
+    "foreign offer catalog is not authority",
+    "foreign offer catalog is not scheduling eligibility",
+    "merge receipt is not execution authority",
+    "source node id is not cryptographic identity"
+  ],
+  "extensions": {
+    "first_contract_id": "ghot.organ.offers->foreign-offer-catalog/v0",
+    "first_source_kind": "ghot.organ.state",
+    "first_source_version": "1",
+    "first_source_selector": "/body/offers",
+    "first_target_path": "GHOT_HOME/knowledge/foreign-offers.v0.json",
+    "first_target_kind": "ghot.foreign-offer-catalog",
+    "first_target_version": "0",
+    "owner_apply_required": true,
+    "network_apply_surface": false,
+    "before_after_addresses_required": true,
+    "stale_plan_refused": true,
+    "exact_backup_when_target_exists": true,
+    "interrupted_write_receipt_reconciliation": true
+  }
+}
