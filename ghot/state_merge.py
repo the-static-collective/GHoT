@@ -438,6 +438,8 @@ class StateMergeEngine:
         spec = MERGE_CONTRACTS[chosen]
 
         local_path, local_before, existed = self._local_state(spec)
+        if parcel_id in (local_before.get("merged_parcels") or []):
+            raise ValueError("parcel is already merged into this local state")
         after = identity_safe(spec["apply"](local_before, context))
         if (
             after.get("kind") != spec["local_kind"]
