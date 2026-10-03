@@ -1,0 +1,47 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.boot-presence@0",
+  "version": "0",
+  "owner_project": "GHoT",
+  "description": "Local startup provenance and current health surface for a booted GHoT organ.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/boot-manifest.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/startup-receipt.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/health.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/presence.v0.json"
+  ],
+  "allowed_dispositions": ["OBSERVE", "REPORT", "BLOCK"],
+  "effect_classes": ["none", "local-state-change"],
+  "receipt_kinds": [],
+  "authority_scope": "observation-only",
+  "dependencies": [
+    "ghot.organ-daemon@0",
+    "ghot.bootable-organ@0",
+    "relatte.identity-signature/v0"
+  ],
+  "implementation_refs": [
+    "ghot/boot_presence.py",
+    "ghot/organ.py",
+    "ghot/install_organ.py"
+  ],
+  "non_authorities": [
+    "health status is not lease authority",
+    "startup receipt is not task execution receipt",
+    "startup receipt does not prove code trustworthiness",
+    "git revision is provenance evidence, not admission",
+    "boot surface is not body identity",
+    "process id is not body identity",
+    "healthy does not mean permanently available",
+    "degraded does not revoke identity",
+    "presence endpoint is not a remote control surface"
+  ],
+  "extensions": {
+    "presence_http_default_host": "127.0.0.1",
+    "presence_http_default_port": 7791,
+    "startup_receipt_signed_by_body_key": true,
+    "manifest_rehash_required": true,
+    "unknown_state_version_blocks_health": true,
+    "automatic_state_migration": false
+  }
+}
