@@ -446,3 +446,50 @@ python3 ghot/authority_discovery_sim.py
 
 See `docs/AUTHORITY-PORCH-DISCOVERY.md` and
 `experiments/013-authority-porch-discovery.md`.
+
+
+## Become one organ process
+
+014 composes the running body into one supervised process:
+
+```bash
+python3 ghot/organ.py
+```
+
+That single command now keeps the BODY HTTP service and BODY discovery responder
+alive while repeatedly refreshing the local body/power/offers, maintaining the
+liveness field, resolving trusted authority porches, and running the portable
+lease worker.
+
+Current composed state is written to:
+
+```text
+.ghot/organ/state.v0.json
+```
+
+Subsystem failure is local. A failed peer discovery, authority scan, or lease
+worker cycle is recorded and retried without discarding the body's identity or
+the rest of the daemon. BODY HTTP/discovery service death is supervised and
+restart is attempted.
+
+A no-port diagnostic cycle is available:
+
+```bash
+python3 ghot/organ.py --once --no-serve
+```
+
+The daemon remains a supervisor, not a new authority:
+
+```text
+DAEMON != AUTHORITY
+SUPERVISION != ADMISSION
+SERVICE FAILURE != BODY DEATH
+```
+
+Deterministic proof:
+
+```bash
+python3 ghot/organ_sim.py
+```
+
+See `docs/ORGAN-DAEMON.md` and `experiments/014-organ-daemon.md`.
