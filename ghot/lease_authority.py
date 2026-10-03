@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Owner-local portable work-lease authority — Experiment 011.
+"""Owner-local portable work-lease authority — Experiments 011/012.
 
 The queue owner remains the sole writer of HOLD / claim authority. Remote
-workers cross requests as reLATTE-shaped envelopes and receive reLATTE-shaped
-receipts.
+workers cross requests as reLATTE CrossingEnvelopeV0 records and receive
+ReceiptV0 responses signed under the reLATTE P-256 identity profile.
 
-Remote workers cannot claim arbitrary held work. The owner must first prepare a
-short-lived DISPATCH naming the target worker and child energy plan.
+A remote worker cannot claim arbitrary held work. The owner first emits a
+DISPATCH bound to the selected BODY node id + P-256 particular/public key.
 """
 
 from __future__ import annotations
@@ -14,11 +14,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
-import secrets
 import time
 import uuid
-from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -26,23 +23,14 @@ from urllib.parse import urlparse
 
 from hold_queue import HoldQueue, iso_at
 from portable_lease import (
-    env_secret,
-    key_id,
+    IdentityKey,
     make_receipt,
     validate_crossing_shape,
-    verify_signature,
+    verify_crossing,
 )
 from reference_node import ROOT, node_id, persist
+from relatte_identity import normalize_public_jwk, particular_for_public_key
 from work_lease import WorkLeaseStore
-
-
-def parse_iso_epoch(value: str | None) -> float | None:
-    if not value:
-        return None
-    try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
-    except ValueError:
-        return None
 
 
 class LeaseAuthority:
@@ -51,7 +39,7 @@ class LeaseAuthority:
         root: Path | None = None,
         *,
         authority_id: str | None = None,
-        secret: str | bytes | None = None,
+        signer: IdentityKey | None = None,
     ) -> None:
         self.root = root or ROOT
         self.queue = HoldQueue(self.root)
@@ -60,7 +48,9 @@ class LeaseAuthority:
         self.receipts_dir = self.authority_root / "receipts"
         self.dispatches_dir = self.authority_root / "dispatches"
         self.authority_id = authority_id or self._load_authority_id()
-        self.secret = secret if secret is not None else self._load_secret(create=True)
+        self.signer = signer or IdentityKey.load_or_create(
+            self.root / "identity" / "authority-p256.pem"
+        )
 
     def _load_authority_id(self) -> str:
         self.authority_root.mkdir(parents=True, exist_ok=True)
@@ -73,47 +63,22 @@ class LeaseAuthority:
         path.write_text(value + "\n", encoding="utf-8")
         return value
 
-    def _load_secret(self, *, create: bool) -> str:
-        explicit = env_secret(required=False)
-        if explicit:
-            return explicit
-
-        self.authority_root.mkdir(parents=True, exist_ok=True)
-        path = self.authority_root / "shared-secret"
-        if path.exists():
-            value = path.read_text(encoding="utf-8").strip()
-            if value:
-                return value
-
-        if not create:
-            raise RuntimeError("portable lease authority secret is unavailable")
-
-        value = secrets.token_hex(32)
-        path.write_text(value + "\n", encoding="utf-8")
-        try:
-            path.chmod(0o600)
-        except OSError:
-            pass
-        return value
-
-    def secret_value(self) -> str:
-        if isinstance(self.secret, bytes):
-            return self.secret.decode("utf-8")
-        return self.secret
-
     def advert(self) -> dict[str, Any]:
+        public_key = self.signer.public_jwk()
         return {
             "kind": "ghot.lease.authority",
-            "version": "0",
+            "version": "1",
             "authority_id": self.authority_id,
             "owner_node_id": node_id(),
             "world_id": f"ghot-authority-world:{self.authority_id}",
+            "particular": self.signer.particular(),
+            "public_key": public_key,
             "capability_ref": "ghot.work-lease/v0",
             "crossing_schema": "relatte.crossing-envelope/v0",
             "receipt_schema": "relatte.receipt/v0",
-            "signing_profile": "shared-secret-hmac-v0",
-            "key_id": key_id(self.secret),
-            "public_key_identity_claimed": False,
+            "signing_profile": "relatte.identity-signature/v0",
+            "algorithm": "ECDSA-P256-SHA256",
+            "public_key_identity_claimed": True,
         }
 
     def _dispatch_path(self, hold_id: str) -> Path:
@@ -150,12 +115,13 @@ class LeaseAuthority:
     ) -> None:
         persist("dispatch-event", {
             "kind": "ghot.dispatch.event",
-            "version": "0",
+            "version": "1",
             "event_id": f"dispatch-event-{uuid.uuid4()}",
             "event_type": event_type,
             "dispatch_id": dispatch["dispatch_id"],
             "hold_id": dispatch["hold_id"],
             "target_worker_id": dispatch["target_worker_id"],
+            "target_particular": dispatch["target_particular"],
             "observed_at": iso_at(at),
             "detail": detail or {},
         })
@@ -188,12 +154,19 @@ class LeaseAuthority:
         hold_id: str,
         *,
         target_worker_id: str,
+        target_particular: str,
+        target_public_key: dict[str, Any],
         child_energy_plan_id: str,
+        target_node_id: str | None = None,
         ttl_seconds: float = 120.0,
         at: float | None = None,
     ) -> dict[str, Any]:
         if ttl_seconds <= 0:
             raise ValueError("ttl_seconds must be > 0")
+        public_key = normalize_public_jwk(target_public_key)
+        if target_particular != particular_for_public_key(public_key):
+            raise ValueError("target particular does not match target public key")
+
         when = time.time() if at is None else float(at)
 
         with self.leases.transition(hold_id):
@@ -237,11 +210,14 @@ class LeaseAuthority:
 
             dispatch = {
                 "kind": "ghot.dispatch",
-                "version": "0",
+                "version": "1",
                 "dispatch_id": f"dispatch-{uuid.uuid4()}",
                 "authority_id": self.authority_id,
                 "hold_id": hold_id,
                 "target_worker_id": target_worker_id,
+                "target_node_id": target_node_id or target_worker_id,
+                "target_particular": target_particular,
+                "target_public_key": public_key,
                 "child_energy_plan_id": child_energy_plan_id,
                 "capability": hold.get("capability"),
                 "payload": hold.get("payload"),
@@ -267,10 +243,32 @@ class LeaseAuthority:
             self._dispatch_event("dispatch.offered", dispatch, at=when)
             return dispatch
 
+    @staticmethod
+    def _source_identity(crossing: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+        signing = crossing.get("signing") or {}
+        public_key = normalize_public_jwk(signing.get("public_key") or {})
+        return str(crossing.get("source_particular") or ""), public_key
+
+    @staticmethod
+    def _dispatch_matches_source(
+        dispatch: dict[str, Any],
+        *,
+        worker_id: str,
+        source_particular: str,
+        source_public_key: dict[str, Any],
+    ) -> bool:
+        return (
+            dispatch.get("target_worker_id") == worker_id
+            and dispatch.get("target_particular") == source_particular
+            and dispatch.get("target_public_key") == source_public_key
+        )
+
     def poll_dispatches(
         self,
         worker_id: str,
         *,
+        source_particular: str,
+        source_public_key: dict[str, Any],
         at: float,
     ) -> list[dict[str, Any]]:
         if not self.dispatches_dir.is_dir():
@@ -287,7 +285,12 @@ class LeaseAuthority:
             if (
                 value
                 and value.get("status") == "offered"
-                and value.get("target_worker_id") == worker_id
+                and self._dispatch_matches_source(
+                    value,
+                    worker_id=worker_id,
+                    source_particular=source_particular,
+                    source_public_key=source_public_key,
+                )
             ):
                 results.append(value)
         return results
@@ -332,7 +335,7 @@ class LeaseAuthority:
     ) -> dict[str, Any]:
         receipt = make_receipt(
             crossing,
-            secret=self.secret,
+            signer=self.signer,
             authority_id=self.authority_id,
             kind=kind,
             semantic_effect=semantic_effect,
@@ -382,10 +385,10 @@ class LeaseAuthority:
                 at=when,
             )
 
-        if not verify_signature(self.secret, crossing):
+        if not verify_crossing(crossing):
             return self._refuse(
                 crossing,
-                "source verification failed for V0 shared-secret profile",
+                "source verification failed for reLATTE P-256 profile",
                 at=when,
             )
 
@@ -397,12 +400,18 @@ class LeaseAuthority:
                 at=when,
             )
 
+        source_particular, source_public_key = self._source_identity(crossing)
         action = effect["action"]
         worker_id = str(effect.get("worker_id") or "")
         hold_id = effect.get("hold_id")
 
         if action == "POLL":
-            dispatches = self.poll_dispatches(worker_id, at=when)
+            dispatches = self.poll_dispatches(
+                worker_id,
+                source_particular=source_particular,
+                source_public_key=source_public_key,
+                at=when,
+            )
             return self._respond(
                 crossing,
                 kind="VERIFIED",
@@ -470,17 +479,22 @@ class LeaseAuthority:
                         "dispatch_id does not match owner dispatch",
                         at=when,
                     )
-                if dispatch.get("target_worker_id") != worker_id:
+                if not self._dispatch_matches_source(
+                    dispatch,
+                    worker_id=worker_id,
+                    source_particular=source_particular,
+                    source_public_key=source_public_key,
+                ):
                     return self._refuse(
                         crossing,
-                        "dispatch belongs to a different worker",
+                        "dispatch belongs to a different cryptographic body",
                         at=when,
                     )
 
                 lease_seconds = float(effect.get("lease_seconds") or 60.0)
                 claim_result = self.leases.claim_locked(
                     current_hold,
-                    worker_id=worker_id,
+                    worker_id=source_particular,
                     lease_seconds=lease_seconds,
                     at=when,
                 )
@@ -502,7 +516,10 @@ class LeaseAuthority:
                     "dispatch.claimed",
                     dispatch,
                     at=when,
-                    detail={"lease_id": claim["lease_id"]},
+                    detail={
+                        "lease_id": claim["lease_id"],
+                        "source_particular": source_particular,
+                    },
                 )
 
             return self._respond(
@@ -525,11 +542,11 @@ class LeaseAuthority:
         if (
             current_claim is None
             or current_claim.get("lease_id") != lease_id
-            or current_claim.get("worker_id") != worker_id
+            or current_claim.get("worker_id") != source_particular
         ):
             return self._refuse(
                 crossing,
-                "worker does not own the current lease",
+                "cryptographic body does not own the current lease",
                 at=when,
             )
         if self.leases.is_claim_expired(current_claim, at=when):
@@ -576,11 +593,16 @@ class LeaseAuthority:
         if (
             dispatch is None
             or dispatch.get("lease_id") != current_claim.get("lease_id")
-            or dispatch.get("target_worker_id") != worker_id
+            or not self._dispatch_matches_source(
+                dispatch,
+                worker_id=worker_id,
+                source_particular=source_particular,
+                source_public_key=source_public_key,
+            )
         ):
             return self._refuse(
                 crossing,
-                "current lease is not backed by the owner dispatch",
+                "current lease is not backed by this body's owner dispatch",
                 at=when,
             )
 
@@ -708,7 +730,7 @@ class LeaseAuthority:
 
 def handler_for(authority: LeaseAuthority) -> type[BaseHTTPRequestHandler]:
     class Handler(BaseHTTPRequestHandler):
-        server_version = "GHoTLeaseAuthority/0"
+        server_version = "GHoTLeaseAuthority/1"
 
         def _json(self, status: int, value: Any) -> None:
             payload = json.dumps(value, indent=2).encode("utf-8")
@@ -759,10 +781,11 @@ def main() -> int:
     prepare.add_argument("hold_id")
     prepare.add_argument("worker_id")
     prepare.add_argument("child_energy_plan_id")
+    prepare.add_argument("target_particular")
+    prepare.add_argument("target_public_key_json")
     prepare.add_argument("--ttl", type=float, default=120.0)
 
     sub.add_parser("show")
-    sub.add_parser("show-secret")
 
     args = parser.parse_args()
     authority = LeaseAuthority()
@@ -771,14 +794,13 @@ def main() -> int:
         print(json.dumps(authority.advert(), indent=2))
         return 0
 
-    if args.command == "show-secret":
-        print(authority.secret_value())
-        return 0
-
     if args.command == "prepare":
         dispatch = authority.prepare_dispatch(
             args.hold_id,
             target_worker_id=args.worker_id,
+            target_node_id=args.worker_id,
+            target_particular=args.target_particular,
+            target_public_key=json.loads(args.target_public_key_json),
             child_energy_plan_id=args.child_energy_plan_id,
             ttl_seconds=args.ttl,
         )
