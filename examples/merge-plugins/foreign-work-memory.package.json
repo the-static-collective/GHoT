@@ -15,7 +15,7 @@
       "payload_type": "object"
     },
     "target": {
-      "relative_path": "knowledge/foreign-work.v0.json",
+      "relative_path": "knowledge/plugins/ghot.plugin.foreign-work-memory/foreign-work.v0.json",
       "state_kind": "ghot.foreign-work-catalog",
       "state_version": "0"
     },
