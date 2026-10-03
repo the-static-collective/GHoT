@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/merge-contract.v0.json",
+  "title": "GHoT Merge Contract Descriptor V0",
+  "type": "object",
+  "required": [
+    "kind","version","contract_id","title","description","category",
+    "source","target","authority_effect","freshness_effect","selection_required"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.merge-contract" },
+    "version": { "const": "0" },
+    "contract_id": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "category": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "object",
+      "required": ["state_kind","state_version","selector","payload_type"],
+      "properties": {
+        "state_kind": { "type": "string", "minLength": 1 },
+        "state_version": { "type": "string", "minLength": 1 },
+        "selector": { "type": "string" },
+        "payload_type": { "type": "string", "minLength": 1 }
+      }
+    },
+    "target": {
+      "type": "object",
+      "required": ["relative_path","state_kind","state_version"],
+      "properties": {
+        "relative_path": { "type": "string", "minLength": 1 },
+        "state_kind": { "type": "string", "minLength": 1 },
+        "state_version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "authority_effect": { "const": "none" },
+    "freshness_effect": { "const": "none" },
+    "selection_required": { "type": "boolean" }
+  }
+}
