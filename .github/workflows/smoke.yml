@@ -83,3 +83,6 @@ jobs:
 
       - name: Carried intent assignment simulation
         run: GHOT_HOME="$(mktemp -d)" python3 ghot/carried_intent_assignment_sim.py
+
+      - name: Carried intent signed dispatch simulation
+        run: GHOT_HOME="$(mktemp -d)" python3 ghot/carried_intent_dispatch_sim.py
