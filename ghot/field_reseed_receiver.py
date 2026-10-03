@@ -99,7 +99,7 @@ def _verified_crossing(value: Any, reseed: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("RELATTE_RESEED_BINDING_MISMATCH")
 
     expected_sha = _digest(reseed)
-    refs = adapter.get("payload_refs")
+    refs = crossing.get("payload_refs")
     if not isinstance(refs, list) or not any(
         isinstance(ref, dict)
         and ref.get("address") == "sha256:" + expected_sha
