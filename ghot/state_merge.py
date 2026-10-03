@@ -293,6 +293,20 @@ MERGE_CONTRACTS: dict[str, dict[str, Any]] = {
 }
 
 
+def merge_contract_registry(root: Path | None = None) -> dict[str, dict[str, Any]]:
+    registry = dict(MERGE_CONTRACTS)
+    state_root = root or ROOT
+    from merge_plugin import installed_contract_specs
+
+    for contract_id, spec in installed_contract_specs(state_root).items():
+        if contract_id in registry:
+            raise ValueError(
+                f"installed plugin contract collides with built-in contract: {contract_id}"
+            )
+        registry[contract_id] = spec
+    return registry
+
+
 def _plan_body(plan: dict[str, Any]) -> dict[str, Any]:
     return {
         "kind": plan.get("kind"),
@@ -448,6 +462,9 @@ class StateMergeEngine:
             self.root / "identity" / "body-p256.pem"
         )
 
+    def contract_registry(self) -> dict[str, dict[str, Any]]:
+        return merge_contract_registry(self.root)
+
     def _parcel_paths(self, parcel_id: str) -> tuple[Path, Path, Path]:
         safe = _safe_name(parcel_id)
         return (
@@ -504,7 +521,7 @@ class StateMergeEngine:
         payload = parcel.get("payload") or {}
         value_type = merge_payload_type(payload.get("value"))
         eligible = []
-        for contract_id, spec in sorted(MERGE_CONTRACTS.items()):
+        for contract_id, spec in sorted(self.contract_registry().items()):
             if (
                 source.get("state_kind") == spec["parcel_state_kind"]
                 and source.get("state_version") == spec["parcel_state_version"]
@@ -543,7 +560,7 @@ class StateMergeEngine:
         chosen = contract_id or eligible[0]
         if chosen not in eligible:
             raise ValueError("requested merge contract does not accept this parcel")
-        spec = MERGE_CONTRACTS[chosen]
+        spec = self.contract_registry()[chosen]
 
         local_path, local_before, existed = self._local_state(spec)
         if parcel_id in (local_before.get("merged_parcels") or []):
@@ -660,7 +677,7 @@ class StateMergeEngine:
                 return existing
             raise ValueError("merge plan was rejected")
 
-        spec = MERGE_CONTRACTS.get(str(plan.get("contract_id") or ""))
+        spec = self.contract_registry().get(str(plan.get("contract_id") or ""))
         if spec is None:
             raise ValueError("merge contract is no longer registered")
 
