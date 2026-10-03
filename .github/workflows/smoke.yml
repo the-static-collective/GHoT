@@ -74,3 +74,6 @@ jobs:
 
       - name: Explicit body choice simulation
         run: GHOT_HOME="$(mktemp -d)" python3 ghot/body_choice_sim.py
+
+      - name: External adapter manifest simulation
+        run: GHOT_HOME="$(mktemp -d)" python3 ghot/external_adapter_sim.py
