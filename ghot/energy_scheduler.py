@@ -54,6 +54,7 @@ def evaluate_energy_candidate(
 ) -> dict[str, Any]:
     body = candidate.get("body") or {}
     power = body.get("power") or {}
+    identity = body.get("identity") or {}
     offer = _matching_offer(body, capability)
     reasons: list[str] = []
     rejected: list[str] = []
@@ -112,6 +113,10 @@ def evaluate_energy_candidate(
     return {
         "node_id": candidate.get("node_id"),
         "location": candidate.get("location"),
+        "identity_available": identity.get("available"),
+        "identity_particular": identity.get("particular"),
+        "identity_public_key": identity.get("public_key"),
+        "identity_profile": identity.get("profile"),
         "url": candidate.get("url"),
         "field_state": candidate.get("field_state"),
         "capability": capability,
