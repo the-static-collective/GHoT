@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/activation-broker-result.v0.json",
+  "title": "GHoT Activation Broker Result V0",
+  "type": "object",
+  "required": [
+    "kind","version","launch_id","expected_proposal_address","ticket_id",
+    "ticket_issued","ticket_spent","receipt_id","receipt_verified",
+    "signed_status","signed_success","verified_success","result_address",
+    "error","success_claim_basis","broker_inferred_success","execution"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.activation-broker.result" },
+    "version": { "const": "0" },
+    "launch_id": { "type": "string", "minLength": 1 },
+    "expected_proposal_address": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "ticket_id": { "type": "string", "minLength": 1 },
+    "ticket_issued": { "const": true },
+    "ticket_spent": { "type": ["boolean","null"] },
+    "receipt_id": { "type": ["string","null"] },
+    "receipt_verified": { "type": "boolean" },
+    "signed_status": { "type": ["string","null"] },
+    "signed_success": { "type": ["boolean","null"] },
+    "verified_success": { "type": "boolean" },
+    "result_address": {
+      "type": ["string","null"],
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "error": { "type": ["object","null"] },
+    "success_claim_basis": {
+      "type": ["string","null"],
+      "enum": [null,"verified-signed-execution-receipt"]
+    },
+    "broker_inferred_success": { "const": false },
+    "execution": { "type": "object" }
+  }
+}
