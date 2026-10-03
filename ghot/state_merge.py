@@ -172,17 +172,105 @@ def merge_foreign_offers(
     })
 
 
+def empty_foreign_presence_catalog() -> dict[str, Any]:
+    return {
+        "kind": "ghot.foreign-presence-catalog",
+        "version": "0",
+        "entries": [],
+        "merged_parcels": [],
+    }
+
+
+def merge_foreign_presence(
+    local_state: dict[str, Any],
+    admitted_context: dict[str, Any],
+) -> dict[str, Any]:
+    if (
+        local_state.get("kind") != "ghot.foreign-presence-catalog"
+        or local_state.get("version") != "0"
+    ):
+        raise ValueError("local state must be ghot.foreign-presence-catalog/v0")
+
+    parcel = admitted_context["parcel"]
+    payload = parcel["payload"]["value"]
+    if not isinstance(payload, dict):
+        raise ValueError("/presence parcel payload must be an object")
+
+    entry = identity_safe({
+        "source_particular": parcel["source"]["particular"],
+        "source_node_id": parcel["source"]["node_id"],
+        "boot_id": payload.get("boot_id"),
+        "manifest_address": payload.get("manifest_address"),
+        "startup_receipt_id": payload.get("startup_receipt_id"),
+        "parcel_id": parcel["parcel_id"],
+        "payload_address": parcel["payload"]["address"],
+    })
+
+    entries_by_parcel: dict[str, dict[str, Any]] = {}
+    for raw in local_state.get("entries") or []:
+        if not isinstance(raw, dict):
+            raise ValueError("local presence catalog entry must be an object")
+        parcel_id = raw.get("parcel_id")
+        if not isinstance(parcel_id, str) or not parcel_id:
+            raise ValueError("local presence catalog entry has invalid parcel id")
+        entries_by_parcel[parcel_id] = identity_safe(raw)
+    entries_by_parcel[parcel["parcel_id"]] = entry
+
+    entries = [
+        entries_by_parcel[key]
+        for key in sorted(entries_by_parcel)
+    ]
+    merged_parcels = sorted(set(
+        [
+            str(item)
+            for item in (local_state.get("merged_parcels") or [])
+            if isinstance(item, str)
+        ]
+        + [parcel["parcel_id"]]
+    ))
+
+    return identity_safe({
+        "kind": "ghot.foreign-presence-catalog",
+        "version": "0",
+        "entries": entries,
+        "merged_parcels": merged_parcels,
+    })
+
+
 MERGE_CONTRACTS: dict[str, dict[str, Any]] = {
     "ghot.organ.offers->foreign-offer-catalog/v0": {
         "contract_id": "ghot.organ.offers->foreign-offer-catalog/v0",
+        "title": "Remember reported body offers",
+        "description": "Merge an admitted /body/offers snapshot into observational foreign capability memory.",
+        "category": "observational-capability-memory",
         "parcel_state_kind": "ghot.organ.state",
         "parcel_state_version": "1",
         "parcel_selector": "/body/offers",
         "local_rel": "knowledge/foreign-offers.v0.json",
         "local_kind": "ghot.foreign-offer-catalog",
         "local_version": "0",
+        "authority_effect": "none",
+        "freshness_effect": "none",
+        "selection_required": True,
         "initial": empty_foreign_offer_catalog,
         "apply": merge_foreign_offers,
+    },
+    "ghot.organ.presence->foreign-presence-catalog/v0": {
+        "contract_id": "ghot.organ.presence->foreign-presence-catalog/v0",
+        "title": "Remember foreign boot presence",
+        "description": "Merge an admitted /presence snapshot into historical foreign wake/provenance memory.",
+        "category": "observational-presence-memory",
+        "parcel_state_kind": "ghot.organ.state",
+        "parcel_state_version": "1",
+        "parcel_selector": "/presence",
+        "local_rel": "knowledge/foreign-presence.v0.json",
+        "local_kind": "ghot.foreign-presence-catalog",
+        "local_version": "0",
+        "authority_effect": "none",
+        "freshness_effect": "none",
+        "selection_required": True,
+        "initial": empty_foreign_presence_catalog,
+        "apply": merge_foreign_presence,
     },
 }
 
