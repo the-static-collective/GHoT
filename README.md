@@ -464,7 +464,7 @@ lease worker.
 Current composed state is written to:
 
 ```text
-.ghot/organ/state.v0.json
+.ghot/organ/state.v1.json
 ```
 
 Subsystem failure is local. A failed peer discovery, authority scan, or lease
@@ -630,3 +630,75 @@ python3 ghot/presence_sim.py
 
 See `docs/BOOT-PRESENCE.md` and
 `experiments/016-boot-presence.md`.
+
+
+## Cross durable state generations
+
+017 turns state upgrades into explicit, signed transitions.
+
+Inspect current durable state:
+
+```bash
+python3 ghot/state_migration.py inspect
+```
+
+See available exact migrations:
+
+```bash
+python3 ghot/state_migration.py plan
+```
+
+Apply only registered migrations:
+
+```bash
+python3 ghot/state_migration.py apply
+```
+
+Inspect signed migration receipts:
+
+```bash
+python3 ghot/state_migration.py receipts
+```
+
+The first real migration is:
+
+```text
+ghot.organ.state / 0
+        ↓
+ghot.organ.state / 1
+```
+
+from `GHOT_HOME/organ/state.v0.json` to `GHOT_HOME/organ/state.v1.json`.
+
+V1 links the current daemon state to its boot presence: `presence.boot_id`,
+`presence.manifest_address`, and `presence.startup_receipt_id`.
+
+Migration preserves an exact source backup, computes before/after semantic
+addresses, atomically writes the target, verifies it, and BODY-signs a
+migration receipt. The legacy v0 source remains preserved as a witness.
+
+If a crash writes v1 but loses the receipt, the next startup can enter
+`reconcile-receipt` only when the existing v1 state exactly equals the
+declared transform of the preserved v0 source.
+
+Unknown versions remain blocked.
+
+```text
+STATE CHANGE SHOULD LEAVE A RECEIPT
+KNOWN MIGRATION != PERMISSION TO REWRITE UNKNOWN STATE
+MIGRATION RECEIPT != EXECUTION RECEIPT
+BACKUP != CANONICAL STATE
+```
+
+Normal `ghot/organ.py` startup applies exact registered migrations before
+creating the new boot manifest. Use `--no-auto-migrate` to inspect/block
+without applying them.
+
+Deterministic proof:
+
+```bash
+python3 ghot/state_migration_sim.py
+```
+
+See `docs/STATE-MIGRATIONS.md` and
+`experiments/017-state-migration-receipts.md`.
