@@ -25,9 +25,21 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, quote, urlparse
 
-from composition_want import CompositionWantStore
+from composition_want import (
+    derive_observation_id,
+    derive_request_link_id,
+    derive_want_id,
+)
+from merge_plugin import (
+    compile_package,
+    validate_package,
+    verify_install_receipt,
+)
 from reference_node import ROOT
 from relatte_identity import identity_safe, timestamp_now
+from state_merge import MERGE_CONTRACTS, merge_payload_type
+from state_migration import semantic_address
+from state_parcel import verify_bundle
 
 
 SURFACE_KIND = "ghot.curiosity.surface"
@@ -158,10 +170,250 @@ def _candidate_index(
     return rows, new_in_latest
 
 
+class ReadOnlyCuriosityStore:
+    """Read 024/020 state without constructing any write-capable helper."""
+
+    def __init__(self, root: Path) -> None:
+        self.root = root
+        self.base = self.root / "composition-wants"
+        self.wants_dir = self.base / "wants"
+        self.observations_dir = self.base / "observations"
+        self.request_links_dir = self.base / "request-links"
+
+    def load_want(self, want_id: str) -> dict[str, Any]:
+        path = self.wants_dir / (
+            want_id.replace(":", "_").replace("/", "_") + ".json"
+        )
+        if not path.exists():
+            raise ValueError("unknown composition want")
+        want = _read_object(path)
+        if want.get("want_id") != derive_want_id(want):
+            raise ValueError("composition want content address mismatch")
+        return want
+
+    def observations(
+        self,
+        *,
+        want_id: str,
+    ) -> list[dict[str, Any]]:
+        if not self.observations_dir.is_dir():
+            return []
+        result = []
+        for path in sorted(self.observations_dir.glob("*.json")):
+            try:
+                value = _read_object(path)
+            except Exception:
+                continue
+            if value.get("want_id") != want_id:
+                continue
+            if value.get("observation_id") != derive_observation_id(value):
+                continue
+            result.append(value)
+        result.sort(key=lambda item: str(item.get("observed_at") or ""))
+        return result
+
+    def request_links(
+        self,
+        *,
+        want_id: str,
+    ) -> list[dict[str, Any]]:
+        if not self.request_links_dir.is_dir():
+            return []
+        result = []
+        for path in sorted(self.request_links_dir.glob("*.json")):
+            try:
+                value = _read_object(path)
+            except Exception:
+                continue
+            if value.get("want_id") != want_id:
+                continue
+            if value.get("link_id") != derive_request_link_id(value):
+                continue
+            result.append(value)
+        result.sort(key=lambda item: str(item.get("requested_at") or ""))
+        return result
+
+    def _installed_contract_registry(self) -> dict[str, dict[str, Any]]:
+        registry = dict(MERGE_CONTRACTS)
+        packages_dir = self.root / "merge-plugins" / "packages"
+        receipts_dir = self.root / "merge-plugins" / "receipts"
+        if not packages_dir.is_dir():
+            return registry
+
+        for manifest_path in sorted(
+            packages_dir.glob("*/manifest.v0.json")
+        ):
+            try:
+                package = _read_object(manifest_path)
+                checked = validate_package(package)
+                package_id = checked["package_id"]
+                receipt_path = receipts_dir / (
+                    package_id.replace("/", "_").replace(":", "_")
+                    + ".json"
+                )
+                if not receipt_path.exists():
+                    continue
+                receipt = _read_object(receipt_path)
+                if not verify_install_receipt(receipt):
+                    continue
+                if (
+                    receipt.get("package_address")
+                    != checked["package_address"]
+                ):
+                    continue
+                spec, _initial, _apply = compile_package(package)
+                contract_id = str(spec["contract_id"])
+                if contract_id in registry:
+                    raise ValueError(
+                        "installed plugin contract collides with existing contract"
+                    )
+                registry[contract_id] = spec
+            except Exception:
+                continue
+        return registry
+
+    def _admitted_context(self, parcel_id: str) -> dict[str, Any]:
+        safe = parcel_id.replace(":", "_").replace("/", "_")
+        inbox_path = (
+            self.root / "state-parcels" / "inbox" / f"{safe}.json"
+        )
+        raw_path = (
+            self.root / "state-parcels" / "raw" / f"{safe}.json"
+        )
+        admitted_path = (
+            self.root / "state-parcels" / "admitted" / f"{safe}.json"
+        )
+        for path in (inbox_path, raw_path, admitted_path):
+            if not path.exists():
+                raise ValueError("parcel is not locally ADMITTED")
+
+        inbox = _read_object(inbox_path)
+        if inbox.get("status") != "ADMIT":
+            raise ValueError("parcel is not locally ADMITTED")
+
+        bundle = _read_object(raw_path)
+        if not verify_bundle(bundle):
+            raise ValueError("stored parcel bundle no longer verifies")
+        parcel = bundle.get("parcel") or {}
+        if parcel.get("parcel_id") != parcel_id:
+            raise ValueError("raw parcel id mismatch")
+
+        admitted = _read_object(admitted_path)
+        if admitted.get("parcel_id") != parcel_id:
+            raise ValueError("admitted parcel id mismatch")
+        expected = {
+            "kind": admitted.get("kind"),
+            "version": admitted.get("version"),
+            "parcel_id": admitted.get("parcel_id"),
+            "admitted_at": admitted.get("admitted_at"),
+            "source": parcel.get("source"),
+            "migration": parcel.get("migration"),
+            "payload": parcel.get("payload"),
+            "note": admitted.get("note"),
+            "canonical_state_mutated": False,
+        }
+        if identity_safe(admitted) != identity_safe(expected):
+            raise ValueError(
+                "admitted materialization no longer matches raw parcel"
+            )
+        return {
+            "parcel": parcel,
+            "admitted": admitted,
+            "admitted_ref": semantic_address(identity_safe(admitted)),
+        }
+
+    def inspect(self, parcel_id: str) -> dict[str, Any]:
+        context = self._admitted_context(parcel_id)
+        parcel = context["parcel"]
+        source = parcel.get("source") or {}
+        payload = parcel.get("payload") or {}
+        value_type = merge_payload_type(payload.get("value"))
+
+        rows = []
+        for contract_id, spec in sorted(
+            self._installed_contract_registry().items()
+        ):
+            reasons = []
+            if source.get("state_kind") != spec.get("parcel_state_kind"):
+                reasons.append("state-kind-mismatch")
+            if (
+                source.get("state_version")
+                != spec.get("parcel_state_version")
+            ):
+                reasons.append("state-version-mismatch")
+            if payload.get("selector") != spec.get("parcel_selector"):
+                reasons.append("selector-mismatch")
+            if value_type != spec.get("payload_type"):
+                reasons.append("payload-type-mismatch")
+
+            target_status = "not-checked"
+            local_address = None
+            if not reasons:
+                try:
+                    local_path = self.root / str(spec["local_rel"])
+                    if local_path.exists():
+                        local_state = _read_object(local_path)
+                        if (
+                            local_state.get("kind")
+                            != spec.get("local_kind")
+                            or local_state.get("version")
+                            != spec.get("local_version")
+                        ):
+                            raise ValueError(
+                                "local merge target has unsupported kind/version"
+                            )
+                        existed = True
+                    else:
+                        local_state = identity_safe(spec["initial"]())
+                        existed = False
+                    target_status = "merge" if existed else "create"
+                    local_address = semantic_address(
+                        identity_safe(local_state)
+                    )
+                    if parcel_id in (
+                        local_state.get("merged_parcels") or []
+                    ):
+                        reasons.append("already-merged")
+                except Exception as exc:
+                    target_status = "blocked"
+                    reasons.append(
+                        f"local-target-blocked:{type(exc).__name__}"
+                    )
+
+            rows.append({
+                "contract_id": contract_id,
+                "compatible": len(reasons) == 0,
+                "reasons": reasons,
+                "target_status": target_status,
+                "local_before_address": local_address,
+            })
+
+        return {
+            "kind": "ghot.merge-contract.inspection",
+            "version": "0",
+            "parcel_id": parcel_id,
+            "parcel_address": parcel.get("parcel_address"),
+            "payload_address": payload.get("address"),
+            "admitted_ref": context["admitted_ref"],
+            "source": {
+                "state_kind": source.get("state_kind"),
+                "state_version": source.get("state_version"),
+                "selector": payload.get("selector"),
+                "payload_type": value_type,
+            },
+            "contracts": rows,
+            "compatible_contract_ids": [
+                row["contract_id"]
+                for row in rows
+                if row["compatible"] is True
+            ],
+        }
+
+
 class CuriousDoorsSurface:
     def __init__(self, root: Path | None = None) -> None:
         self.root = root or ROOT
-        self.store = CompositionWantStore(self.root)
+        self.store = ReadOnlyCuriosityStore(self.root)
 
     def _matching_plugin_parcels(
         self,
@@ -335,7 +587,7 @@ class CuriousDoorsSurface:
             package_addresses=package_addresses,
         )
         try:
-            current = self.store.pantry.inspect(str(want["parcel_id"]))
+            current = self.store.inspect(str(want["parcel_id"]))
             current_error = None
         except Exception as exc:
             current = None
@@ -364,7 +616,7 @@ class CuriousDoorsSurface:
         compatible: list[str] = []
         projection_error: str | None = None
         try:
-            current = self.store.pantry.inspect(str(want["parcel_id"]))
+            current = self.store.inspect(str(want["parcel_id"]))
             compatible = list(
                 current.get("compatible_contract_ids") or []
             )
