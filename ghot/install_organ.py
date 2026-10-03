@@ -59,6 +59,8 @@ Type=simple
 WorkingDirectory={q_systemd(repo_root)}
 Environment=PYTHONUNBUFFERED=1
 Environment=GHOT_HOME={q_systemd(state_home)}
+Environment=GHOT_BOOT_SURFACE=systemd-user
+Environment=GHOT_BOOT_INSTANCE=ghot-organ.service
 ExecStart={q_systemd(python)} {q_systemd(repo_root / "ghot" / "organ.py")}
 Restart=on-failure
 RestartSec=5
@@ -94,6 +96,8 @@ User={user}
 WorkingDirectory={q_systemd(repo_root)}
 Environment=PYTHONUNBUFFERED=1
 Environment=GHOT_HOME={q_systemd(state_home)}
+Environment=GHOT_BOOT_SURFACE=live-usb-systemd
+Environment=GHOT_BOOT_INSTANCE=ghot-organ.service
 ExecStart={q_systemd(python)} {q_systemd(repo_root / "ghot" / "organ.py")}
 Restart=on-failure
 RestartSec=5
@@ -123,6 +127,8 @@ set -eu
 
 export GHOT_HOME={shlex.quote(str(state_home))}
 export PYTHONUNBUFFERED=1
+export GHOT_BOOT_SURFACE=termux-boot
+export GHOT_BOOT_INSTANCE=ghot-organ
 
 mkdir -p {shlex.quote(str(state_home))} {shlex.quote(str(log_dir))}
 cd {shlex.quote(str(repo_root))}
