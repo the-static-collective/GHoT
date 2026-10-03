@@ -295,6 +295,18 @@ class LeaseAuthority:
                 results.append(value)
         return results
 
+    def get_dispatch(
+        self,
+        hold_id: str,
+        *,
+        at: float | None = None,
+    ) -> dict[str, Any] | None:
+        when = time.time() if at is None else float(at)
+        return self._expire_dispatch_if_due(
+            self._read_dispatch(hold_id),
+            at=when,
+        )
+
     def _receipt_path(self, crossing_id: str) -> Path:
         digest = hashlib.sha256(crossing_id.encode("utf-8")).hexdigest()
         return self.receipts_dir / f"{digest}.json"
