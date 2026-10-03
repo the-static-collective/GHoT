@@ -1,0 +1,47 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.authority-porch-discovery@0",
+  "version": "0",
+  "owner_project": "GHoT",
+  "description": "Discover current roads to signed lease-authority porches while keeping trust and admission owner-local.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/authority-advert.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/authority-trust.v0.json"
+  ],
+  "allowed_dispositions": ["OBSERVE", "ADMIT", "FORGET", "IGNORE"],
+  "effect_classes": ["none", "local-state-change"],
+  "receipt_kinds": [],
+  "authority_scope": "owner-local",
+  "dependencies": [
+    "ghot.authority.advert/v0",
+    "ghot.authority.trust/v0",
+    "relatte.identity-signature/v0"
+  ],
+  "implementation_refs": [
+    "ghot/authority_discovery.py",
+    "ghot/lease_authority.py",
+    "ghot/lease_remote.py"
+  ],
+  "non_authorities": [
+    "network address is not authority identity",
+    "discovery is not trust",
+    "valid signature is not admission",
+    "freshness is not trust",
+    "remembered authority is not human identity",
+    "observed route may change without changing authority identity"
+  ],
+  "extensions": {
+    "automatic_trust_on_first_use": false,
+    "signed_advert_required": true,
+    "fresh_advert_required": true,
+    "remembered_identity_fields": [
+      "particular",
+      "public_key",
+      "authority_id",
+      "world_id"
+    ],
+    "route_identity_bearing": false,
+    "pin_environment_variable": "GHOT_AUTHORITY_PARTICULAR"
+  }
+}
