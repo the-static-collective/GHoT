@@ -20,7 +20,7 @@ from typing import Any
 
 from reference_node import ROOT
 from relatte_identity import identity_safe, jcs_bytes, timestamp_now
-from state_merge import MERGE_CONTRACTS, StateMergeEngine, merge_payload_type
+from state_merge import StateMergeEngine, merge_payload_type
 from state_migration import semantic_address
 
 
@@ -136,7 +136,7 @@ class MergeContractPantry:
 
     def contracts(self) -> list[dict[str, Any]]:
         result = []
-        for contract_id, spec in sorted(MERGE_CONTRACTS.items()):
+        for contract_id, spec in sorted(self.engine.contract_registry().items()):
             descriptor = contract_descriptor(contract_id, spec)
             result.append({
                 **descriptor,
@@ -152,7 +152,7 @@ class MergeContractPantry:
         value_type = merge_payload_type(payload.get("value"))
 
         rows = []
-        for contract_id, spec in sorted(MERGE_CONTRACTS.items()):
+        for contract_id, spec in sorted(self.engine.contract_registry().items()):
             reasons = []
             if source.get("state_kind") != spec.get("parcel_state_kind"):
                 reasons.append("state-kind-mismatch")
@@ -281,7 +281,7 @@ class MergeContractPantry:
     def propose(self, selection_id: str) -> dict[str, Any]:
         selection = self._load_selection(selection_id)
         contract_id = str(selection.get("contract_id") or "")
-        spec = MERGE_CONTRACTS.get(contract_id)
+        spec = self.engine.contract_registry().get(contract_id)
         if spec is None:
             raise ValueError("selected merge contract is no longer installed")
         if selection.get("contract_address") != contract_address(contract_id, spec):
