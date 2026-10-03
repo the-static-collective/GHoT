@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/authority-trust.v0.json",
+  "title": "GHoT Authority Trust Record V0",
+  "type": "object",
+  "required": [
+    "kind","version","particular","public_key","authority_id","world_id",
+    "admitted_at","source"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.authority.trust" },
+    "version": { "const": "0" },
+    "particular": { "type": "string", "minLength": 1 },
+    "public_key": { "type": "object" },
+    "authority_id": { "type": "string", "minLength": 1 },
+    "world_id": { "type": "string", "minLength": 1 },
+    "admitted_at": { "type": "string" },
+    "last_route": { "type": ["string","null"] },
+    "source": { "const": "explicit-operator-introduction" }
+  }
+}
