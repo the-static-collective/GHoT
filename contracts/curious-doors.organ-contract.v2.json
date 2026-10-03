@@ -1,0 +1,53 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.curious-doors@2",
+  "version": "2",
+  "owner_project": "GHoT",
+  "description": "Project read-only Curious Doors with legacy human navigation plus separate typed Static-OS launch descriptors containing no executable command, consent, or permission.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/curiosity-door.v2.json",
+    "https://the-static-collective.github.io/GHoT/schemas/curiosity-surface.v2.json",
+    "https://the-static-collective.github.io/GHoT/schemas/launch-descriptor.v0.json"
+  ],
+  "allowed_dispositions": [
+    "SNAPSHOT",
+    "RENDER_HTML",
+    "SERVE_READ_ONLY",
+    "NAVIGATE_EVIDENCE",
+    "DISPLAY_COMMAND_INTENT",
+    "PROJECT_LAUNCH_DESCRIPTOR",
+    "FETCH_LAUNCH_DESCRIPTOR"
+  ],
+  "effect_classes": ["none"],
+  "receipt_kinds": [],
+  "authority_scope": "projection-and-routing-context-only",
+  "dependencies": [
+    "ghot.curious-doors@1",
+    "ghot.launch-routing@0"
+  ],
+  "implementation_refs": [
+    "ghot/curious_doors.py",
+    "ghot/launch_descriptor.py"
+  ],
+  "non_authorities": [
+    "launch descriptor is not command",
+    "launch descriptor is not executable URL",
+    "launch descriptor is not consent",
+    "launch descriptor is not permission transfer",
+    "surface does not perform destination preflight",
+    "surface does not route automatically",
+    "surface does not execute preflight proposal",
+    "human navigation channel and machine launch channel are distinct"
+  ],
+  "extensions": {
+    "legacy_navigation_preserved": true,
+    "typed_launch_channel": true,
+    "launches_execute": false,
+    "launch_context_grants_consent": false,
+    "launch_context_transfers_permission": false,
+    "destination_revalidation_required": true,
+    "launch_fetch_get_only": true,
+    "launch_fetch_path": "/launch?launch_id=<launch-id>"
+  }
+}

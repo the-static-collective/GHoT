@@ -101,3 +101,6 @@ jobs:
 
       - name: Curious Door navigation simulation
         run: python3 ghot/curious_navigation_sim.py
+
+      - name: Typed launch descriptor simulation
+        run: python3 ghot/launch_descriptor_sim.py

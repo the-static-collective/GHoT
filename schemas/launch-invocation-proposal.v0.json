@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/launch-invocation-proposal.v0.json",
+  "title": "GHoT Launch Invocation Proposal V0",
+  "type": "object",
+  "required": [
+    "kind","version","argv","executes","authorization_granted",
+    "consent_granted","requires_separate_operator_action",
+    "execution_revalidation_required"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.launch.invocation-proposal" },
+    "version": { "const": "0" },
+    "argv": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "executes": { "const": false },
+    "authorization_granted": { "const": false },
+    "consent_granted": { "const": false },
+    "requires_separate_operator_action": { "const": true },
+    "execution_revalidation_required": { "const": true }
+  }
+}

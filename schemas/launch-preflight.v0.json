@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/launch-preflight.v0.json",
+  "title": "GHoT Launch Preflight V0",
+  "type": "object",
+  "required": [
+    "kind","version","launch_id","destination","status","checks","proposal",
+    "note","preflighted_at","destination_revalidated",
+    "network_read_performed","executes","authorization_granted",
+    "consent_granted","permission_transfer",
+    "execution_revalidation_required"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.launch.preflight" },
+    "version": { "const": "0" },
+    "launch_id": { "type": ["string","null"] },
+    "destination": { "type": ["object","null"] },
+    "status": { "enum": ["ready","stale","blocked"] },
+    "checks": { "type": "array", "items": { "type": "object" } },
+    "proposal": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "launch-invocation-proposal.v0.json" }
+      ]
+    },
+    "note": { "type": ["string","null"] },
+    "preflighted_at": { "type": "string" },
+    "destination_revalidated": { "type": "boolean" },
+    "network_read_performed": { "type": "boolean" },
+    "executes": { "const": false },
+    "authorization_granted": { "const": false },
+    "consent_granted": { "const": false },
+    "permission_transfer": { "const": false },
+    "execution_revalidation_required": { "const": true }
+  }
+}

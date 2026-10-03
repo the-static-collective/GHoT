@@ -1418,3 +1418,95 @@ python3 ghot/curious_navigation_sim.py
 
 See `docs/CURIOUS-DOOR-NAVIGATION.md` and
 `experiments/026-curious-door-navigation.md`.
+
+
+## Carry possible actions without carrying authority
+
+027 adds a machine-portable launch channel beside 026's human navigation.
+
+Each Curious Door v2 now contains:
+
+```text
+navigation   # evidence links + inert command text
+launches     # typed Static-OS launch descriptors
+```
+
+A launch descriptor contains only:
+
+```text
+source door/WANT context
+destination app id
+owner contract
+operation
+bounded context
+declared possible effect
+revalidation requirements
+```
+
+It deliberately contains no argv, shell command, executable URL, consent token,
+or authorization.
+
+Every descriptor says:
+
+```text
+executes = false
+permission_transfer = false
+consent_granted = false
+destination_revalidation = true
+execution_revalidation = true
+```
+
+Curious Doors exposes descriptors read-only:
+
+```text
+GET /launch?launch_id=<launch-id>
+```
+
+A Static-OS shell may route a user-selected descriptor to destination preflight:
+
+```bash
+python3 ghot/launch_preflight.py verify /path/to/launch.json
+python3 ghot/launch_preflight.py preflight /path/to/launch.json
+```
+
+Preflight returns:
+
+```text
+ready
+stale
+blocked
+```
+
+Even `ready` is non-authoritative:
+
+```text
+executes = false
+authorization_granted = false
+consent_granted = false
+permission_transfer = false
+```
+
+Only after destination revalidation may a fresh inert argv proposal be returned.
+The proposal still requires separate operator action and another execution-time
+revalidation.
+
+Candidate request preflight performs a fresh signed exchange-advert GET and
+refuses an unshared or changed candidate without sending a request.
+
+```text
+LAUNCH != EXECUTE
+CONTEXT != CONSENT
+ROUTE != PERMISSION
+DESCRIPTOR != COMMAND
+PREFLIGHT READY != AUTHORIZATION
+DESTINATION REVALIDATES AUTHORITY
+```
+
+Deterministic proof:
+
+```bash
+python3 ghot/launch_descriptor_sim.py
+```
+
+See `docs/TYPED-LAUNCH-DESCRIPTORS.md` and
+`experiments/027-typed-launch-descriptors.md`.

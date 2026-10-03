@@ -30,6 +30,13 @@ from composition_want import (
     derive_request_link_id,
     derive_want_id,
 )
+from launch_descriptor import (
+    APP_COMPOSITION_WANTS,
+    APP_MERGE_PANTRY,
+    APP_PLUGIN_PARCEL,
+    make_launch_descriptor,
+    verify_launch_descriptor,
+)
 from merge_plugin import (
     compile_package,
     validate_package,
@@ -43,9 +50,9 @@ from state_parcel import verify_bundle
 
 
 SURFACE_KIND = "ghot.curiosity.surface"
-SURFACE_VERSION = "1"
+SURFACE_VERSION = "2"
 DOOR_KIND = "ghot.curiosity.door"
-DOOR_VERSION = "1"
+DOOR_VERSION = "2"
 
 STATE_OPEN = "open-gap"
 STATE_CANDIDATE = "candidate-observed"
@@ -573,6 +580,157 @@ class CuriousDoorsSurface:
 
         return destinations
 
+    def _launches(
+        self,
+        *,
+        want: dict[str, Any],
+        state: str,
+        candidates: list[dict[str, Any]],
+        plugin_parcels: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        want_id = str(want["want_id"])
+        door_id = f"curious-door:{want_id}"
+        launches: list[dict[str, Any]] = [
+            make_launch_descriptor(
+                label="Open this WANT in Composition Wants",
+                door_id=door_id,
+                want_id=want_id,
+                door_state=state,
+                app_id=APP_COMPOSITION_WANTS,
+                operation="show-want",
+                context={
+                    "want_id": want_id,
+                },
+                effect_if_executed="read-only",
+            )
+        ]
+
+        if state in {STATE_OPEN, STATE_CANDIDATE}:
+            launches.append(make_launch_descriptor(
+                label="Refresh observed grammar candidates",
+                door_id=door_id,
+                want_id=want_id,
+                door_state=state,
+                app_id=APP_COMPOSITION_WANTS,
+                operation="refresh-candidates",
+                context={
+                    "want_id": want_id,
+                },
+                effect_if_executed=(
+                    "network-read+local-observation-write"
+                ),
+            ))
+
+        if state == STATE_CANDIDATE:
+            for candidate in candidates:
+                candidate_id = candidate.get("candidate_id")
+                if not isinstance(candidate_id, str) or not candidate_id:
+                    continue
+                launches.append(make_launch_descriptor(
+                    label=(
+                        "Request candidate "
+                        + str(candidate.get("package_id") or candidate_id)
+                    ),
+                    door_id=door_id,
+                    want_id=want_id,
+                    door_state=state,
+                    app_id=APP_COMPOSITION_WANTS,
+                    operation="request-candidate",
+                    context={
+                        "want_id": want_id,
+                        "candidate_id": candidate_id,
+                        "package_id": candidate.get("package_id"),
+                        "package_address": candidate.get("package_address"),
+                        "contract_id": candidate.get("contract_id"),
+                        "source_particular": candidate.get(
+                            "source_particular"
+                        ),
+                    },
+                    effect_if_executed="signed-023-request",
+                ))
+
+        if state == STATE_REQUESTED:
+            for parcel in plugin_parcels:
+                parcel_id = parcel.get("parcel_id")
+                status = parcel.get("status")
+                if not isinstance(parcel_id, str) or not parcel_id:
+                    continue
+                context = {
+                    "want_id": want_id,
+                    "plugin_parcel_id": parcel_id,
+                    "package_id": parcel.get("package_id"),
+                    "package_address": parcel.get("package_address"),
+                    "expected_status": status,
+                }
+                launches.append(make_launch_descriptor(
+                    label="Inspect received plugin parcel",
+                    door_id=door_id,
+                    want_id=want_id,
+                    door_state=state,
+                    app_id=APP_PLUGIN_PARCEL,
+                    operation="show-parcel",
+                    context=context,
+                    effect_if_executed="read-only",
+                ))
+                if status == "HOLD":
+                    launches.append(make_launch_descriptor(
+                        label="Validate held plugin parcel locally",
+                        door_id=door_id,
+                        want_id=want_id,
+                        door_state=state,
+                        app_id=APP_PLUGIN_PARCEL,
+                        operation="validate-parcel",
+                        context=context,
+                        effect_if_executed=(
+                            "local-validation-state-change"
+                        ),
+                    ))
+                elif status == "VALIDATED":
+                    launches.append(make_launch_descriptor(
+                        label="Install validated plugin parcel locally",
+                        door_id=door_id,
+                        want_id=want_id,
+                        door_state=state,
+                        app_id=APP_PLUGIN_PARCEL,
+                        operation="install-parcel",
+                        context=context,
+                        effect_if_executed="local-plugin-install",
+                    ))
+
+        if state == STATE_RESOLVED:
+            parcel_id = want.get("parcel_id")
+            if isinstance(parcel_id, str) and parcel_id:
+                launches.append(make_launch_descriptor(
+                    label="Inspect current local merge compatibility",
+                    door_id=door_id,
+                    want_id=want_id,
+                    door_state=state,
+                    app_id=APP_MERGE_PANTRY,
+                    operation="inspect-parcel",
+                    context={
+                        "want_id": want_id,
+                        "parcel_id": parcel_id,
+                    },
+                    effect_if_executed="read-only",
+                ))
+
+        return launches
+
+    def launch_descriptor(
+        self,
+        launch_id: str,
+    ) -> dict[str, Any]:
+        for door in self.snapshot().get("doors") or []:
+            for descriptor in door.get("launches") or []:
+                if descriptor.get("launch_id") != launch_id:
+                    continue
+                if not verify_launch_descriptor(descriptor):
+                    raise ValueError(
+                        "stored launch descriptor failed verification"
+                    )
+                return descriptor
+        raise ValueError("unknown launch descriptor")
+
     def evidence(self, want_id: str) -> dict[str, Any]:
         want = self.store.load_want(want_id)
         observations = self.store.observations(want_id=want_id)
@@ -655,6 +813,12 @@ class CuriousDoorsSurface:
             links=links,
             plugin_parcels=plugin_parcels,
         )
+        launches = self._launches(
+            want=want,
+            state=state,
+            candidates=candidates,
+            plugin_parcels=plugin_parcels,
+        )
 
         return identity_safe({
             "kind": DOOR_KIND,
@@ -685,6 +849,7 @@ class CuriousDoorsSurface:
             "requested_candidate_ids": requested_candidate_ids,
             "matching_plugin_parcels": plugin_parcels,
             "navigation": navigation,
+            "launches": launches,
             "projection_error": projection_error,
             "read_only": True,
         })
@@ -721,6 +886,7 @@ class CuriousDoorsSurface:
                         "requested_candidate_ids": [],
                         "matching_plugin_parcels": [],
                         "navigation": [],
+                        "launches": [],
                         "projection_error": (
                             f"{type(exc).__name__}: {exc}"
                         ),
@@ -764,9 +930,36 @@ class CuriousDoorsSurface:
             "automatic_install": False,
             "navigation_executes": False,
             "navigation_transfers_permission": False,
+            "launches_execute": False,
+            "launch_context_grants_consent": False,
+            "launch_context_transfers_permission": False,
+            "destination_revalidation_required": True,
             "counts": counts,
             "doors": doors,
         })
+
+
+def _render_launches(
+    launches: list[dict[str, Any]],
+) -> str:
+    if not launches:
+        return "<p>No typed launch descriptors available.</p>"
+    rows = []
+    for descriptor in launches:
+        destination = descriptor.get("destination") or {}
+        rows.append(
+            "<li><code>"
+            + _esc(descriptor.get("launch_id"))
+            + "</code> — "
+            + _esc(descriptor.get("label"))
+            + "<br><small>"
+            + _esc(destination.get("app_id"))
+            + " / "
+            + _esc(destination.get("operation"))
+            + " · executes=false · consent=false"
+            + "</small></li>"
+        )
+    return "<ul class=\"launches\">" + "".join(rows) + "</ul>"
 
 
 def _esc(value: Any) -> str:
@@ -821,6 +1014,7 @@ main { max-width: 980px; margin: 0 auto; padding: 2rem 1rem 4rem; }
 a { color: inherit; }
 pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #15191e; padding: .8rem; border-radius: 8px; }
 .navigation li { margin: 1rem 0; }
+.launches li { margin: 1rem 0; }
 small { color: #aeb7c2; }
 </style>
 </head>
@@ -883,6 +1077,9 @@ def render_html(snapshot: dict[str, Any]) -> str:
             + "</ul></details>"
             + "<details><summary>Navigate without acting</summary>"
             + _render_navigation(door.get("navigation") or [])
+            + "</details>"
+            + "<details><summary>Typed Static-OS launches</summary>"
+            + _render_launches(door.get("launches") or [])
             + "</details>"
             + (
                 "<p class=\"error\"><strong>Projection error:</strong> "
@@ -1036,10 +1233,34 @@ def surface_handler(
                     ).encode("utf-8")
                     self._send(200, raw, "text/html; charset=utf-8")
                 return
+            if parsed.path == "/launch":
+                params = parse_qs(parsed.query)
+                launch_id = (params.get("launch_id") or [None])[0]
+                if not isinstance(launch_id, str) or not launch_id:
+                    self._send(
+                        400,
+                        b'{"error":"launch_id required"}',
+                        "application/json",
+                    )
+                    return
+                try:
+                    descriptor = surface.launch_descriptor(launch_id)
+                except Exception as exc:
+                    raw = json.dumps({
+                        "error": f"{type(exc).__name__}: {exc}",
+                    }).encode("utf-8")
+                    self._send(404, raw, "application/json")
+                    return
+                raw = json.dumps(
+                    descriptor,
+                    indent=2,
+                ).encode("utf-8")
+                self._send(200, raw, "application/json")
+                return
             if parsed.path == "/health":
                 raw = json.dumps({
                     "kind": "ghot.curiosity.surface.health",
-                    "version": "0",
+                    "version": "2",
                     "status": "awake",
                     "read_only": True,
                 }).encode("utf-8")
@@ -1161,6 +1382,9 @@ def main() -> int:
             "DISPLAY ORDER != RANK",
             "NAVIGATION != ACTION",
             "LINK != AUTHORITY",
+            "LAUNCH != EXECUTE",
+            "CONTEXT != CONSENT",
+            "DESTINATION REVALIDATES AUTHORITY",
         ],
     }, indent=2))
     try:

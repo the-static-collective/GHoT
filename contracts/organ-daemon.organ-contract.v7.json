@@ -1,0 +1,49 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.organ-daemon@7",
+  "version": "7",
+  "owner_project": "GHoT",
+  "description": "One-process GHoT organ supervisor including Curious Doors v2 with typed launch descriptors that remain non-executing and require destination-side revalidation.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/curiosity-surface.v2.json",
+    "https://the-static-collective.github.io/GHoT/schemas/launch-descriptor.v0.json"
+  ],
+  "allowed_dispositions": [
+    "OBSERVE",
+    "RETRY",
+    "SERVE",
+    "POLL",
+    "HOLD_STATE",
+    "HOLD_PLUGIN_PACKAGE",
+    "SERVE_GRAMMAR_EXCHANGE",
+    "SERVE_CURIOUS_DOORS"
+  ],
+  "effect_classes": ["none","local-state-change"],
+  "receipt_kinds": [],
+  "authority_scope": "supervisor-only",
+  "dependencies": [
+    "ghot.organ-daemon@6",
+    "ghot.curious-doors@2",
+    "ghot.launch-routing@0"
+  ],
+  "implementation_refs": [
+    "ghot/organ.py",
+    "ghot/curious_doors.py"
+  ],
+  "non_authorities": [
+    "supervision does not route launches",
+    "launch visibility does not grant consent",
+    "launch context does not transfer destination permission",
+    "preflight readiness is not execution authority"
+  ],
+  "extensions": {
+    "curious_doors_host_default": "127.0.0.1",
+    "curious_doors_port_default": 7794,
+    "typed_launches": true,
+    "launches_execute": false,
+    "launch_context_grants_consent": false,
+    "launch_context_transfers_permission": false,
+    "destination_revalidation_required": true
+  }
+}
