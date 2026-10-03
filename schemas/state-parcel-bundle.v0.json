@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/state-parcel-bundle.v0.json",
+  "title": "GHoT State Parcel Bundle V0",
+  "type": "object",
+  "required": ["kind","version","parcel","crossing"],
+  "properties": {
+    "kind": { "const": "ghot.state.parcel.bundle" },
+    "version": { "const": "0" },
+    "parcel": { "type": "object" },
+    "crossing": { "type": "object" }
+  }
+}
