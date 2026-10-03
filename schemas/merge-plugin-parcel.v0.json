@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/merge-plugin-parcel.v0.json",
+  "title": "GHoT Portable Merge Plugin Parcel V0",
+  "type": "object",
+  "required": [
+    "kind","version","parcel_id","parcel_address","created_at",
+    "source","target","package_id","package_version","package_address",
+    "package","author"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.merge-plugin.parcel" },
+    "version": { "const": "0" },
+    "parcel_id": { "type": "string", "minLength": 1 },
+    "parcel_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "created_at": { "type": "string" },
+    "source": {
+      "type": "object",
+      "required": ["node_id","particular"],
+      "properties": {
+        "node_id": { "type": "string", "minLength": 1 },
+        "particular": { "type": "string", "minLength": 1 }
+      }
+    },
+    "target": {
+      "type": "object",
+      "required": ["particular"],
+      "properties": {
+        "particular": { "type": ["string","null"] }
+      }
+    },
+    "package_id": { "type": "string", "minLength": 1 },
+    "package_version": { "type": "string", "minLength": 1 },
+    "package_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "package": { "type": "object" },
+    "author": { "type": ["object","null"] }
+  }
+}
