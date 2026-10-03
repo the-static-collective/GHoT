@@ -82,6 +82,22 @@ def _write_atomic(path: Path, value: dict[str, Any]) -> None:
     temp.replace(path)
 
 
+def merge_payload_type(value: Any) -> str:
+    if isinstance(value, dict):
+        return "object"
+    if isinstance(value, list):
+        return "array"
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, str):
+        return "string"
+    if isinstance(value, int):
+        return "integer"
+    return "unknown"
+
+
 def empty_foreign_offer_catalog() -> dict[str, Any]:
     return {
         "kind": "ghot.foreign-offer-catalog",
@@ -486,12 +502,14 @@ class StateMergeEngine:
         parcel = context["parcel"]
         source = parcel.get("source") or {}
         payload = parcel.get("payload") or {}
+        value_type = merge_payload_type(payload.get("value"))
         eligible = []
         for contract_id, spec in sorted(MERGE_CONTRACTS.items()):
             if (
                 source.get("state_kind") == spec["parcel_state_kind"]
                 and source.get("state_version") == spec["parcel_state_version"]
                 and payload.get("selector") == spec["parcel_selector"]
+                and value_type == spec.get("payload_type")
             ):
                 eligible.append(contract_id)
         return eligible
