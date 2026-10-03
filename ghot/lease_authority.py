@@ -15,12 +15,18 @@ import argparse
 import hashlib
 import json
 import time
+import threading
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from authority_discovery import (
+    DISCOVERY_PORT,
+    discovery_responder,
+    make_authority_advert,
+)
 from hold_queue import HoldQueue, iso_at
 from portable_lease import (
     IdentityKey,
@@ -80,6 +86,19 @@ class LeaseAuthority:
             "algorithm": "ECDSA-P256-SHA256",
             "public_key_identity_claimed": True,
         }
+
+    def signed_advert(
+        self,
+        *,
+        lease_port: int,
+        ttl_seconds: int = 15,
+    ) -> dict[str, Any]:
+        return make_authority_advert(
+            self.advert(),
+            signer=self.signer,
+            lease_port=lease_port,
+            ttl_seconds=ttl_seconds,
+        )
 
     def _dispatch_path(self, hold_id: str) -> Path:
         safe = hashlib.sha256(hold_id.encode("utf-8")).hexdigest()
@@ -740,7 +759,10 @@ class LeaseAuthority:
         )
 
 
-def handler_for(authority: LeaseAuthority) -> type[BaseHTTPRequestHandler]:
+def handler_for(
+    authority: LeaseAuthority,
+    lease_port: int,
+) -> type[BaseHTTPRequestHandler]:
     class Handler(BaseHTTPRequestHandler):
         server_version = "GHoTLeaseAuthority/1"
 
@@ -757,7 +779,7 @@ def handler_for(authority: LeaseAuthority) -> type[BaseHTTPRequestHandler]:
 
         def do_GET(self) -> None:
             if urlparse(self.path).path == "/authority":
-                self._json(200, authority.advert())
+                self._json(200, authority.signed_advert(lease_port=lease_port))
                 return
             self._json(404, {"error": "not found"})
 
@@ -788,6 +810,8 @@ def main() -> int:
     serve = sub.add_parser("serve")
     serve.add_argument("--host", default="0.0.0.0")
     serve.add_argument("--port", type=int, default=7790)
+    serve.add_argument("--discovery-port", type=int, default=DISCOVERY_PORT)
+    serve.add_argument("--no-discovery", action="store_true")
 
     prepare = sub.add_parser("prepare")
     prepare.add_argument("hold_id")
@@ -822,18 +846,34 @@ def main() -> int:
     if args.command == "serve":
         server = ThreadingHTTPServer(
             (args.host, args.port),
-            handler_for(authority),
+            handler_for(authority, args.port),
         )
+        stop = threading.Event()
+        responder = None
+        if not args.no_discovery:
+            responder = threading.Thread(
+                target=discovery_responder,
+                args=(
+                    lambda: authority.signed_advert(lease_port=args.port),
+                    stop,
+                ),
+                kwargs={"port": args.discovery_port},
+                daemon=True,
+            )
+            responder.start()
+
         print(json.dumps({
-            **authority.advert(),
+            **authority.signed_advert(lease_port=args.port),
             "listen": f"http://{args.host}:{args.port}",
             "crossing_endpoint": "/crossing",
+            "discovery_port": None if args.no_discovery else args.discovery_port,
         }, indent=2))
         try:
             server.serve_forever()
         except KeyboardInterrupt:
             return 0
         finally:
+            stop.set()
             server.server_close()
 
     return 2
