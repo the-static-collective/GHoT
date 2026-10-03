@@ -11,6 +11,8 @@
     "capability": { "type": "string", "minLength": 1 },
     "created_at": { "type": "string" },
     "requester_node_id": { "type": ["string", "null"] },
+    "context_posture": { "enum": ["fresh", "bounded-window", "lineage-enabled", "owner-local", null] },
+    "context": {},
     "input": {},
     "constraints": { "type": "object" }
   }
