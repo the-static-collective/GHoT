@@ -12,6 +12,7 @@
     "observed_at": { "type": ["string", "null"] },
     "available": { "type": "boolean" },
     "executor": { "type": ["string", "null"] },
+    "context_posture": { "enum": ["fresh", "bounded-window", "lineage-enabled", "owner-local", null] },
     "limits": { "type": "object" },
     "cost": { "type": "object" },
     "policy": { "type": "object" },

@@ -144,6 +144,8 @@ def execute(
     requester_node_id: str | None = None,
     constraints: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
+    context_posture = (constraints or {}).get("context_posture")
+
     task = {
         "kind": "ghot.task",
         "version": "0",
@@ -151,6 +153,7 @@ def execute(
         "capability": capability,
         "created_at": now(),
         "requester_node_id": requester_node_id or node_id(),
+        "context_posture": context_posture,
         "input": payload,
         "constraints": constraints or {"network": "not-required"},
     }
@@ -198,6 +201,7 @@ def execute(
         "requester_node_id": task["requester_node_id"],
         "executor_node_id": node_id(),
         "capability": capability,
+        "context_posture": context_posture,
         "status": status,
         "started_at": started,
         "finished_at": now(),
