@@ -43,6 +43,8 @@ from lan_node import (
 from lease_remote import work_available
 from liveness_field import LivenessField
 from reference_node import ROOT, body, node_id
+from relatte_identity import IdentityKey
+from state_migration import StateMigrator
 
 
 BodyProbe = Callable[[], dict[str, Any]]
@@ -76,6 +78,7 @@ class OrganDaemon:
         discovery_timeout: float = 2.0,
         authority_timeout: float = 2.0,
         lease_seconds: float = 60.0,
+        presence_context: dict[str, Any] | None = None,
     ) -> None:
         self.root = root or ROOT
         self.body_probe = body_probe
@@ -85,7 +88,12 @@ class OrganDaemon:
         self.discovery_timeout = discovery_timeout
         self.authority_timeout = authority_timeout
         self.lease_seconds = lease_seconds
-        self.state_path = self.root / "organ" / "state.v0.json"
+        self.presence_context = presence_context or {
+            "boot_id": None,
+            "manifest_address": None,
+            "startup_receipt_id": None,
+        }
+        self.state_path = self.root / "organ" / "state.v1.json"
         self.records_dir = self.root / "records"
         self.field = LivenessField(
             state_path=self.root / "field.v0.json",
@@ -276,7 +284,7 @@ class OrganDaemon:
 
         state = {
             "kind": "ghot.organ.state",
-            "version": "0",
+            "version": "1",
             "node_id": local_id,
             "started_at": self.started_at,
             "updated_at": iso_now(when),
@@ -287,6 +295,7 @@ class OrganDaemon:
             "work": work,
             "services": self.service_state,
             "errors": errors,
+            "presence": dict(self.presence_context),
         }
         self._write_state(state)
 
@@ -633,6 +642,11 @@ def main() -> int:
         help="disable the loopback health/presence HTTP endpoint",
     )
     parser.add_argument(
+        "--no-auto-migrate",
+        action="store_true",
+        help="inspect state but do not apply registered startup migrations",
+    )
+    parser.add_argument(
         "--no-serve",
         action="store_true",
         help="run supervisory cycles without BODY HTTP/discovery services",
@@ -647,15 +661,51 @@ def main() -> int:
     if args.interval <= 0:
         raise SystemExit("--interval must be > 0")
 
+    body_record = body()
+    migrator = StateMigrator(ROOT)
+    migration_run: dict[str, Any] = {
+        "kind": "ghot.state.migration.run",
+        "version": "0",
+        "applied": [],
+        "state": migrator.inspect(),
+    }
+    if not args.no_auto_migrate:
+        try:
+            migration_signer = IdentityKey.load_or_create(
+                ROOT / "identity" / "body-p256.pem"
+            )
+            migration_run = migrator.apply_available(
+                signer=migration_signer,
+            )
+        except Exception as exc:
+            migration_run = {
+                "kind": "ghot.state.migration.run",
+                "version": "0",
+                "applied": [],
+                "state": migrator.inspect(),
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+
+    presence_store = PresenceStore(ROOT)
+    boot_manifest, startup_receipt = presence_store.wake(
+        repo_root=Path(__file__).resolve().parents[1],
+        body_record=body_record,
+        migration_run=migration_run,
+    )
+    presence_context = {
+        "boot_id": boot_manifest.get("boot_id"),
+        "manifest_address": boot_manifest.get("manifest_address"),
+        "startup_receipt_id": (
+            startup_receipt.get("receipt_id")
+            if isinstance(startup_receipt, dict)
+            else None
+        ),
+    }
     daemon = OrganDaemon(
         discovery_timeout=args.discovery_timeout,
         authority_timeout=args.authority_timeout,
         lease_seconds=args.lease_seconds,
-    )
-    presence_store = PresenceStore(ROOT)
-    boot_manifest, startup_receipt = presence_store.wake(
-        repo_root=Path(__file__).resolve().parents[1],
-        body_record=body(),
+        presence_context=presence_context,
     )
 
     services: OrganServices | None = None
@@ -699,6 +749,11 @@ def main() -> int:
         ),
         "boot_surface": boot_manifest.get("boot_surface"),
         "initial_health": initial_health.get("status"),
+        "migrations_applied": (
+            boot_manifest.get("state", {})
+            .get("automatic_migrations_applied", [])
+        ),
+        "migration_error": migration_run.get("error"),
         "body_http_port": None if args.no_serve else args.http_port,
         "body_discovery_port": None if args.no_serve else args.discovery_port,
         "health_endpoint": (
