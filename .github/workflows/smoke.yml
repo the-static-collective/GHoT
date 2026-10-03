@@ -17,6 +17,12 @@ jobs:
       - name: Compile all Python modules
         run: python3 -m py_compile ghot/*.py
 
+      - name: Recursive Systems Composition regressions
+        run: python3 experiments/test_rsc_composer.py
+
+      - name: Epistemic capability regressions
+        run: python3 experiments/test_epistemic_capability.py
+
       - name: Phase 0 local body
         run: |
           python3 ghot/reference_node.py probe
