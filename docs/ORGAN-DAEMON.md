@@ -1,3 +1,5 @@
+> **026 note:** Curious Doors v1 remains loopback-only and read-only but now exposes GET-only evidence navigation plus inert subsystem-owned command intents. The surface never executes an intent or transfers permission; action intents have no executable URL. Organ service state declares `navigation_executes=false`, `permission_transfer=false`, and `evidence_get_only=true`. See `docs/CURIOUS-DOOR-NAVIGATION.md`.
+
 > **025 note:** A normal organ now supervises the loopback-only read-only Curious Doors surface on port 7794. It projects durable 024 wants and current local pantry state but never creates a WANT, refreshes the network, requests/offers a package, validates, installs, ranks, or notifies. See `docs/CURIOUS-DOORS.md`.
 
 > **023 note:** A normal organ now supervises a non-authoritative grammar exchange service on HTTP 7793 / UDP 47890. The service advertises only explicitly shared package metadata and can record signed requests, but it never auto-shares, auto-requests, auto-offers, or auto-installs. See `docs/GRAMMAR-EXCHANGE.md`.
