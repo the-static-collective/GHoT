@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
 import time
 import uuid
 from pathlib import Path
@@ -210,21 +211,26 @@ class StateMigrator:
         self.backups_dir = self.migration_root / "backups"
         self.receipts_dir = self.migration_root / "receipts"
 
+    def _matching_receipt(
+        self,
+        *,
+        migration_id: str,
+        before_address: str,
+        after_address: str,
+    ) -> dict[str, Any] | None:
+        for receipt in self.receipts():
+            if (
+                receipt.get("verified") is True
+                and receipt.get("migration_id") == migration_id
+                and receipt.get("before_address") == before_address
+                and receipt.get("after_address") == after_address
+            ):
+                return receipt
+        return None
+
     def _plan_for(self, spec: dict[str, Any]) -> dict[str, Any] | None:
         source = self.root / spec["source_rel"]
         target = self.root / spec["target_rel"]
-
-        if target.exists():
-            try:
-                current = _read_object(target)
-            except Exception:
-                return None
-            if (
-                current.get("kind") == spec["kind"]
-                and current.get("version") == spec["to_version"]
-            ):
-                return None
-            return None
 
         if not source.exists():
             return None
@@ -239,6 +245,30 @@ class StateMigrator:
             return None
 
         migrated = spec["apply"](value)
+        before_address = semantic_address(value)
+        after_address = semantic_address(migrated)
+        mode = "apply"
+
+        if target.exists():
+            try:
+                current = _read_object(target)
+            except Exception:
+                return None
+            if (
+                current.get("kind") != spec["kind"]
+                or current.get("version") != spec["to_version"]
+            ):
+                return None
+            if semantic_address(current) != after_address:
+                return None
+            if self._matching_receipt(
+                migration_id=spec["migration_id"],
+                before_address=before_address,
+                after_address=after_address,
+            ) is not None:
+                return None
+            mode = "reconcile-receipt"
+
         return {
             "kind": PLAN_KIND,
             "version": PLAN_VERSION,
@@ -248,8 +278,9 @@ class StateMigrator:
             "to_version": spec["to_version"],
             "source_path": str(source),
             "target_path": str(target),
-            "before_address": semantic_address(value),
-            "proposed_after_address": semantic_address(migrated),
+            "before_address": before_address,
+            "proposed_after_address": after_address,
+            "mode": mode,
             "available": True,
         }
 
@@ -301,13 +332,29 @@ class StateMigrator:
                 migration_required = True
 
             if organ_v0.exists():
+                reconcile = available_by_source.get(str(organ_v0))
                 checks.append({
                     "path": str(organ_v0),
-                    "status": "legacy-source-preserved",
+                    "status": (
+                        "migration-receipt-required"
+                        if reconcile is not None
+                        and reconcile.get("mode") == "reconcile-receipt"
+                        else "legacy-source-preserved"
+                    ),
                     "kind": "ghot.organ.state",
                     "version": "0",
                     "canonical": False,
+                    "migration_id": (
+                        reconcile.get("migration_id")
+                        if reconcile is not None
+                        else None
+                    ),
                 })
+                if (
+                    reconcile is not None
+                    and reconcile.get("mode") == "reconcile-receipt"
+                ):
+                    migration_required = True
         elif organ_v0.exists():
             try:
                 value = _read_object(organ_v0)
@@ -449,9 +496,13 @@ class StateMigrator:
 
         backup_path = self._backup_path(migration_id, before_address)
         if not backup_path.exists():
-            _write_atomic(backup_path, identity_safe(before))
+            backup_path.parent.mkdir(parents=True, exist_ok=True)
+            temp_backup = backup_path.with_suffix(f".tmp-{uuid.uuid4()}")
+            shutil.copyfile(source, temp_backup)
+            temp_backup.replace(backup_path)
 
-        _write_atomic(target, identity_safe(after))
+        if not target.exists():
+            _write_atomic(target, identity_safe(after))
         persisted = _read_object(target)
         if semantic_address(persisted) != after_address:
             raise RuntimeError("persisted migration target failed after-address verification")
