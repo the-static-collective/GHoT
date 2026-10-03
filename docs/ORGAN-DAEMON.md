@@ -1,3 +1,5 @@
+> **018 note:** The default organ now also supervises a dedicated HOLD-only state parcel porch on port 7792. BODY discovery advertises that porch separately from the normal task service. Network receive may HOLD valid parcels but cannot ADMIT them. See `docs/STATE-PARCELS.md`.
+
 > **017 note:** The canonical daemon current-state record is now `ghot.organ.state/v1` at `.ghot/organ/state.v1.json`, linked to the current boot presence. Valid v0 state crosses through the signed migration path in `docs/STATE-MIGRATIONS.md`.
 
 # Organ Daemon
@@ -21,6 +23,7 @@ BODY HTTP service
 + liveness field maintenance
 + trusted authority porch resolution
 + portable lease worker
++ HOLD-only state parcel porch
 = one running GHoT organ
 ```
 
@@ -192,6 +195,8 @@ Useful controls:
 --discovery-timeout 2
 --authority-timeout 2
 --lease-seconds 60
+--state-port 7792
+--no-state-porch
 ```
 
 ## Process boundary
