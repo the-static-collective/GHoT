@@ -961,6 +961,7 @@ def discover_exchanges(
     timeout: float = 2.0,
     *,
     port: int = DISCOVERY_PORT,
+    host: str = "255.255.255.255",
 ) -> list[dict[str, Any]]:
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -973,7 +974,7 @@ def discover_exchanges(
     }
     sock.sendto(
         json.dumps(request).encode("utf-8"),
-        ("255.255.255.255", port),
+        (host, port),
     )
     deadline = time.monotonic() + timeout
     seen: dict[str, dict[str, Any]] = {}
