@@ -1,0 +1,65 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.grammar-exchange@0",
+  "version": "0",
+  "owner_project": "GHoT",
+  "description": "Advertise only explicitly shared installed merge-plugin package metadata, accept signed package-address requests without crossing packages, and require an explicit local OFFER before creating a 022 package parcel.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/grammar-share.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/grammar-exchange-advert.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/grammar-exchange-request.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/grammar-exchange-request-inbox.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/grammar-exchange-offer.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/grammar-exchange-table.v0.json",
+    "relatte.receipt/v0"
+  ],
+  "allowed_dispositions": [
+    "INVENTORY",
+    "SHARE",
+    "UNSHARE",
+    "DISCOVER",
+    "REQUEST",
+    "OFFER",
+    "DECLINE"
+  ],
+  "effect_classes": ["none","local-state-change"],
+  "receipt_kinds": ["REQUESTED"],
+  "authority_scope": "owner-local",
+  "dependencies": [
+    "ghot.merge-plugin-store@0",
+    "ghot.merge-plugin-parcel-inbox@0",
+    "relatte.identity-signature/v0"
+  ],
+  "implementation_refs": [
+    "ghot/grammar_exchange.py",
+    "ghot/merge_plugin_parcel.py"
+  ],
+  "non_authorities": [
+    "installed package is not shareable by default",
+    "discovery is not request",
+    "request is not offer",
+    "offer is not installation",
+    "signed advert is not trust",
+    "signed request is not entitlement",
+    "return road is not requester identity",
+    "request receipt is not package crossing receipt",
+    "exchange service supervision is not exchange authority",
+    "advertised author particular is provenance metadata, not trust"
+  ],
+  "extensions": {
+    "discovery_udp_port_default": 47890,
+    "exchange_http_port_default": 7793,
+    "advert_ttl_seconds_default": 15,
+    "request_ttl_seconds_default": 300,
+    "explicit_share_required": true,
+    "auto_share": false,
+    "auto_request": false,
+    "auto_offer": false,
+    "auto_install": false,
+    "package_bytes_in_advert": false,
+    "request_crosses_package": false,
+    "offer_uses_022_parcel": true,
+    "return_porch_particular_revalidated_before_offer": true
+  }
+}
