@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Deterministic simulation for GHoT Experiment 009."""
+"""Deterministic local HOLD lifecycle simulation for GHoT Experiment 009.
+
+Remote wake semantics moved to Experiment 012; this witness continues to prove
+the original HOLD/recheck/release/cancel/expiry lifecycle on one local executor.
+"""
 
 from __future__ import annotations
 
@@ -22,8 +26,8 @@ def candidate(
 ) -> dict[str, Any]:
     return {
         "node_id": node_id,
-        "location": "remote",
-        "url": f"http://{node_id}.invalid:7788",
+        "location": "local",
+        "url": None,
         "field_state": "awake",
         "body": {
             "node_id": node_id,
