@@ -78,9 +78,12 @@ class OrganDaemon:
         self.discovery_timeout = discovery_timeout
         self.authority_timeout = authority_timeout
         self.lease_seconds = lease_seconds
-        self.field = LivenessField(state_path=self.root / "field.v0.json")
         self.state_path = self.root / "organ" / "state.v0.json"
         self.records_dir = self.root / "records"
+        self.field = LivenessField(
+            state_path=self.root / "field.v0.json",
+            event_sink=self._field_event,
+        )
         self.started_at = iso_now()
         self.cycle_count = 0
         self.last_event_fingerprint: str | None = None
@@ -117,6 +120,15 @@ class OrganDaemon:
             encoding="utf-8",
         )
         return event
+
+    def _field_event(self, event: dict[str, Any]) -> None:
+        self._event(
+            str(event.get("event_type") or "field.event"),
+            {
+                "node_id": event.get("node_id"),
+                "field_event": event,
+            },
+        )
 
     @staticmethod
     def _body_summary(record: dict[str, Any]) -> dict[str, Any]:
