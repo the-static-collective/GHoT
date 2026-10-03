@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/state-merge-receipt.v0.json",
+  "title": "GHoT State Merge Receipt V0",
+  "type": "object",
+  "required": [
+    "kind","version","receipt_id","plan_id","contract_id","disposition",
+    "parcel_id","parcel_address","payload_address","admitted_ref",
+    "local_state_path","local_before_address","local_after_address",
+    "backup_path","created_at","particular","note","signing"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.state.merge.receipt" },
+    "version": { "const": "0" },
+    "receipt_id": { "type": "string", "minLength": 1 },
+    "plan_id": { "type": "string", "minLength": 1 },
+    "contract_id": { "type": "string", "minLength": 1 },
+    "disposition": { "enum": ["APPLY","REJECT"] },
+    "parcel_id": { "type": "string", "minLength": 1 },
+    "parcel_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "payload_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "admitted_ref": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "local_state_path": { "type": "string", "minLength": 1 },
+    "local_before_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "local_after_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "backup_path": { "type": ["string","null"] },
+    "created_at": { "type": "string" },
+    "particular": { "type": "string", "minLength": 1 },
+    "note": { "type": ["string","null"] },
+    "signing": {
+      "type": "object",
+      "required": ["algorithm","public_key","signature","domain"],
+      "properties": {
+        "algorithm": { "const": "ECDSA-P256-SHA256" },
+        "public_key": { "type": "object" },
+        "signature": { "type": "string", "minLength": 1 },
+        "domain": { "const": "ghot.state-merge-receipt-signature/v0" }
+      }
+    }
+  }
+}
