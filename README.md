@@ -383,3 +383,66 @@ not only GHoT-generated signatures.
 
 See `docs/IDENTITY-AUTOMATIC-DISPATCH.md` and
 `experiments/012-identity-automatic-dispatch.md`.
+
+
+## Discover the authority porch
+
+013 removes the last hand-wired owner URL from the normal remote-organ path.
+
+The authority server now broadcasts a short-lived signed porch advert on the
+LAN:
+
+```bash
+python3 ghot/lease_authority.py serve --port 7790
+```
+
+A remote body may inspect what is present:
+
+```bash
+python3 ghot/authority_discovery.py scan
+```
+
+Discovery alone grants nothing. Admit an intended authority explicitly once:
+
+```bash
+python3 ghot/authority_discovery.py trust http://OWNER:7790
+```
+
+That stores the authority particular, public key, authority id and world id as
+a local trust record. Future network-address changes do not require a new
+identity decision as long as the signed authority identity remains the same.
+
+Then the remote organ can run with no owner address:
+
+```bash
+python3 ghot/lease_remote.py watch
+```
+
+It discovers current roads, rejects unsigned/stale adverts, and polls only
+authorities that are either remembered locally or pinned with
+`GHOT_AUTHORITY_PARTICULAR`.
+
+Useful inspection commands:
+
+```bash
+python3 ghot/authority_discovery.py trusted
+python3 ghot/authority_discovery.py resolve
+python3 ghot/authority_discovery.py forget <authority-particular>
+```
+
+The authority IP address is deliberately not identity-bearing:
+
+```text
+ROAD != IDENTITY
+DISCOVERY != TRUST
+SIGNED ADVERT != ADMISSION
+```
+
+Deterministic proof:
+
+```bash
+python3 ghot/authority_discovery_sim.py
+```
+
+See `docs/AUTHORITY-PORCH-DISCOVERY.md` and
+`experiments/013-authority-porch-discovery.md`.
