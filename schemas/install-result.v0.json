@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/install-result.v0.json",
+  "title": "GHoT Install Result V0",
+  "type": "object",
+  "required": ["kind", "version", "target"],
+  "properties": {
+    "kind": { "const": "ghot.install.result" },
+    "version": { "const": "0" },
+    "target": {
+      "enum": ["systemd-user", "termux-boot", "live-usb-bundle"]
+    },
+    "unit_path": { "type": "string" },
+    "script_path": { "type": "string" },
+    "state_home": { "type": "string" },
+    "enabled_now": { "type": "boolean" },
+    "installed": { "type": "boolean" },
+    "removed": { "type": "boolean" },
+    "modified_host": { "type": "boolean" },
+    "commands": { "type": "array", "items": { "type": "string" } },
+    "requires": { "type": "array", "items": { "type": "string" } },
+    "actions": { "type": "array", "items": { "type": "string" } },
+    "error": { "type": "string" }
+  }
+}
