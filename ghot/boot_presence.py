@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from reference_node import ROOT, body, node_id
+from state_migration import StateMigrator
 from relatte_identity import (
     ALGORITHM,
     IdentityKey,
@@ -39,12 +40,6 @@ RECEIPT_VERSION = "0"
 RECEIPT_ID_DOMAIN = b"GHoT-StartupReceipt-v0|"
 RECEIPT_SIGNATURE_DOMAIN = b"GHoT-StartupReceiptSignature-v0|"
 RECEIPT_SIGNING_DOMAIN = "ghot.startup-receipt-signature/v0"
-
-SUPPORTED_STATE = {
-    "ghot.organ.state": {"0"},
-    "ghot.field": {"0"},
-}
-
 
 def stable_json_bytes(value: Any) -> bytes:
     return jcs_bytes(value)
@@ -150,60 +145,6 @@ def dependency_readiness() -> dict[str, Any]:
     }
 
 
-def inspect_state(root: Path) -> dict[str, Any]:
-    checks: list[dict[str, Any]] = []
-    paths = [
-        root / "organ" / "state.v0.json",
-        root / "field.v0.json",
-    ]
-    migration_required = False
-
-    for path in paths:
-        if not path.exists():
-            checks.append({
-                "path": str(path),
-                "status": "absent",
-                "kind": None,
-                "version": None,
-            })
-            continue
-        try:
-            value = json.loads(path.read_text(encoding="utf-8"))
-        except Exception as exc:
-            checks.append({
-                "path": str(path),
-                "status": "invalid",
-                "kind": None,
-                "version": None,
-                "error": f"{type(exc).__name__}: {exc}",
-            })
-            migration_required = True
-            continue
-
-        kind = value.get("kind") if isinstance(value, dict) else None
-        version = value.get("version") if isinstance(value, dict) else None
-        supported = (
-            isinstance(kind, str)
-            and isinstance(version, str)
-            and version in SUPPORTED_STATE.get(kind, set())
-        )
-        checks.append({
-            "path": str(path),
-            "status": "compatible" if supported else "migration-required",
-            "kind": kind,
-            "version": version,
-        })
-        if not supported:
-            migration_required = True
-
-    return {
-        "status": "migration-required" if migration_required else "compatible",
-        "migration_required": migration_required,
-        "checks": checks,
-        "automatic_migrations_applied": [],
-    }
-
-
 def infer_boot_surface() -> dict[str, Any]:
     surface = os.environ.get("GHOT_BOOT_SURFACE", "direct")
     instance = os.environ.get("GHOT_BOOT_INSTANCE")
@@ -294,10 +235,24 @@ def create_boot_manifest(
     repo_root: Path | None = None,
     body_record: dict[str, Any] | None = None,
     created_at: str | None = None,
+    migration_run: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     state_root = root or ROOT
     code_root = repo_root or Path(__file__).resolve().parents[1]
     record = body_record or body()
+    state_info = StateMigrator(state_root).inspect()
+    applied = []
+    if isinstance(migration_run, dict):
+        for item in migration_run.get("applied") or []:
+            receipt = item.get("receipt") if isinstance(item, dict) else None
+            if isinstance(receipt, dict):
+                applied.append({
+                    "migration_id": receipt.get("migration_id"),
+                    "receipt_id": receipt.get("receipt_id"),
+                    "before_address": receipt.get("before_address"),
+                    "after_address": receipt.get("after_address"),
+                })
+    state_info["automatic_migrations_applied"] = applied
     manifest = identity_safe({
         "kind": MANIFEST_KIND,
         "version": MANIFEST_VERSION,
@@ -319,7 +274,7 @@ def create_boot_manifest(
         },
         "boot_surface": infer_boot_surface(),
         "state_home": str(state_root),
-        "state": inspect_state(state_root),
+        "state": state_info,
         "dependencies": dependency_readiness(),
     })
     manifest["manifest_address"] = derive_manifest_address(manifest)
@@ -444,11 +399,13 @@ class PresenceStore:
         *,
         repo_root: Path | None = None,
         body_record: dict[str, Any] | None = None,
+        migration_run: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any] | None]:
         manifest = create_boot_manifest(
             root=self.root,
             repo_root=repo_root,
             body_record=body_record,
+            migration_run=migration_run,
         )
         _write_atomic(self.manifest_path, manifest)
 
@@ -505,7 +462,10 @@ class PresenceStore:
             return None
 
     def runtime_state(self) -> dict[str, Any] | None:
-        path = self.root / "organ" / "state.v0.json"
+        path = self.root / "organ" / "state.v1.json"
+        if not path.exists():
+            legacy = self.root / "organ" / "state.v0.json"
+            path = legacy if legacy.exists() else path
         if not path.exists():
             return None
         try:
