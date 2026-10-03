@@ -62,7 +62,8 @@ def main() -> int:
             enable_now=False,
         )
         assert Path(reinstall["unit_path"]) == unit_path
-        assert len(list(unit_dir.glob("ghot-organ.service"))) == 1
+        idempotent_install = len(list(unit_dir.glob("ghot-organ.service"))) == 1
+        assert idempotent_install
 
         termux_result = install_termux(
             python=python,
@@ -130,7 +131,7 @@ def main() -> int:
                 "rootless_unit": "User=root" not in unit,
                 "no_new_privileges": "NoNewPrivileges=true" in unit,
                 "organ_only": "lease_authority.py" not in unit,
-                "idempotent_install": len(list(unit_dir.glob("ghot-organ.service"))) == 0,
+                "idempotent_install": idempotent_install,
             },
             "termux": {
                 "mode": oct(mode),
