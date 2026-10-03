@@ -48,5 +48,11 @@ jobs:
       - name: Atomic work lease simulation
         run: python3 ghot/lease_sim.py
 
+      - name: reLATTE P-256 fixture conformance
+        run: python3 ghot/relatte_identity_sim.py
+
       - name: Portable lease authority crossing simulation
         run: python3 ghot/portable_lease_sim.py
+
+      - name: Automatic remote dispatch simulation
+        run: python3 ghot/auto_dispatch_sim.py
