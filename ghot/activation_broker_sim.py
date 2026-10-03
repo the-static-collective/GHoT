@@ -257,6 +257,28 @@ def main() -> int:
                 + urllib.parse.quote(launch_id, safe="")
             )
 
+            index_before = file_snapshot(requester_root)
+            status, content_type, broker_index = http_get(base_url + "/")
+            index_after = file_snapshot(requester_root)
+            assert status == 200
+            assert "text/html" in content_type
+            assert index_before == index_after
+            assert "selection only · no consent" in broker_index
+            assert "/preview?launch_id=" in broker_index
+            assert "<form" not in broker_index.lower()
+            assert "<button" not in broker_index.lower()
+
+            status, content_type, health_text = http_get(
+                base_url + "/health"
+            )
+            assert status == 200
+            assert "application/json" in content_type
+            health = json.loads(health_text)
+            assert health["preview_read_only"] is True
+            assert health["click_grants_consent"] is False
+            assert health["act_required"] is True
+            assert health["browser_post_same_origin_required"] is True
+
             http_before = file_snapshot(requester_root)
             status, content_type, served_preview = http_get(preview_url)
             http_after = file_snapshot(requester_root)
@@ -431,6 +453,7 @@ def main() -> int:
                 wrong_phrase_refused,
                 wrong_binding_refused,
                 stale_remote_refused,
+                index_before == index_after,
                 http_before == http_after,
                 broker_result["verified_success"] is True,
                 validate_result["verified_success"] is True,
@@ -454,6 +477,16 @@ def main() -> int:
                     "stale_remote_state": stale_remote_refused,
                     "cross_origin_http_status": 403,
                     "wrong_http_phrase_status": 409,
+                },
+                "http_surface": {
+                    "index_read_only": index_before == index_after,
+                    "preview_read_only": http_before == http_after,
+                    "index_has_act_form": "<form" in broker_index.lower(),
+                    "index_has_act_button": "<button" in broker_index.lower(),
+                    "health_act_required": health["act_required"],
+                    "same_origin_required": health[
+                        "browser_post_same_origin_required"
+                    ],
                 },
                 "request": {
                     "receipt_verified": broker_result[
