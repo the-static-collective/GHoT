@@ -1,0 +1,49 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.organ-daemon@2",
+  "version": "2",
+  "owner_project": "GHoT",
+  "description": "One-process GHoT organ supervisor with v1 durable state, boot presence, trusted authority work, and a supervised HOLD-only state parcel porch.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/body.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/organ-state.v1.json",
+    "https://the-static-collective.github.io/GHoT/schemas/organ-event.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/state-parcel-bundle.v0.json"
+  ],
+  "allowed_dispositions": ["OBSERVE","RETRY","SERVE","POLL","HOLD_STATE"],
+  "effect_classes": ["none","local-state-change"],
+  "receipt_kinds": [],
+  "authority_scope": "supervisor-only",
+  "dependencies": [
+    "ghot.body/v0",
+    "ghot.field/v0",
+    "ghot.authority.advert/v0",
+    "ghot.authority.trust/v0",
+    "ghot.work-lease/v0",
+    "ghot.boot-presence@0",
+    "ghot.state-migration@0",
+    "ghot.state-parcel-inbox@0"
+  ],
+  "implementation_refs": [
+    "ghot/organ.py",
+    "ghot/state_migration.py",
+    "ghot/state_parcel.py"
+  ],
+  "non_authorities": [
+    "daemon supervision is not task authority",
+    "daemon liveness is not lease authority",
+    "state parcel receive is not state admission",
+    "HOLD is not merge",
+    "parcel porch availability is not trust",
+    "boot presence is not admission"
+  ],
+  "extensions": {
+    "durable_current_state": ".ghot/organ/state.v1.json",
+    "presence_link_required": true,
+    "state_parcel_port_default": 7792,
+    "state_parcel_network_disposition": "HOLD",
+    "state_parcel_network_admit": false,
+    "owner_lease_authority_preserved": true
+  }
+}
