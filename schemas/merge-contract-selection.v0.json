@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/merge-contract-selection.v0.json",
+  "title": "GHoT Merge Contract Selection V0",
+  "type": "object",
+  "required": [
+    "kind","version","selection_id","parcel_id","parcel_address",
+    "payload_address","admitted_ref","contract_id","contract_address",
+    "selected_at","selection_source"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.merge-contract.selection" },
+    "version": { "const": "0" },
+    "selection_id": { "type": "string", "minLength": 1 },
+    "parcel_id": { "type": "string", "minLength": 1 },
+    "parcel_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "payload_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "admitted_ref": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "contract_id": { "type": "string", "minLength": 1 },
+    "contract_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "selected_at": { "type": "string" },
+    "selection_source": { "type": "string", "minLength": 1 }
+  }
+}

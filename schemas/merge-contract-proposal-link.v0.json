@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/merge-contract-proposal-link.v0.json",
+  "title": "GHoT Merge Contract Proposal Link V0",
+  "type": "object",
+  "required": [
+    "kind","version","link_id","selection_id","plan_id",
+    "contract_id","parcel_id","linked_at"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.merge-contract.proposal-link" },
+    "version": { "const": "0" },
+    "link_id": { "type": "string", "minLength": 1 },
+    "selection_id": { "type": "string", "minLength": 1 },
+    "plan_id": { "type": "string", "minLength": 1 },
+    "contract_id": { "type": "string", "minLength": 1 },
+    "parcel_id": { "type": "string", "minLength": 1 },
+    "linked_at": { "type": "string" }
+  }
+}

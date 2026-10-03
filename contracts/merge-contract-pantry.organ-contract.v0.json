@@ -1,0 +1,56 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.merge-contract-pantry@0",
+  "version": "0",
+  "owner_project": "GHoT",
+  "description": "Discover installed local merge grammars, explain compatibility, persist explicit owner-local selection, and revalidate that selection before creating a 019 merge proposal.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/merge-contract.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/merge-contract-inspection.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/merge-contract-selection.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/state-merge-plan.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/merge-contract-proposal-link.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/merge-contract-proposal.v0.json"
+  ],
+  "allowed_dispositions": [
+    "LIST",
+    "INSPECT",
+    "SELECT",
+    "PROPOSE"
+  ],
+  "effect_classes": [
+    "none",
+    "local-state-change"
+  ],
+  "receipt_kinds": [],
+  "authority_scope": "selection-only",
+  "dependencies": [
+    "ghot.state-merge@0",
+    "ghot.state-parcel-inbox@0"
+  ],
+  "implementation_refs": [
+    "ghot/merge_contract_pantry.py",
+    "ghot/state_merge.py"
+  ],
+  "non_authorities": [
+    "contract discovery is not selection",
+    "compatibility is not recommendation",
+    "selection is not proposal",
+    "proposal is not apply",
+    "installed merge grammar is not authority",
+    "foreign presence memory is not liveness",
+    "foreign offer memory is not scheduling eligibility",
+    "proposal link is traceability, not apply authority"
+  ],
+  "extensions": {
+    "installed_contract_count_at_introduction": 2,
+    "selection_persisted": true,
+    "selection_content_addressed": true,
+    "selection_revalidated_before_proposal": true,
+    "contract_descriptor_revalidated_before_proposal": true,
+    "network_selection_surface": false,
+    "network_apply_surface": false,
+    "selection_to_plan_link_persisted": true
+  }
+}
