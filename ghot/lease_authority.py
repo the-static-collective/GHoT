@@ -173,7 +173,7 @@ class LeaseAuthority:
         if dispatch is None:
             return None
         if (
-            dispatch.get("status") in {"offered", "claimed"}
+            dispatch.get("status") == "offered"
             and self._dispatch_expired(dispatch, at)
         ):
             dispatch["status"] = "expired"
@@ -213,6 +213,25 @@ class LeaseAuthority:
                 self._read_dispatch(hold_id),
                 at=when,
             )
+
+            if claim is not None and self.leases.is_claim_expired(claim, at=when):
+                self.leases.remove_expired_claim_locked(
+                    claim,
+                    recovery_worker_id=None,
+                    at=when,
+                    reason="owner-prepared-new-dispatch",
+                )
+                if existing is not None and existing.get("status") == "claimed":
+                    existing["status"] = "lease-expired"
+                    existing["updated_at"] = iso_at(when)
+                    self._write_dispatch(existing)
+                    self._dispatch_event(
+                        "dispatch.lease_expired",
+                        existing,
+                        at=when,
+                        detail={"lease_id": claim.get("lease_id")},
+                    )
+
             if existing is not None and existing.get("status") in {"offered", "claimed"}:
                 raise ValueError("hold already has an active dispatch")
 
@@ -592,11 +611,15 @@ class LeaseAuthority:
 
         if action == "COMPLETE":
             outcome = str(effect.get("outcome") or "")
-            child_plan = str(
-                effect.get("child_energy_plan_id")
-                or dispatch.get("child_energy_plan_id")
-                or ""
-            )
+            dispatch_child_plan = str(dispatch.get("child_energy_plan_id") or "")
+            supplied_child_plan = effect.get("child_energy_plan_id")
+            if supplied_child_plan and str(supplied_child_plan) != dispatch_child_plan:
+                return self._refuse(
+                    crossing,
+                    "child energy plan does not match owner dispatch",
+                    at=when,
+                )
+            child_plan = dispatch_child_plan
             remote_receipt_id = effect.get("receipt_id")
 
             if outcome != "ok":
