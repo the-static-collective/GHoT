@@ -1,0 +1,41 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.organ-daemon@1",
+  "version": "1",
+  "owner_project": "GHoT",
+  "description": "One-process GHoT organ supervisor with v1 state linked to the current boot presence receipt.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/body.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/organ-state.v1.json",
+    "https://the-static-collective.github.io/GHoT/schemas/organ-event.v0.json"
+  ],
+  "allowed_dispositions": ["OBSERVE","RETRY","SERVE","POLL"],
+  "effect_classes": ["none","local-state-change"],
+  "receipt_kinds": [],
+  "authority_scope": "supervisor-only",
+  "dependencies": [
+    "ghot.body/v0",
+    "ghot.field/v0",
+    "ghot.authority.advert/v0",
+    "ghot.authority.trust/v0",
+    "ghot.work-lease/v0",
+    "ghot.boot-presence@0",
+    "ghot.state-migration@0"
+  ],
+  "implementation_refs": [
+    "ghot/organ.py",
+    "ghot/state_migration.py"
+  ],
+  "non_authorities": [
+    "daemon supervision is not task authority",
+    "daemon liveness is not lease authority",
+    "boot presence is not admission",
+    "migration receipt is not execution authority"
+  ],
+  "extensions": {
+    "durable_current_state": ".ghot/organ/state.v1.json",
+    "presence_link_required": true,
+    "owner_lease_authority_preserved": true
+  }
+}
