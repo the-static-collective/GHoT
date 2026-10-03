@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/merge-contract-inspection.v0.json",
+  "title": "GHoT Merge Contract Inspection V0",
+  "type": "object",
+  "required": [
+    "kind","version","parcel_id","parcel_address","payload_address",
+    "admitted_ref","source","contracts","compatible_contract_ids"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.merge-contract.inspection" },
+    "version": { "const": "0" },
+    "parcel_id": { "type": "string", "minLength": 1 },
+    "parcel_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "payload_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "admitted_ref": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "source": {
+      "type": "object",
+      "required": ["state_kind","state_version","selector","payload_type"]
+    },
+    "contracts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "contract_id","contract_address","compatible","reasons",
+          "target_status","authority_effect","freshness_effect"
+        ]
+      }
+    },
+    "compatible_contract_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  }
+}
