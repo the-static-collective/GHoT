@@ -309,8 +309,9 @@ python3 ghot/lease_remote.py http://OWNER:7790 --worker-id <worker-id> work
 The crossing objects use `relatte.crossing-envelope/v0`; authority responses
 use `relatte.receipt/v0`.
 
-V0 signs those records with a shared-secret HMAC profile. It explicitly does
-**not** claim public-key identity verification yet.
+Experiment 011 originally used a bounded shared-secret HMAC bridge. Experiment
+012 supersedes that transport-auth profile with the current reLATTE P-256
+identity/signature profile while preserving the same owner-local authority law.
 
 Deterministic proof:
 
@@ -320,3 +321,65 @@ python3 ghot/portable_lease_sim.py
 
 See `docs/PORTABLE-LEASE-AUTHORITY.md` and
 `experiments/011-portable-lease-authority.md`.
+
+
+## Sign bodies and dispatch automatically
+
+012 upgrades portable work leases from the 011 shared-secret bridge to the
+current reLATTE Identity + Signature Profile v0.
+
+Each BODY now advertises a stable P-256 public identity generated from local
+durable key material:
+
+```bash
+python3 ghot/reference_node.py probe
+```
+
+The BODY record includes:
+
+```text
+identity.profile = relatte.identity-signature/v0
+identity.algorithm = ECDSA-P256-SHA256
+identity.particular
+identity.public_key
+```
+
+Wake Composer now automatically emits an owner DISPATCH when an energy plan
+selects a remote body. The dispatch is bound to the selected body's node id,
+particular, and public key.
+
+Owner services:
+
+```bash
+python3 ghot/lease_authority.py serve --port 7790
+python3 ghot/wake_composer.py watch
+```
+
+Remote organ:
+
+```bash
+python3 ghot/lan_node.py serve --port 7788
+python3 ghot/lease_remote.py http://OWNER:7790 watch
+```
+
+For authority continuity on a network where the initial advert itself is not
+implicitly trusted, pin the expected authority particular:
+
+```bash
+GHOT_AUTHORITY_PARTICULAR=<expected-particular> \
+python3 ghot/lease_remote.py http://OWNER:7790 watch
+```
+
+Conformance and automatic-dispatch proofs:
+
+```bash
+python3 ghot/relatte_identity_sim.py
+python3 ghot/portable_lease_sim.py
+python3 ghot/auto_dispatch_sim.py
+```
+
+The reLATTE fixture test verifies the fixed genesis P-256 crossing and receipt,
+not only GHoT-generated signatures.
+
+See `docs/IDENTITY-AUTOMATIC-DISPATCH.md` and
+`experiments/012-identity-automatic-dispatch.md`.
