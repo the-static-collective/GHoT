@@ -50,6 +50,10 @@ WANT_KIND = "ghot.composition.want"
 WANT_VERSION = "0"
 WANT_ID_DOMAIN = b"GHoT-CompositionWant-v0|"
 
+OBSERVATION_KIND = "ghot.composition.want-observation"
+OBSERVATION_VERSION = "0"
+OBSERVATION_ID_DOMAIN = b"GHoT-CompositionWantObservation-v0|"
+
 REQUEST_LINK_KIND = "ghot.composition.want-request-link"
 REQUEST_LINK_VERSION = "0"
 REQUEST_LINK_ID_DOMAIN = b"GHoT-CompositionWantRequestLink-v0|"
@@ -154,6 +158,26 @@ def derive_want_id(want: dict[str, Any]) -> str:
         WANT_ID_DOMAIN + jcs_bytes(identity_safe(_want_body(want)))
     ).hexdigest()
     return "ghot-composition-want-v0:" + digest
+
+
+def _observation_body(observation: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "kind": observation.get("kind"),
+        "version": observation.get("version"),
+        "want_id": observation.get("want_id"),
+        "gap_id": observation.get("gap_id"),
+        "source": observation.get("source"),
+        "candidates": observation.get("candidates"),
+        "observed_at": observation.get("observed_at"),
+    }
+
+
+def derive_observation_id(observation: dict[str, Any]) -> str:
+    digest = hashlib.sha256(
+        OBSERVATION_ID_DOMAIN
+        + jcs_bytes(identity_safe(_observation_body(observation)))
+    ).hexdigest()
+    return "ghot-composition-want-observation-v0:" + digest
 
 
 def _request_link_body(link: dict[str, Any]) -> dict[str, Any]:
@@ -301,6 +325,7 @@ class CompositionWantStore:
         self.pantry = MergeContractPantry(self.root)
         self.base = self.root / "composition-wants"
         self.wants_dir = self.base / "wants"
+        self.observations_dir = self.base / "observations"
         self.request_links_dir = self.base / "request-links"
 
     def inspect_gap(
@@ -389,9 +414,12 @@ class CompositionWantStore:
                 want = _read_object(path)
             except Exception:
                 continue
-            links = self.request_links(want_id=str(want.get("want_id")))
+            want_id = str(want.get("want_id"))
+            links = self.request_links(want_id=want_id)
+            observations = self.observations(want_id=want_id)
             result.append({
                 **want,
+                "observation_count": len(observations),
                 "request_links": links,
             })
         return result
@@ -404,6 +432,64 @@ class CompositionWantStore:
         if want.get("want_id") != derive_want_id(want):
             raise ValueError("composition want content address mismatch")
         return want
+
+    def refresh(
+        self,
+        want_id: str,
+        *,
+        observations: Iterable[dict[str, Any]] = (),
+    ) -> dict[str, Any]:
+        want = self.load_want(want_id)
+        self._revalidate_want_gap(want)
+        candidates = candidates_from_observations(
+            required_source=want["source"],
+            observations=observations,
+        )
+        observation = {
+            "kind": OBSERVATION_KIND,
+            "version": OBSERVATION_VERSION,
+            "observation_id": "",
+            "want_id": want["want_id"],
+            "gap_id": want["gap_id"],
+            "source": want["source"],
+            "candidates": candidates,
+            "observed_at": timestamp_now(),
+        }
+        observation["observation_id"] = derive_observation_id(observation)
+        self.observations_dir.mkdir(parents=True, exist_ok=True)
+        _write_atomic(
+            self.observations_dir
+            / f"{_safe_name(observation['observation_id'])}.json",
+            observation,
+        )
+        return observation
+
+    def observations(
+        self,
+        *,
+        want_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        if not self.observations_dir.is_dir():
+            return []
+        result = []
+        for path in sorted(self.observations_dir.glob("*.json")):
+            try:
+                observation = _read_object(path)
+            except Exception:
+                continue
+            if (
+                observation.get("observation_id")
+                != derive_observation_id(observation)
+            ):
+                continue
+            if (
+                want_id is not None
+                and observation.get("want_id") != want_id
+            ):
+                continue
+            result.append(observation)
+        result.sort(key=lambda item: str(item.get("observed_at")))
+        return result
 
     def request_links(
         self,
@@ -435,6 +521,7 @@ class CompositionWantStore:
         return {
             "want": want,
             "current_local_inspection": current,
+            "observations": self.observations(want_id=want_id),
             "request_links": self.request_links(want_id=want_id),
         }
 
@@ -472,17 +559,26 @@ class CompositionWantStore:
         want = self.load_want(want_id)
         self._revalidate_want_gap(want)
 
-        candidate = next(
-            (
+        candidate_pool: list[dict[str, Any]] = [
+            item
+            for item in (want.get("candidates") or [])
+            if isinstance(item, dict)
+        ]
+        for observation in self.observations(want_id=want_id):
+            candidate_pool.extend(
                 item
-                for item in want.get("candidates") or []
-                if item.get("candidate_id") == candidate_id
-            ),
-            None,
-        )
+                for item in (observation.get("candidates") or [])
+                if isinstance(item, dict)
+            )
+        matches = [
+            item
+            for item in candidate_pool
+            if item.get("candidate_id") == candidate_id
+        ]
+        candidate = matches[-1] if matches else None
         if not isinstance(candidate, dict):
             raise ValueError(
-                "candidate is not part of this durable want snapshot"
+                "candidate is not part of this want or its refresh observations"
             )
 
         source_url = str(candidate["exchange_url"]).rstrip("/")
@@ -579,6 +675,12 @@ def main() -> int:
 
     sub.add_parser("wants")
 
+    refresh = sub.add_parser("refresh")
+    refresh.add_argument("want_id")
+    refresh.add_argument("--exchange-url", action="append", default=[])
+    refresh.add_argument("--scan", action="store_true")
+    refresh.add_argument("--timeout", type=float, default=2.0)
+
     show = sub.add_parser("show")
     show.add_argument("want_id")
 
@@ -618,6 +720,21 @@ def main() -> int:
 
     if args.command == "wants":
         print(json.dumps(store.wants(), indent=2))
+        return 0
+
+    if args.command == "refresh":
+        observations = collect_observations(
+            exchange_urls=args.exchange_url,
+            scan=args.scan,
+            timeout=args.timeout,
+        )
+        print(json.dumps(
+            store.refresh(
+                args.want_id,
+                observations=observations,
+            ),
+            indent=2,
+        ))
         return 0
 
     if args.command == "show":
