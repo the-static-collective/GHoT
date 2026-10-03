@@ -189,6 +189,9 @@ def discover_peers(timeout: float = 2.0) -> list[dict[str, Any]]:
         key = message.get("node_id") or f"{addr[0]}:{addr[1]}"
         message["address"] = addr[0]
         message["url"] = f"http://{addr[0]}:{message['http_port']}"
+        parcel_port = message.get("state_parcel_port")
+        if isinstance(parcel_port, int):
+            message["state_parcel_url"] = f"http://{addr[0]}:{parcel_port}"
         seen[key] = message
 
     sock.close()
