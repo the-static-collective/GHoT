@@ -53,6 +53,23 @@ def sha256_address(value: Any) -> str:
     return "sha256:" + hashlib.sha256(stable_json_bytes(value)).hexdigest()
 
 
+def derive_manifest_address(manifest: dict[str, Any]) -> str:
+    body = dict(manifest)
+    body.pop("manifest_address", None)
+    return sha256_address(body)
+
+
+def verify_boot_manifest(manifest: dict[str, Any]) -> bool:
+    try:
+        return (
+            manifest.get("kind") == MANIFEST_KIND
+            and manifest.get("version") == MANIFEST_VERSION
+            and manifest.get("manifest_address") == derive_manifest_address(manifest)
+        )
+    except Exception:
+        return False
+
+
 def repo_revision(repo_root: Path) -> dict[str, Any]:
     git = shutil.which("git")
     if git is None or not (repo_root / ".git").exists():
@@ -304,7 +321,7 @@ def create_boot_manifest(
         "state": inspect_state(state_root),
         "dependencies": dependency_readiness(),
     }
-    manifest["manifest_address"] = sha256_address(manifest)
+    manifest["manifest_address"] = derive_manifest_address(manifest)
     return manifest
 
 
@@ -513,6 +530,12 @@ class PresenceStore:
             manifest=manifest,
             runtime_state=self.runtime_state(),
         )
+        if not verify_boot_manifest(manifest):
+            health["status"] = "blocked"
+            health["reasons"].append({
+                "kind": "boot-manifest-invalid",
+                "detail": "persisted boot manifest address does not re-derive",
+            })
         receipt = self.receipt()
         if receipt is None:
             health["status"] = "blocked"
@@ -525,6 +548,12 @@ class PresenceStore:
             health["reasons"].append({
                 "kind": "startup-receipt-invalid",
                 "detail": "persisted startup receipt failed signature verification",
+            })
+        elif receipt.get("manifest_address") != manifest.get("manifest_address"):
+            health["status"] = "blocked"
+            health["reasons"].append({
+                "kind": "startup-receipt-manifest-mismatch",
+                "detail": "startup receipt does not witness the current boot manifest",
             })
         return health
 
