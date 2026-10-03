@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/presence.v0.json",
+  "title": "GHoT Presence V0",
+  "type": "object",
+  "required": ["kind","version","manifest","startup_receipt","health"],
+  "properties": {
+    "kind": { "const": "ghot.presence" },
+    "version": { "const": "0" },
+    "manifest": { "type": ["object","null"] },
+    "startup_receipt": { "type": ["object","null"] },
+    "health": { "type": "object" }
+  }
+}
