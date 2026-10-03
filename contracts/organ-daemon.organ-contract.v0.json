@@ -1,0 +1,47 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.organ-daemon@0",
+  "version": "0",
+  "owner_project": "GHoT",
+  "description": "One-process supervisor that composes GHoT body presence, liveness, power-aware offers, trusted porch resolution, and portable lease work.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/body.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/organ-state.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/organ-event.v0.json"
+  ],
+  "allowed_dispositions": ["OBSERVE", "RETRY", "SERVE", "POLL"],
+  "effect_classes": ["none", "local-state-change"],
+  "receipt_kinds": [],
+  "authority_scope": "supervisor-only",
+  "dependencies": [
+    "ghot.body/v0",
+    "ghot.field/v0",
+    "ghot.authority.advert/v0",
+    "ghot.authority.trust/v0",
+    "ghot.work-lease/v0"
+  ],
+  "implementation_refs": [
+    "ghot/organ.py",
+    "ghot/reference_node.py",
+    "ghot/lan_node.py",
+    "ghot/liveness_field.py",
+    "ghot/authority_discovery.py",
+    "ghot/lease_remote.py"
+  ],
+  "non_authorities": [
+    "daemon supervision is not task authority",
+    "daemon liveness is not lease authority",
+    "service restart is not permission escalation",
+    "discovery is not trust",
+    "selected work still requires owner dispatch and lease admission",
+    "current state file is not append-only history"
+  ],
+  "extensions": {
+    "single_process_entrypoint": "python3 ghot/organ.py",
+    "durable_current_state": ".ghot/organ/state.v0.json",
+    "subsystem_failures_are_local": true,
+    "service_restart_is_supervised": true,
+    "owner_lease_authority_preserved": true
+  }
+}
