@@ -89,3 +89,6 @@ jobs:
 
       - name: Portable merge plugin parcel simulation
         run: python3 ghot/merge_plugin_parcel_sim.py
+
+      - name: Grammar exchange request-offer simulation
+        run: python3 ghot/grammar_exchange_sim.py

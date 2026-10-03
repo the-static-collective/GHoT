@@ -1084,3 +1084,85 @@ python3 ghot/merge_plugin_parcel_sim.py
 
 See `docs/PORTABLE-MERGE-PLUGINS.md` and
 `experiments/022-portable-merge-plugins.md`.
+
+
+## Exchange grammars without auto-installing them
+
+023 adds a signed grammar exchange table over explicitly shared installed
+packages.
+
+Installed packages are private by default:
+
+```bash
+python3 ghot/grammar_exchange.py inventory
+python3 ghot/grammar_exchange.py share <package-id>
+python3 ghot/grammar_exchange.py unshare <package-id>
+python3 ghot/grammar_exchange.py shares
+```
+
+A normal organ supervises:
+
+```text
+HTTP 7793
+UDP discovery 47890
+```
+
+Scan current signed exchange adverts:
+
+```bash
+python3 ghot/grammar_exchange.py scan
+```
+
+Adverts contain package metadata only. Package bytes do not ride discovery.
+
+Request one exact advertised package address:
+
+```bash
+python3 ghot/grammar_exchange.py request \
+  http://SOURCE:7793 \
+  <package-id> \
+  <sha256:package-address>
+```
+
+A successful request creates a signed `REQUESTED` receipt but crosses no
+package.
+
+On the source:
+
+```bash
+python3 ghot/grammar_exchange.py requests
+python3 ghot/grammar_exchange.py offer <request-id>
+python3 ghot/grammar_exchange.py decline <request-id>
+```
+
+Only local OFFER creates a 022 plugin parcel. Before sending, the source probes
+the requester's current parcel porch and requires its BODY particular to equal
+the signed requester identity.
+
+The requester receives only HOLD and still owns:
+
+```bash
+python3 ghot/merge_plugin_parcel.py validate <parcel-id>
+python3 ghot/merge_plugin_parcel.py install <parcel-id>
+```
+
+The organ keeps the exchange service awake but never auto-shares, auto-requests,
+auto-offers, or auto-installs.
+
+```text
+INSTALLED != SHAREABLE
+DISCOVERY != REQUEST
+REQUEST != OFFER
+RETURN ROAD != REQUESTER IDENTITY
+OFFER != INSTALLATION
+SUPERVISION != EXCHANGE AUTHORITY
+```
+
+Deterministic request/offer proof:
+
+```bash
+python3 ghot/grammar_exchange_sim.py
+```
+
+See `docs/GRAMMAR-EXCHANGE.md` and
+`experiments/023-grammar-exchange.md`.

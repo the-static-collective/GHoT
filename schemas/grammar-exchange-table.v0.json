@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/grammar-exchange-table.v0.json",
+  "title": "GHoT Grammar Exchange Table V0",
+  "type": "object",
+  "required": ["kind","version","installed","held_foreign","declared_shares","active_shares"],
+  "properties": {
+    "kind": { "const": "ghot.grammar.exchange.table" },
+    "version": { "const": "0" },
+    "installed": { "type": "array" },
+    "held_foreign": { "type": "array" },
+    "declared_shares": { "type": "array" },
+    "active_shares": { "type": "array" }
+  }
+}
