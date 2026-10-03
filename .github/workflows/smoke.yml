@@ -59,3 +59,6 @@ jobs:
 
       - name: Authority porch discovery simulation
         run: python3 ghot/authority_discovery_sim.py
+
+      - name: Organ daemon lifecycle simulation
+        run: python3 ghot/organ_sim.py
