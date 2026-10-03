@@ -344,10 +344,12 @@ class BodyDiscoveryService:
         *,
         http_port: int,
         discovery_port: int,
+        state_parcel_port: int | None,
         stop: threading.Event,
     ) -> None:
         self.http_port = http_port
         self.discovery_port = discovery_port
+        self.state_parcel_port = state_parcel_port
         self.stop = stop
         self.socket: socket.socket | None = None
         self.thread: threading.Thread | None = None
@@ -385,6 +387,7 @@ class BodyDiscoveryService:
                     "node_id": node_id(),
                     "observed_at": iso_now(),
                     "http_port": self.http_port,
+                    "state_parcel_port": self.state_parcel_port,
                     "body": body(),
                 }
                 sock.sendto(json.dumps(response).encode("utf-8"), address)
@@ -412,11 +415,13 @@ class OrganServices:
         http_host: str,
         http_port: int,
         discovery_port: int,
+        state_parcel_port: int | None = None,
     ) -> None:
         self.daemon = daemon
         self.http_host = http_host
         self.http_port = http_port
         self.discovery_port = discovery_port
+        self.state_parcel_port = state_parcel_port
         self.stop = threading.Event()
         self.http_server: ThreadingHTTPServer | None = None
         self.http_thread: threading.Thread | None = None
@@ -443,6 +448,7 @@ class OrganServices:
         discovery = BodyDiscoveryService(
             http_port=self.http_port,
             discovery_port=self.discovery_port,
+            state_parcel_port=self.state_parcel_port,
             stop=self.stop,
         )
         discovery.start()
@@ -800,6 +806,9 @@ def main() -> int:
             http_host=args.http_host,
             http_port=args.http_port,
             discovery_port=args.discovery_port,
+            state_parcel_port=(
+                None if args.no_state_porch else args.state_port
+            ),
         )
         services.start()
         if not args.no_state_porch:
