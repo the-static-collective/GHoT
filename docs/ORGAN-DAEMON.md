@@ -1,3 +1,5 @@
+> **022 note:** Port 7792 is now a shared HOLD-only parcel porch with separate `/state-parcel` and `/merge-plugin-package` protocols. Sharing the supervised HTTP service does not merge their inbox, validation, admission, or installation authority. See `docs/PORTABLE-MERGE-PLUGINS.md`.
+
 > **018 note:** The default organ now also supervises a dedicated HOLD-only state parcel porch on port 7792. BODY discovery advertises that porch separately from the normal task service. Network receive may HOLD valid parcels but cannot ADMIT them. See `docs/STATE-PARCELS.md`.
 
 > **017 note:** The canonical daemon current-state record is now `ghot.organ.state/v1` at `.ghot/organ/state.v1.json`, linked to the current boot presence. Valid v0 state crosses through the signed migration path in `docs/STATE-MIGRATIONS.md`.
