@@ -92,3 +92,6 @@ jobs:
 
       - name: Grammar exchange request-offer simulation
         run: python3 ghot/grammar_exchange_sim.py
+
+      - name: Composition gap and want simulation
+        run: python3 ghot/composition_want_sim.py
