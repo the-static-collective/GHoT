@@ -916,3 +916,88 @@ python3 ghot/merge_contract_pantry_sim.py
 
 See `docs/MERGE-CONTRACT-PANTRY.md` and
 `experiments/020-merge-contract-pantry.md`.
+
+
+## Install new merge grammars without plugin code
+
+021 makes merge contracts locally installable as declarative packages.
+
+Validate an example package:
+
+```bash
+python3 ghot/merge_plugin.py validate \
+  examples/merge-plugins/foreign-work-memory.package.json
+```
+
+Install it:
+
+```bash
+python3 ghot/merge_plugin.py install \
+  examples/merge-plugins/foreign-work-memory.package.json
+```
+
+Then inspect installed packages and pantry grammars:
+
+```bash
+python3 ghot/merge_plugin.py list
+python3 ghot/merge_contract_pantry.py list
+```
+
+The example package adds a grammar core GHoT does not hard-code:
+
+```text
+ghot.organ.state/v1
+selector /work
+  ->
+ghot.foreign-work-catalog/v0
+```
+
+Its target is confined to:
+
+```text
+GHOT_HOME/knowledge/plugins/ghot.plugin.foreign-work-memory/
+```
+
+Package files contain no Python or shell code. V0 supports only the bounded
+`catalog-object-snapshot/v0` merge DSL, with allowlisted source expressions
+and deterministic conformance fixtures.
+
+Installation requires:
+
+```text
+validate package
+ -> run fixtures
+ -> derive package address
+ -> persist exact manifest
+ -> BODY-sign install receipt
+ -> expose contract to pantry
+```
+
+The pantry only loads an installed plugin while its manifest still matches the
+verified install receipt. Editing the manifest afterward removes that grammar
+from the active registry.
+
+Remove locally:
+
+```bash
+python3 ghot/merge_plugin.py remove <package-id>
+```
+
+A previous 020 selection cannot resurrect a removed plugin.
+
+```text
+EXTENSIBILITY != ARBITRARY CODE EXECUTION
+PLUGIN MANIFEST != EXECUTABLE CODE
+INSTALLED PLUGIN != TRUST
+INSTALLED PLUGIN != AUTHORITY
+ARRIVAL != INSTALLATION
+```
+
+Deterministic proof:
+
+```bash
+python3 ghot/merge_plugin_sim.py
+```
+
+See `docs/MERGE-PLUGINS.md` and
+`experiments/021-merge-plugins.md`.
