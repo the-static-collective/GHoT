@@ -1261,3 +1261,75 @@ python3 ghot/composition_want_sim.py
 
 See `docs/COMPOSITION-WANTS.md` and
 `experiments/024-composition-wants.md`.
+
+
+## See what the body is wondering about
+
+025 projects durable 024 wants into a read-only local Curious Doors surface.
+
+Snapshot:
+
+```bash
+python3 ghot/curious_doors.py snapshot
+```
+
+Render a standalone HTML view:
+
+```bash
+python3 ghot/curious_doors.py render \
+  --out /tmp/curious-doors.html
+```
+
+Serve manually:
+
+```bash
+python3 ghot/curious_doors.py serve
+```
+
+A normal organ already supervises the surface on:
+
+```text
+http://127.0.0.1:7794/
+```
+
+Disable it explicitly:
+
+```bash
+python3 ghot/organ.py --no-curious-doors
+```
+
+Each durable WANT projects as one of:
+
+```text
+open-gap
+candidate-observed
+requested
+resolved-local
+blocked
+```
+
+The surface reads already-persisted local evidence only. It does not scan the
+network, REFRESH wants, choose candidates, send requests, offer packages,
+validate packages, or install packages.
+
+The HTML surface has no form, button, script, or mutation endpoint. POST, PUT,
+and DELETE are refused with HTTP 405.
+
+Doors are shown chronologically, not by importance.
+
+```text
+SURFACE != REQUEST
+ATTENTION != PRIORITY
+DISPLAY ORDER != RANK
+NEW CANDIDATE != NOTIFICATION AUTHORITY
+SUPERVISED SURFACE != CURIOSITY AUTHORITY
+```
+
+Deterministic proof:
+
+```bash
+python3 ghot/curious_doors_sim.py
+```
+
+See `docs/CURIOUS-DOORS.md` and
+`experiments/025-curious-doors.md`.

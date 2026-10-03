@@ -1,0 +1,57 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.curious-doors@0",
+  "version": "0",
+  "owner_project": "GHoT",
+  "description": "Project durable 024 composition wants into a local read-only JSON and HTML curiosity surface without network refresh, ranking, recommendation, notification authority, or mutation.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/composition-want.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/composition-want-observation.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/composition-want-request-link.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/curiosity-door.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/curiosity-surface.v0.json"
+  ],
+  "allowed_dispositions": [
+    "SNAPSHOT",
+    "RENDER_HTML",
+    "SERVE_READ_ONLY"
+  ],
+  "effect_classes": ["none"],
+  "receipt_kinds": [],
+  "authority_scope": "projection-only",
+  "dependencies": [
+    "ghot.composition-wants@0",
+    "ghot.merge-contract-pantry@0"
+  ],
+  "implementation_refs": [
+    "ghot/curious_doors.py"
+  ],
+  "non_authorities": [
+    "surface is not request",
+    "surface is not want declaration",
+    "surface is not refresh",
+    "attention is not priority",
+    "chronological display order is not rank",
+    "new candidate delta is not notification authority",
+    "candidate display is not recommendation",
+    "requested state is not offer authority",
+    "resolved display is not proof of remote state",
+    "HTML surface has no mutation route"
+  ],
+  "extensions": {
+    "default_host": "127.0.0.1",
+    "default_port": 7794,
+    "read_only_http": true,
+    "get_paths": ["/","/curious-doors","/health"],
+    "mutation_methods_refused": ["POST","PUT","DELETE"],
+    "network_refresh": false,
+    "candidate_ranking": false,
+    "notifications": false,
+    "automatic_want": false,
+    "automatic_refresh": false,
+    "automatic_request": false,
+    "automatic_offer": false,
+    "automatic_install": false
+  }
+}

@@ -95,3 +95,6 @@ jobs:
 
       - name: Composition gap and want simulation
         run: python3 ghot/composition_want_sim.py
+
+      - name: Curious Doors read-only surface simulation
+        run: python3 ghot/curious_doors_sim.py

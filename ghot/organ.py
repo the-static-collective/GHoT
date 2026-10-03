@@ -47,6 +47,7 @@ from relatte_identity import IdentityKey
 from state_migration import StateMigrator
 from state_parcel import parcel_handler
 from grammar_exchange import GrammarExchangeService
+from curious_doors import CuriousDoorsHTTPService
 
 
 BodyProbe = Callable[[], dict[str, Any]]
@@ -110,6 +111,7 @@ class OrganDaemon:
             "presence_http": {"state": "not-started"},
             "state_parcel_http": {"state": "not-started"},
             "grammar_exchange": {"state": "not-started"},
+            "curious_doors": {"state": "not-started"},
         }
 
     def _write_state(self, state: dict[str, Any]) -> None:
@@ -792,6 +794,83 @@ class OrganGrammarExchangeService:
         }
 
 
+class OrganCuriousDoorsService:
+    """Supervise the loopback-only read-only curiosity surface."""
+
+    def __init__(
+        self,
+        daemon: OrganDaemon,
+        *,
+        root: Path,
+        host: str,
+        port: int,
+    ) -> None:
+        self.daemon = daemon
+        self.root = root
+        self.host = host
+        self.port = port
+        self.service: CuriousDoorsHTTPService | None = None
+
+    def start(self) -> None:
+        self.service = CuriousDoorsHTTPService(
+            root=self.root,
+            host=self.host,
+            port=self.port,
+        )
+        self.service.start()
+        live_port = (
+            self.service.server.server_port
+            if self.service.server is not None
+            else self.port
+        )
+        self.daemon.service_state["curious_doors"] = {
+            "state": "awake",
+            "host": self.host,
+            "port": live_port,
+            "read_only": True,
+            "auto_want": False,
+            "auto_refresh": False,
+            "auto_request": False,
+            "auto_offer": False,
+            "auto_install": False,
+        }
+
+    def supervise(self) -> None:
+        alive = (
+            self.service is not None
+            and self.service.thread is not None
+            and self.service.thread.is_alive()
+        )
+        if alive:
+            return
+        if self.service is not None:
+            self.service.close()
+        try:
+            self.start()
+            self.daemon._event("organ.service_restarted", {
+                "node_id": node_id(),
+                "service": "curious_doors",
+                "host": self.host,
+                "port": self.port,
+            })
+        except Exception as exc:
+            self.daemon.service_state["curious_doors"] = {
+                "state": "failed",
+                "host": self.host,
+                "port": self.port,
+                "read_only": True,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+
+    def close(self) -> None:
+        if self.service is not None:
+            self.service.close()
+        self.daemon.service_state["curious_doors"] = {
+            **self.daemon.service_state.get("curious_doors", {}),
+            "state": "stopped",
+        }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run one GHoT organ process.")
     parser.add_argument("--http-host", default="0.0.0.0")
@@ -808,6 +887,8 @@ def main() -> int:
     parser.add_argument("--grammar-exchange-host", default="0.0.0.0")
     parser.add_argument("--grammar-exchange-port", type=int, default=7793)
     parser.add_argument("--grammar-discovery-port", type=int, default=47890)
+    parser.add_argument("--curious-doors-host", default="127.0.0.1")
+    parser.add_argument("--curious-doors-port", type=int, default=7794)
     parser.add_argument(
         "--no-health",
         action="store_true",
@@ -822,6 +903,11 @@ def main() -> int:
         "--no-grammar-exchange",
         action="store_true",
         help="disable the signed grammar exchange table service",
+    )
+    parser.add_argument(
+        "--no-curious-doors",
+        action="store_true",
+        help="disable the loopback-only read-only Curious Doors surface",
     )
     parser.add_argument(
         "--no-auto-migrate",
@@ -894,6 +980,7 @@ def main() -> int:
     presence_service: PresenceHTTPService | None = None
     state_parcel_service: StateParcelHTTPService | None = None
     grammar_exchange_service: OrganGrammarExchangeService | None = None
+    curious_doors_service: OrganCuriousDoorsService | None = None
 
     if not args.no_serve:
         services = OrganServices(
@@ -940,6 +1027,24 @@ def main() -> int:
                     "host": args.grammar_exchange_host,
                     "port": args.grammar_exchange_port,
                     "discovery_port": args.grammar_discovery_port,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+
+        if not args.no_curious_doors:
+            curious_doors_service = OrganCuriousDoorsService(
+                daemon,
+                root=ROOT,
+                host=args.curious_doors_host,
+                port=args.curious_doors_port,
+            )
+            try:
+                curious_doors_service.start()
+            except Exception as exc:
+                daemon.service_state["curious_doors"] = {
+                    "state": "failed",
+                    "host": args.curious_doors_host,
+                    "port": args.curious_doors_port,
+                    "read_only": True,
                     "error": f"{type(exc).__name__}: {exc}",
                 }
 
@@ -995,6 +1100,11 @@ def main() -> int:
             if args.no_serve or args.no_state_porch
             else f"http://{args.state_host}:{args.state_port}/state-parcel"
         ),
+        "curious_doors_endpoint": (
+            None
+            if args.no_serve or args.no_curious_doors
+            else f"http://{args.curious_doors_host}:{args.curious_doors_port}/"
+        ),
         "cycle_interval": args.interval,
         "authority_discovery": True,
     }, indent=2))
@@ -1009,6 +1119,8 @@ def main() -> int:
                 state_parcel_service.supervise()
             if grammar_exchange_service is not None:
                 grammar_exchange_service.supervise()
+            if curious_doors_service is not None:
+                curious_doors_service.supervise()
             state = daemon.cycle()
             work_status = (state.get("work") or {}).get("status")
             if (
@@ -1023,6 +1135,8 @@ def main() -> int:
     except KeyboardInterrupt:
         return 0
     finally:
+        if curious_doors_service is not None:
+            curious_doors_service.close()
         if grammar_exchange_service is not None:
             grammar_exchange_service.close()
         if state_parcel_service is not None:
