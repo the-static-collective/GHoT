@@ -20,7 +20,7 @@ from typing import Any
 
 from reference_node import ROOT
 from relatte_identity import identity_safe, jcs_bytes, timestamp_now
-from state_merge import MERGE_CONTRACTS, StateMergeEngine
+from state_merge import MERGE_CONTRACTS, StateMergeEngine, merge_payload_type
 from state_migration import semantic_address
 
 
@@ -50,22 +50,6 @@ def _read_object(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError(f"JSON object required: {path}")
     return value
-
-
-def payload_type(value: Any) -> str:
-    if isinstance(value, dict):
-        return "object"
-    if isinstance(value, list):
-        return "array"
-    if value is None:
-        return "null"
-    if isinstance(value, bool):
-        return "boolean"
-    if isinstance(value, str):
-        return "string"
-    if isinstance(value, int):
-        return "integer"
-    return "unknown"
 
 
 def contract_descriptor(contract_id: str, spec: dict[str, Any]) -> dict[str, Any]:
@@ -141,7 +125,7 @@ class MergeContractPantry:
         parcel = context["parcel"]
         source = parcel.get("source") or {}
         payload = parcel.get("payload") or {}
-        value_type = payload_type(payload.get("value"))
+        value_type = merge_payload_type(payload.get("value"))
 
         rows = []
         for contract_id, spec in sorted(MERGE_CONTRACTS.items()):
