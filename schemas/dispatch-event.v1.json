@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/dispatch-event.v1.json",
+  "title": "GHoT Dispatch Event V1",
+  "type": "object",
+  "required": [
+    "kind", "version", "event_id", "event_type", "dispatch_id",
+    "hold_id", "target_worker_id", "target_particular", "observed_at"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.dispatch.event" },
+    "version": { "const": "1" },
+    "event_id": { "type": "string", "minLength": 1 },
+    "event_type": {
+      "enum": [
+        "dispatch.offered",
+        "dispatch.claimed",
+        "dispatch.completed",
+        "dispatch.abandoned",
+        "dispatch.failed",
+        "dispatch.expired",
+        "dispatch.lease_expired"
+      ]
+    },
+    "dispatch_id": { "type": "string", "minLength": 1 },
+    "hold_id": { "type": "string", "minLength": 1 },
+    "target_worker_id": { "type": "string", "minLength": 1 },
+    "target_particular": { "type": "string", "minLength": 1 },
+    "observed_at": { "type": "string" },
+    "detail": { "type": "object" }
+  }
+}
