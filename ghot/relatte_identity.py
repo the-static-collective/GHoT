@@ -46,6 +46,18 @@ TIMESTAMP_RE = re.compile(
     r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$"
 )
 
+CROSSING_REQUIRED_FIELDS = {
+    "schema",
+    "crossing_id",
+    "protocol_version",
+    "source_particular",
+    "source_world",
+    "declared_kind",
+    "payload_refs",
+    "created_at",
+    "signing",
+}
+
 CROSSING_ROOT_FIELDS = {
     "schema",
     "crossing_id",
@@ -64,6 +76,18 @@ CROSSING_ROOT_FIELDS = {
     "created_at",
     "signing",
     "extensions",
+}
+
+RECEIPT_REQUIRED_FIELDS = {
+    "schema",
+    "receipt_id",
+    "crossing_id",
+    "world_id",
+    "receiver_particular",
+    "kind",
+    "semantic_effect",
+    "created_at",
+    "signing",
 }
 
 RECEIPT_ROOT_FIELDS = {
@@ -463,7 +487,10 @@ def sign_crossing(envelope: dict[str, Any], key: IdentityKey) -> dict[str, Any]:
 
 def verify_crossing(envelope: dict[str, Any]) -> bool:
     try:
-        if set(envelope) != CROSSING_ROOT_FIELDS:
+        fields = set(envelope)
+        if not CROSSING_REQUIRED_FIELDS.issubset(fields):
+            return False
+        if not fields.issubset(CROSSING_ROOT_FIELDS):
             return False
         signing = envelope.get("signing")
         if not isinstance(signing, dict) or set(signing) != SIGNING_FIELDS:
@@ -472,10 +499,10 @@ def verify_crossing(envelope: dict[str, Any]) -> bool:
             return False
         if signing.get("domain") != CROSSING_SIGNING_DOMAIN:
             return False
-        normalize_timestamp(str(envelope.get("created_at") or ""))
-        public_key = normalize_public_jwk(signing.get("public_key") or {})
-        if envelope.get("source_particular") != particular_for_public_key(public_key):
+        created_at = str(envelope.get("created_at") or "")
+        if not TIMESTAMP_RE.fullmatch(created_at):
             return False
+        public_key = normalize_public_jwk(signing.get("public_key") or {})
         if envelope.get("crossing_id") != derive_crossing_id(envelope):
             return False
         signature_text = str(signing.get("signature") or "")
@@ -545,7 +572,10 @@ def verify_receipt(
     expected_receiver_particular: str | None = None,
 ) -> bool:
     try:
-        if set(receipt) != RECEIPT_ROOT_FIELDS:
+        fields = set(receipt)
+        if not RECEIPT_REQUIRED_FIELDS.issubset(fields):
+            return False
+        if not fields.issubset(RECEIPT_ROOT_FIELDS):
             return False
         signing = receipt.get("signing")
         if not isinstance(signing, dict) or set(signing) != SIGNING_FIELDS:
@@ -554,7 +584,9 @@ def verify_receipt(
             return False
         if signing.get("domain") != RECEIPT_SIGNING_DOMAIN:
             return False
-        normalize_timestamp(str(receipt.get("created_at") or ""))
+        created_at = str(receipt.get("created_at") or "")
+        if not TIMESTAMP_RE.fullmatch(created_at):
+            return False
         public_key = normalize_public_jwk(signing.get("public_key") or {})
         if expected_public_key is not None:
             if public_key != normalize_public_jwk(expected_public_key):
