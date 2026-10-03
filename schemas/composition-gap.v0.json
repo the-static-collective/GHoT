@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/composition-gap.v0.json",
+  "title": "GHoT Composition Gap V0",
+  "type": "object",
+  "required": [
+    "kind","version","gap_id","parcel_id","parcel_address",
+    "payload_address","admitted_ref","source",
+    "local_compatible_contract_ids","status","candidates",
+    "observed_at","candidate_count"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.composition.gap" },
+    "version": { "const": "0" },
+    "gap_id": { "type": "string", "minLength": 1 },
+    "parcel_id": { "type": "string", "minLength": 1 },
+    "parcel_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "payload_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "admitted_ref": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "source": {
+      "type": "object",
+      "required": ["state_kind","state_version","selector","payload_type"]
+    },
+    "local_compatible_contract_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "status": { "enum": ["gap","satisfied-local"] },
+    "candidates": { "type": "array", "items": { "type": "object" } },
+    "observed_at": { "type": "string" },
+    "candidate_count": { "type": "integer", "minimum": 0 }
+  }
+}

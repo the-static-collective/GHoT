@@ -1166,3 +1166,98 @@ python3 ghot/grammar_exchange_sim.py
 
 See `docs/GRAMMAR-EXCHANGE.md` and
 `experiments/023-grammar-exchange.md`.
+
+
+## Notice missing composition grammars without auto-requesting them
+
+024 grounds curiosity in one concrete ADMITTED parcel.
+
+Inspect a parcel:
+
+```bash
+python3 ghot/composition_want.py inspect <parcel-id>
+```
+
+If no local 020 grammar accepts its exact source kind/version/selector/payload
+shape:
+
+```text
+status = gap
+```
+
+Observe structurally matching shared grammars without ranking them:
+
+```bash
+python3 ghot/composition_want.py inspect \
+  <parcel-id> \
+  --scan
+```
+
+or:
+
+```bash
+python3 ghot/composition_want.py inspect \
+  <parcel-id> \
+  --exchange-url http://BODY:7793
+```
+
+Make the gap matter durably:
+
+```bash
+python3 ghot/composition_want.py want \
+  <parcel-id> \
+  --note "I want a lawful grammar for this parcel"
+```
+
+A WANT is valid even with zero candidates.
+
+Later, refresh observed candidates without mutating the WANT or sending a
+request:
+
+```bash
+python3 ghot/composition_want.py refresh \
+  <want-id> \
+  --scan
+```
+
+Inspect durable state:
+
+```bash
+python3 ghot/composition_want.py wants
+python3 ghot/composition_want.py show <want-id>
+```
+
+Only an explicit candidate-specific action enters the existing 023 request
+flow:
+
+```bash
+python3 ghot/composition_want.py request \
+  <want-id> \
+  <candidate-id>
+```
+
+Before REQUEST, 024 revalidates the ADMITTED parcel, the still-open local gap,
+the source BODY identity, and the exact currently shared package/contract/source
+shape.
+
+Candidates are exact structural matches only. They carry no rank, score, or
+recommendation.
+
+```text
+GAP != WANT
+GAP != REQUEST
+CANDIDATE != RECOMMENDATION
+ONE CANDIDATE != AUTOMATIC CHOICE
+REFRESH != REQUEST
+WANT != AUTHORITY
+SATISFIED GAP != REPEAT REQUEST
+```
+
+Deterministic proof:
+
+```bash
+python3 ghot/composition_want_sim.py
+```
+
+See `docs/COMPOSITION-WANTS.md` and
+`experiments/024-composition-wants.md`.
