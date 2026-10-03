@@ -50,6 +50,8 @@ def main() -> int:
         assert "User=root" not in unit
         assert "NoNewPrivileges=true" in unit
         assert "ProtectSystem=strict" in unit
+        assert "Environment=GHOT_BOOT_SURFACE=systemd-user" in unit
+        assert "Environment=GHOT_BOOT_INSTANCE=ghot-organ.service" in unit
         assert str(state_home) in unit
         assert systemd_result["enabled_now"] is False
 
@@ -80,6 +82,8 @@ def main() -> int:
         assert "kill -0" in termux
         assert "PID_FILE=" in termux
         assert "nohup" in termux
+        assert "export GHOT_BOOT_SURFACE=termux-boot" in termux
+        assert "export GHOT_BOOT_INSTANCE=ghot-organ" in termux
         assert mode == 0o700
 
         live_result = render_live_usb_bundle(
@@ -98,6 +102,8 @@ def main() -> int:
         assert '"/opt/GHoT/ghot/organ.py"' in live_unit
         assert '"/var/lib/ghot"' in live_unit
         assert "lease_authority.py" not in live_unit
+        assert "Environment=GHOT_BOOT_SURFACE=live-usb-systemd" in live_unit
+        assert "Environment=GHOT_BOOT_INSTANCE=ghot-organ.service" in live_unit
         assert live_result["modified_host"] is False
         assert "systemctl enable ghot-organ.service" in live_instructions
 
@@ -131,17 +137,20 @@ def main() -> int:
                 "rootless_unit": "User=root" not in unit,
                 "no_new_privileges": "NoNewPrivileges=true" in unit,
                 "organ_only": "lease_authority.py" not in unit,
+                "boot_surface_tagged": "GHOT_BOOT_SURFACE=systemd-user" in unit,
                 "idempotent_install": idempotent_install,
             },
             "termux": {
                 "mode": oct(mode),
                 "duplicate_launch_guard": "kill -0" in termux,
                 "organ_only": "lease_authority.py" not in termux,
+                "boot_surface_tagged": "GHOT_BOOT_SURFACE=termux-boot" in termux,
             },
             "live_usb": {
                 "render_only": live_result["modified_host"] is False,
                 "target_repo": "/opt/GHoT" in live_unit,
                 "target_state": "/var/lib/ghot" in live_unit,
+                "boot_surface_tagged": "GHOT_BOOT_SURFACE=live-usb-systemd" in live_unit,
             },
             "uninstall_preserves_state": sentinel.exists(),
         }, indent=2))
