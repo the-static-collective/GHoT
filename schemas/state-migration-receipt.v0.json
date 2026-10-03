@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/state-migration-receipt.v0.json",
+  "title": "GHoT State Migration Receipt V0",
+  "type": "object",
+  "required": [
+    "kind","version","receipt_id","migration_id","state_kind","from_version",
+    "to_version","source_path","target_path","backup_path","before_address",
+    "after_address","applied_at","particular","signing"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.state.migration.receipt" },
+    "version": { "const": "0" },
+    "receipt_id": { "type": "string", "minLength": 1 },
+    "migration_id": { "type": "string", "minLength": 1 },
+    "state_kind": { "type": "string", "minLength": 1 },
+    "from_version": { "type": "string", "minLength": 1 },
+    "to_version": { "type": "string", "minLength": 1 },
+    "source_path": { "type": "string", "minLength": 1 },
+    "target_path": { "type": "string", "minLength": 1 },
+    "backup_path": { "type": "string", "minLength": 1 },
+    "before_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "after_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "applied_at": { "type": "string" },
+    "particular": { "type": "string", "minLength": 1 },
+    "signing": {
+      "type": "object",
+      "required": ["algorithm","public_key","signature","domain"],
+      "properties": {
+        "algorithm": { "const": "ECDSA-P256-SHA256" },
+        "public_key": { "type": "object" },
+        "signature": { "type": "string", "minLength": 1 },
+        "domain": { "const": "ghot.state-migration-receipt-signature/v0" }
+      }
+    }
+  }
+}
