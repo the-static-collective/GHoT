@@ -1,3 +1,5 @@
+> **017 note:** 014 originally introduced organ state v0. Experiment 017 makes v1 canonical and preserves v0 through the signed migration path; the behavioral lifecycle test now writes v1.
+
 # Experiment 014 — Organ Daemon
 
 ## Question
@@ -98,7 +100,7 @@ python3 ghot/organ.py --once --no-serve
 Expected: BODY/power/liveness/authority/work composition runs once and writes:
 
 ```text
-.ghot/organ/state.v0.json
+.ghot/organ/state.v1.json
 ```
 
 without binding BODY service ports.
