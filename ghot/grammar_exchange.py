@@ -253,6 +253,11 @@ class GrammarShareStore:
                 continue
             if current.get("package_address") != record.get("package_address"):
                 continue
+            package = current.get("package") or {}
+            contract = package.get("contract") or {}
+            source = contract.get("source") or {}
+            target = contract.get("target") or {}
+            operation = package.get("operation") or {}
             author = find_author_for_installed_package(
                 self.root,
                 package_id=str(package_id),
@@ -265,6 +270,17 @@ class GrammarShareStore:
                 "contract_id": record["contract_id"],
                 "title": record.get("title"),
                 "category": record.get("category"),
+                "source": {
+                    "state_kind": source.get("state_kind"),
+                    "state_version": source.get("state_version"),
+                    "selector": source.get("selector"),
+                    "payload_type": source.get("payload_type"),
+                },
+                "target": {
+                    "state_kind": target.get("state_kind"),
+                    "state_version": target.get("state_version"),
+                },
+                "operation_kind": operation.get("kind"),
                 "author_particular": (
                     author.get("particular")
                     if isinstance(author, dict)
@@ -413,6 +429,23 @@ def verify_exchange_advert(advert: dict[str, Any]) -> bool:
                 not isinstance(address, str)
                 or not address.startswith("sha256:")
             ):
+                return False
+            source = item.get("source")
+            target = item.get("target")
+            if not isinstance(source, dict) or not isinstance(target, dict):
+                return False
+            for field in (
+                "state_kind",
+                "state_version",
+                "selector",
+                "payload_type",
+            ):
+                if not isinstance(source.get(field), str):
+                    return False
+            for field in ("state_kind", "state_version"):
+                if not isinstance(target.get(field), str):
+                    return False
+            if not isinstance(item.get("operation_kind"), str):
                 return False
             if item.get("shareable") is not True:
                 return False
