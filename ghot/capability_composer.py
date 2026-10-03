@@ -40,9 +40,14 @@ def candidate_view(candidate: dict[str, Any]) -> dict[str, Any]:
     body_record = candidate["body"]
     system = body_record.get("system") or {}
     power = body_record.get("power") or {}
+    identity = body_record.get("identity") or {}
     return {
         "node_id": candidate["node_id"],
         "location": candidate["location"],
+        "identity_available": identity.get("available"),
+        "identity_particular": identity.get("particular"),
+        "identity_public_key": identity.get("public_key"),
+        "identity_profile": identity.get("profile"),
         "url": candidate.get("url"),
         "hostname": system.get("hostname"),
         "architecture": system.get("architecture"),
