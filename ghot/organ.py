@@ -46,6 +46,7 @@ from reference_node import ROOT, body, node_id
 from relatte_identity import IdentityKey
 from state_migration import StateMigrator
 from state_parcel import parcel_handler
+from grammar_exchange import GrammarExchangeService
 
 
 BodyProbe = Callable[[], dict[str, Any]]
@@ -108,6 +109,7 @@ class OrganDaemon:
             "body_discovery": {"state": "not-started"},
             "presence_http": {"state": "not-started"},
             "state_parcel_http": {"state": "not-started"},
+            "grammar_exchange": {"state": "not-started"},
         }
 
     def _write_state(self, state: dict[str, Any]) -> None:
@@ -702,6 +704,90 @@ class StateParcelHTTPService:
             self.server.server_close()
         self.daemon.service_state["state_parcel_http"] = {
             **self.daemon.service_state.get("state_parcel_http", {}),
+            "state": "stopped",
+        }
+
+
+class OrganGrammarExchangeService:
+    """Supervise the non-authoritative grammar exchange table."""
+
+    def __init__(
+        self,
+        daemon: OrganDaemon,
+        *,
+        root: Path,
+        host: str,
+        port: int,
+        discovery_port: int,
+        parcel_port: int,
+    ) -> None:
+        self.daemon = daemon
+        self.root = root
+        self.host = host
+        self.port = port
+        self.discovery_port = discovery_port
+        self.parcel_port = parcel_port
+        self.service: GrammarExchangeService | None = None
+
+    def start(self) -> None:
+        self.service = GrammarExchangeService(
+            root=self.root,
+            host=self.host,
+            port=self.port,
+            discovery_port=self.discovery_port,
+            parcel_port=self.parcel_port,
+        )
+        self.service.start()
+        self.daemon.service_state["grammar_exchange"] = {
+            "state": "awake",
+            "host": self.host,
+            "port": (
+                self.service.server.server_port
+                if self.service.server is not None
+                else self.port
+            ),
+            "discovery_port": self.discovery_port,
+            "auto_share": False,
+            "auto_request": False,
+            "auto_offer": False,
+            "auto_install": False,
+        }
+
+    def supervise(self) -> None:
+        alive = (
+            self.service is not None
+            and self.service.http_thread is not None
+            and self.service.http_thread.is_alive()
+            and self.service.discovery_thread is not None
+            and self.service.discovery_thread.is_alive()
+        )
+        if alive:
+            return
+        if self.service is not None:
+            self.service.close()
+        try:
+            self.start()
+            self.daemon._event("organ.service_restarted", {
+                "node_id": node_id(),
+                "service": "grammar_exchange",
+                "host": self.host,
+                "port": self.port,
+                "discovery_port": self.discovery_port,
+            })
+        except Exception as exc:
+            self.daemon.service_state["grammar_exchange"] = {
+                "state": "failed",
+                "host": self.host,
+                "port": self.port,
+                "discovery_port": self.discovery_port,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+
+    def close(self) -> None:
+        if self.service is not None:
+            self.service.close()
+        self.daemon.service_state["grammar_exchange"] = {
+            **self.daemon.service_state.get("grammar_exchange", {}),
             "state": "stopped",
         }
 
