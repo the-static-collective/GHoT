@@ -16,6 +16,12 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from external_adapters import (
+    execute_external_adapter,
+    external_executor_records,
+    find_external_capability,
+)
+
 EXECUTORS: dict[str, dict[str, Any]] = {
     "python": {
         "commands": ["python3", "python"],
@@ -105,6 +111,7 @@ def probe_executors() -> list[dict[str, Any]]:
             ),
             "capabilities": list(spec["capabilities"]) if available else [],
         })
+    records.extend(external_executor_records())
     return records
 
 
@@ -114,6 +121,11 @@ def derive_offers(executors: list[dict[str, Any]]) -> list[dict[str, Any]]:
         if not executor.get("available"):
             continue
         for capability in executor.get("capabilities", []):
+            declared_limits = (
+                executor.get("capability_limits", {}).get(capability, {})
+                if isinstance(executor.get("capability_limits"), dict)
+                else {}
+            )
             offers.append({
                 "kind": "ghot.offer",
                 "version": "0",
@@ -123,6 +135,7 @@ def derive_offers(executors: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "limits": {
                     "remote_shell": False,
                     "bounded_adapter_only": True,
+                    **declared_limits,
                 },
             })
     return offers
@@ -200,6 +213,9 @@ def _media_probe(payload: Any) -> dict[str, Any]:
 
 
 def execute_adapter(capability: str, payload: Any) -> Any:
+    if find_external_capability(capability) is not None:
+        return execute_external_adapter(capability, payload)
+
     if capability == "media.probe":
         return _media_probe(payload)
 
