@@ -291,7 +291,6 @@ def _preflight_composition_wants(
         "package_address",
         "contract_id",
         "source_particular",
-        "exchange_url",
     )
     context_matches = all(
         context.get(field) == candidate.get(field)
