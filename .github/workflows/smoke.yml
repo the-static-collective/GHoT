@@ -74,3 +74,6 @@ jobs:
 
       - name: Explicit body choice simulation
         run: GHOT_HOME="$(mktemp -d)" python3 ghot/body_choice_sim.py
+
+      - name: Portable state parcel simulation
+        run: python3 ghot/state_parcel_sim.py
