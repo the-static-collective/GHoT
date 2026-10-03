@@ -77,3 +77,6 @@ jobs:
 
       - name: External adapter manifest simulation
         run: GHOT_HOME="$(mktemp -d)" python3 ghot/external_adapter_sim.py
+
+      - name: Field reseed receiver simulation
+        run: GHOT_HOME="$(mktemp -d)" python3 ghot/field_reseed_receiver_sim.py
