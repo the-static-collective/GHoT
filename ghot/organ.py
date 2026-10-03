@@ -45,6 +45,7 @@ from liveness_field import LivenessField
 from reference_node import ROOT, body, node_id
 from relatte_identity import IdentityKey
 from state_migration import StateMigrator
+from state_parcel import parcel_handler
 
 
 BodyProbe = Callable[[], dict[str, Any]]
@@ -106,6 +107,7 @@ class OrganDaemon:
             "body_http": {"state": "not-started"},
             "body_discovery": {"state": "not-started"},
             "presence_http": {"state": "not-started"},
+            "state_parcel_http": {"state": "not-started"},
         }
 
     def _write_state(self, state: dict[str, Any]) -> None:
@@ -625,6 +627,79 @@ class PresenceHTTPService:
         }
 
 
+class StateParcelHTTPService:
+    """Supervised HOLD-only state parcel porch."""
+
+    def __init__(
+        self,
+        daemon: OrganDaemon,
+        *,
+        root: Path,
+        host: str,
+        port: int,
+    ) -> None:
+        self.daemon = daemon
+        self.root = root
+        self.host = host
+        self.port = port
+        self.server: ThreadingHTTPServer | None = None
+        self.thread: threading.Thread | None = None
+
+    def start(self) -> None:
+        self.server = ThreadingHTTPServer(
+            (self.host, self.port),
+            parcel_handler(self.root),
+        )
+        self.thread = threading.Thread(
+            target=self.server.serve_forever,
+            daemon=True,
+        )
+        self.thread.start()
+        self.daemon.service_state["state_parcel_http"] = {
+            "state": "awake",
+            "host": self.host,
+            "port": self.server.server_port,
+            "automatic_disposition": "HOLD",
+        }
+
+    def supervise(self) -> None:
+        alive = self.thread is not None and self.thread.is_alive()
+        if alive:
+            return
+        if self.server is not None:
+            try:
+                self.server.server_close()
+            except OSError:
+                pass
+        try:
+            self.start()
+            self.daemon._event("organ.service_restarted", {
+                "node_id": node_id(),
+                "service": "state_parcel_http",
+                "host": self.host,
+                "port": self.port,
+            })
+        except Exception as exc:
+            self.daemon.service_state["state_parcel_http"] = {
+                "state": "failed",
+                "host": self.host,
+                "port": self.port,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+
+    def close(self) -> None:
+        if self.server is not None:
+            try:
+                self.server.shutdown()
+            except OSError:
+                pass
+            self.server.server_close()
+        self.daemon.service_state["state_parcel_http"] = {
+            **self.daemon.service_state.get("state_parcel_http", {}),
+            "state": "stopped",
+        }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run one GHoT organ process.")
     parser.add_argument("--http-host", default="0.0.0.0")
@@ -636,10 +711,17 @@ def main() -> int:
     parser.add_argument("--lease-seconds", type=float, default=60.0)
     parser.add_argument("--health-host", default="127.0.0.1")
     parser.add_argument("--health-port", type=int, default=7791)
+    parser.add_argument("--state-host", default="0.0.0.0")
+    parser.add_argument("--state-port", type=int, default=7792)
     parser.add_argument(
         "--no-health",
         action="store_true",
         help="disable the loopback health/presence HTTP endpoint",
+    )
+    parser.add_argument(
+        "--no-state-porch",
+        action="store_true",
+        help="disable the HOLD-only state parcel receiving porch",
     )
     parser.add_argument(
         "--no-auto-migrate",
@@ -710,6 +792,7 @@ def main() -> int:
 
     services: OrganServices | None = None
     presence_service: PresenceHTTPService | None = None
+    state_parcel_service: StateParcelHTTPService | None = None
 
     if not args.no_serve:
         services = OrganServices(
@@ -719,6 +802,23 @@ def main() -> int:
             discovery_port=args.discovery_port,
         )
         services.start()
+        if not args.no_state_porch:
+            state_parcel_service = StateParcelHTTPService(
+                daemon,
+                root=ROOT,
+                host=args.state_host,
+                port=args.state_port,
+            )
+            try:
+                state_parcel_service.start()
+            except Exception as exc:
+                daemon.service_state["state_parcel_http"] = {
+                    "state": "failed",
+                    "host": args.state_host,
+                    "port": args.state_port,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+
         if not args.no_health:
             presence_service = PresenceHTTPService(
                 daemon,
@@ -766,6 +866,11 @@ def main() -> int:
             if args.no_serve or args.no_health
             else f"http://{args.health_host}:{args.health_port}/presence"
         ),
+        "state_parcel_endpoint": (
+            None
+            if args.no_serve or args.no_state_porch
+            else f"http://{args.state_host}:{args.state_port}/state-parcel"
+        ),
         "cycle_interval": args.interval,
         "authority_discovery": True,
     }, indent=2))
@@ -776,6 +881,8 @@ def main() -> int:
                 services.supervise()
             if presence_service is not None:
                 presence_service.supervise()
+            if state_parcel_service is not None:
+                state_parcel_service.supervise()
             state = daemon.cycle()
             work_status = (state.get("work") or {}).get("status")
             if (
@@ -790,6 +897,8 @@ def main() -> int:
     except KeyboardInterrupt:
         return 0
     finally:
+        if state_parcel_service is not None:
+            state_parcel_service.close()
         if presence_service is not None:
             presence_service.close()
         if services is not None:
