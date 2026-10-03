@@ -95,11 +95,11 @@ def main() -> int:
             assert receipt["manifest_address"] == manifest["manifest_address"]
             assert receipt["particular"] == record["identity"]["particular"]
 
-            runtime_path = root / "organ" / "state.v0.json"
+            runtime_path = root / "organ" / "state.v1.json"
             runtime_path.parent.mkdir(parents=True, exist_ok=True)
             runtime_state = {
                 "kind": "ghot.organ.state",
-                "version": "0",
+                "version": "1",
                 "node_id": "node-presence",
                 "cycle": 1,
                 "services": {
@@ -108,6 +108,11 @@ def main() -> int:
                     "presence_http": {"state": "awake"},
                 },
                 "errors": [],
+                "presence": {
+                    "boot_id": manifest["boot_id"],
+                    "manifest_address": manifest["manifest_address"],
+                    "startup_receipt_id": receipt["receipt_id"],
+                },
             }
             runtime_path.write_text(
                 json.dumps(runtime_state) + "\n",
