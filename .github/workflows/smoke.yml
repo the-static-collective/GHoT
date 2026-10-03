@@ -80,3 +80,6 @@ jobs:
 
       - name: Owner-local state merge simulation
         run: python3 ghot/state_merge_sim.py
+
+      - name: Merge-contract pantry simulation
+        run: python3 ghot/merge_contract_pantry_sim.py
