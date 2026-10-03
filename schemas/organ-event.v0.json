@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/organ-event.v0.json",
+  "title": "GHoT Organ Event V0",
+  "type": "object",
+  "required": [
+    "kind","version","event_id","event_type","observed_at","detail"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.organ.event" },
+    "version": { "const": "0" },
+    "event_id": { "type": "string", "minLength": 1 },
+    "event_type": {
+      "enum": [
+        "organ.state_changed",
+        "organ.service_restarted",
+        "body.arrived",
+        "body.returned",
+        "body.stale",
+        "body.departed",
+        "body.quarantine_expired",
+        "body.state_changed"
+      ]
+    },
+    "node_id": { "type": ["string","null"] },
+    "observed_at": { "type": "string" },
+    "detail": { "type": "object" }
+  }
+}
