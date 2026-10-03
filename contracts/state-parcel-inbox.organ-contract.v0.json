@@ -1,0 +1,49 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.state-parcel-inbox@0",
+  "version": "0",
+  "owner_project": "GHoT",
+  "description": "Receive portable signed state parcels into HOLD and allow only owner-local HOLD, ADMIT, REJECT, or SCAR dispositions without automatically mutating canonical live state.",
+  "accepted_crossing_kinds": ["GHOT_STATE_PARCEL"],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/state-parcel.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/state-parcel-bundle.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/state-parcel-inbox.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/state-parcel-export-receipt.v0.json",
+    "relatte.crossing-envelope/v0",
+    "relatte.receipt/v0"
+  ],
+  "allowed_dispositions": ["HOLD","ADMIT","REJECT","SCAR"],
+  "effect_classes": ["none","local-state-change"],
+  "receipt_kinds": ["HELD","ADMITTED","REJECTED","SCARRED","REFUSED"],
+  "authority_scope": "owner-local",
+  "dependencies": [
+    "ghot.state-migration@0",
+    "relatte.identity-signature/v0"
+  ],
+  "implementation_refs": [
+    "ghot/state_parcel.py",
+    "ghot/organ.py",
+    "ghot/lan_node.py"
+  ],
+  "non_authorities": [
+    "valid signature is not trust",
+    "crossing is not admission",
+    "HOLD is not merge",
+    "ADMIT does not rewrite canonical live state",
+    "foreign source metadata is not local authority",
+    "node id is not cryptographic body identity",
+    "migration metadata is provenance evidence, not permission",
+    "transport address is not identity"
+  ],
+  "extensions": {
+    "automatic_network_disposition": "HOLD",
+    "network_admit_endpoint": false,
+    "max_payload_bytes": 524288,
+    "target_particular_enforced_when_present": true,
+    "send_node_requires_discovered_particular_match": true,
+    "canonical_state_mutation": false,
+    "admitted_corpus": "GHOT_HOME/state-parcels/admitted",
+    "scar_corpus": "GHOT_HOME/state-parcels/scars"
+  }
+}

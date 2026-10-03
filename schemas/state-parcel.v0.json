@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/state-parcel.v0.json",
+  "title": "GHoT State Parcel V0",
+  "type": "object",
+  "required": [
+    "kind","version","parcel_id","parcel_address","created_at",
+    "source","target","payload","migration","export_receipt"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.state.parcel" },
+    "version": { "const": "0" },
+    "parcel_id": { "type": "string", "minLength": 1 },
+    "parcel_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "created_at": { "type": "string" },
+    "source": {
+      "type": "object",
+      "required": [
+        "node_id","particular","state_path","state_kind",
+        "state_version","state_address"
+      ],
+      "properties": {
+        "node_id": { "type": "string", "minLength": 1 },
+        "particular": { "type": "string", "minLength": 1 },
+        "state_path": { "type": "string", "minLength": 1 },
+        "state_kind": { "type": ["string","null"] },
+        "state_version": { "type": ["string","null"] },
+        "state_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "target": {
+      "type": "object",
+      "required": ["particular"],
+      "properties": {
+        "particular": { "type": ["string","null"] }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "required": ["selector","encoding","address","size_bytes","value"],
+      "properties": {
+        "selector": { "type": "string" },
+        "encoding": { "const": "identity-safe-json" },
+        "address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "size_bytes": { "type": "integer", "minimum": 0, "maximum": 524288 },
+        "value": {}
+      }
+    },
+    "migration": {
+      "type": "object",
+      "required": [
+        "state_kind","state_version","current_known_version",
+        "migration_receipt_ids"
+      ],
+      "properties": {
+        "state_kind": { "type": ["string","null"] },
+        "state_version": { "type": ["string","null"] },
+        "current_known_version": { "type": ["string","null"] },
+        "migration_receipt_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "export_receipt": { "type": "object" }
+  }
+}

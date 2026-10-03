@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/state-parcel-export-receipt.v0.json",
+  "title": "GHoT State Parcel Export Receipt V0",
+  "type": "object",
+  "required": [
+    "kind","version","receipt_id","parcel_id","parcel_address",
+    "payload_address","source_state_address","source_particular",
+    "target_particular","exported_at","signing"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.state.parcel.export-receipt" },
+    "version": { "const": "0" },
+    "receipt_id": { "type": "string", "minLength": 1 },
+    "parcel_id": { "type": "string", "minLength": 1 },
+    "parcel_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "payload_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "source_state_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "source_particular": { "type": "string", "minLength": 1 },
+    "target_particular": { "type": ["string","null"] },
+    "exported_at": { "type": "string" },
+    "signing": {
+      "type": "object",
+      "required": ["algorithm","public_key","signature","domain"],
+      "properties": {
+        "algorithm": { "const": "ECDSA-P256-SHA256" },
+        "public_key": { "type": "object" },
+        "signature": { "type": "string", "minLength": 1 },
+        "domain": { "const": "ghot.state-parcel-export-receipt-signature/v0" }
+      }
+    }
+  }
+}
