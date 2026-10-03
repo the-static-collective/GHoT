@@ -98,3 +98,6 @@ jobs:
 
       - name: Curious Doors read-only surface simulation
         run: python3 ghot/curious_doors_sim.py
+
+      - name: Curious Door navigation simulation
+        run: python3 ghot/curious_navigation_sim.py
