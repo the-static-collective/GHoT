@@ -71,3 +71,6 @@ jobs:
 
       - name: State migration receipt simulation
         run: python3 ghot/state_migration_sim.py
+
+      - name: Explicit body choice simulation
+        run: GHOT_HOME="$(mktemp -d)" python3 ghot/body_choice_sim.py
