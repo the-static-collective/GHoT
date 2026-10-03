@@ -79,6 +79,7 @@ def evaluate_candidate(
     prefer_local: bool,
     prefer_plugged_in: bool,
     prefer_memory: bool,
+    context_posture: str | None = None,
     excluded_node_ids: set[str] | None = None,
 ) -> dict[str, Any]:
     body_record = candidate["body"]
@@ -98,12 +99,18 @@ def evaluate_candidate(
     else:
         reasons.append("body is awake in liveness field")
 
-    matching_offers = [
+    capability_offers = [
         offer for offer in body_record.get("offers", [])
         if offer.get("capability") == capability
     ]
-    if not matching_offers:
+    matching_offers = [
+        offer for offer in capability_offers
+        if context_posture is None or offer.get("context_posture") == context_posture
+    ]
+    if not capability_offers:
         rejected.append("required capability not offered")
+    elif context_posture is not None and not matching_offers:
+        rejected.append(f"required context posture not offered: {context_posture}")
     elif not any(offer.get("available", False) for offer in matching_offers):
         power_reasons = []
         for offer in matching_offers:
@@ -112,6 +119,8 @@ def evaluate_candidate(
             rejected.append("required capability withdrawn: " + "; ".join(power_reasons))
         else:
             rejected.append("required capability currently unavailable")
+    elif context_posture is not None:
+        reasons.append(f"context posture matches: {context_posture}")
 
     battery = power.get("battery_percent")
     if min_battery is not None:
@@ -210,6 +219,7 @@ def compose_plan(
     prefer_local: bool = True,
     prefer_plugged_in: bool = False,
     prefer_memory: bool = False,
+    context_posture: str | None = None,
     excluded_node_ids: set[str] | None = None,
     composition_id: str | None = None,
     parent_plan_id: str | None = None,
@@ -227,6 +237,7 @@ def compose_plan(
             prefer_local=prefer_local,
             prefer_plugged_in=prefer_plugged_in,
             prefer_memory=prefer_memory,
+            context_posture=context_posture,
             excluded_node_ids=excluded,
         )
         for candidate in candidates
@@ -261,6 +272,7 @@ def compose_plan(
         "constraints": {
             "min_battery_percent": min_battery,
             "required_liveness_state": "awake",
+            "context_posture": context_posture,
         },
         "preferences": {
             "prefer_local": prefer_local,
@@ -350,6 +362,12 @@ def main() -> int:
     )
     parser.add_argument("--prefer-plugged-in", action="store_true")
     parser.add_argument("--prefer-memory", action="store_true")
+    parser.add_argument(
+        "--context-posture",
+        choices=["fresh", "bounded-window", "lineage-enabled", "owner-local"],
+        default=None,
+        help="require an offer with this explicit epistemic context posture",
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -360,6 +378,7 @@ def main() -> int:
         prefer_local=not args.no_prefer_local,
         prefer_plugged_in=args.prefer_plugged_in,
         prefer_memory=args.prefer_memory,
+        context_posture=args.context_posture,
     )
 
     if args.dry_run:
