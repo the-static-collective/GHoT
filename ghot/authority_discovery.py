@@ -21,6 +21,7 @@ import threading
 import time
 import urllib.request
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
@@ -152,6 +153,28 @@ def make_authority_advert(
     return advert
 
 
+def advert_is_fresh(
+    advert: dict[str, Any],
+    *,
+    at: float | None = None,
+) -> bool:
+    try:
+        issued = datetime.fromisoformat(
+            str(advert.get("issued_at") or "").replace("Z", "+00:00")
+        )
+        if issued.tzinfo is None:
+            return False
+        issued_epoch = issued.astimezone(timezone.utc).timestamp()
+        ttl = int(advert.get("ttl_seconds"))
+        if ttl <= 0:
+            return False
+        when = time.time() if at is None else float(at)
+        # Allow small clock skew but reject adverts from implausibly far ahead.
+        return issued_epoch - 5.0 <= when <= issued_epoch + ttl
+    except Exception:
+        return False
+
+
 def verify_authority_advert(advert: dict[str, Any]) -> bool:
     try:
         if set(advert) != ADVERT_FIELDS:
@@ -167,6 +190,8 @@ def verify_authority_advert(advert: dict[str, Any]) -> bool:
         if not isinstance(advert.get("lease_port"), int):
             return False
         if not isinstance(advert.get("ttl_seconds"), int):
+            return False
+        if int(advert.get("ttl_seconds")) <= 0:
             return False
 
         public_key = normalize_public_jwk(advert.get("public_key") or {})
@@ -336,7 +361,11 @@ def discover_authorities(
         if message.get("kind") != HERE_MAGIC:
             continue
         advert = message.get("advert")
-        if not isinstance(advert, dict) or not verify_authority_advert(advert):
+        if (
+            not isinstance(advert, dict)
+            or not verify_authority_advert(advert)
+            or not advert_is_fresh(advert)
+        ):
             continue
         particular = str(advert["particular"])
         seen[particular] = {
@@ -368,7 +397,11 @@ def trusted_observations(
     results: list[dict[str, Any]] = []
     for observation in observations:
         advert = observation.get("advert")
-        if not isinstance(advert, dict) or not verify_authority_advert(advert):
+        if (
+            not isinstance(advert, dict)
+            or not verify_authority_advert(advert)
+            or not advert_is_fresh(advert)
+        ):
             continue
         pin_match = bool(pin and advert.get("particular") == pin)
         remembered = trust.matches(advert)
