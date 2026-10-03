@@ -48,6 +48,7 @@ from state_migration import StateMigrator
 from state_parcel import parcel_handler
 from grammar_exchange import GrammarExchangeService
 from curious_doors import CuriousDoorsHTTPService
+from activation_broker import ActivationBrokerHTTPService
 
 
 BodyProbe = Callable[[], dict[str, Any]]
@@ -112,6 +113,7 @@ class OrganDaemon:
             "state_parcel_http": {"state": "not-started"},
             "grammar_exchange": {"state": "not-started"},
             "curious_doors": {"state": "not-started"},
+            "activation_broker": {"state": "not-started"},
         }
 
     def _write_state(self, state: dict[str, Any]) -> None:
@@ -887,6 +889,87 @@ class OrganCuriousDoorsService:
         }
 
 
+class OrganActivationBrokerService:
+    """Supervise the loopback activation ceremony without supplying consent."""
+
+    def __init__(
+        self,
+        daemon: OrganDaemon,
+        *,
+        root: Path,
+        host: str,
+        port: int,
+    ) -> None:
+        self.daemon = daemon
+        self.root = root
+        self.host = host
+        self.port = port
+        self.service: ActivationBrokerHTTPService | None = None
+
+    def start(self) -> None:
+        self.service = ActivationBrokerHTTPService(
+            root=self.root,
+            host=self.host,
+            port=self.port,
+        )
+        self.service.start()
+        live_port = (
+            self.service.server.server_port
+            if self.service.server is not None
+            else self.port
+        )
+        self.daemon.service_state["activation_broker"] = {
+            "state": "awake",
+            "host": self.host,
+            "port": live_port,
+            "loopback_only": self.host in {"127.0.0.1", "localhost", "::1"},
+            "launch_index_read_only": True,
+            "preview_read_only": True,
+            "act_required": True,
+            "daemon_supplies_act": False,
+            "ui_click_grants_consent": False,
+            "broker_grants_consent": False,
+            "same_origin_browser_act_required": True,
+            "success_requires_verified_signed_receipt": True,
+        }
+
+    def supervise(self) -> None:
+        alive = (
+            self.service is not None
+            and self.service.thread is not None
+            and self.service.thread.is_alive()
+        )
+        if alive:
+            return
+        if self.service is not None:
+            self.service.close()
+        try:
+            self.start()
+            self.daemon._event("organ.service_restarted", {
+                "node_id": node_id(),
+                "service": "activation_broker",
+                "host": self.host,
+                "port": self.port,
+            })
+        except Exception as exc:
+            self.daemon.service_state["activation_broker"] = {
+                "state": "failed",
+                "host": self.host,
+                "port": self.port,
+                "daemon_supplies_act": False,
+                "broker_grants_consent": False,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+
+    def close(self) -> None:
+        if self.service is not None:
+            self.service.close()
+        self.daemon.service_state["activation_broker"] = {
+            **self.daemon.service_state.get("activation_broker", {}),
+            "state": "stopped",
+        }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run one GHoT organ process.")
     parser.add_argument("--http-host", default="0.0.0.0")
@@ -905,6 +988,8 @@ def main() -> int:
     parser.add_argument("--grammar-discovery-port", type=int, default=47890)
     parser.add_argument("--curious-doors-host", default="127.0.0.1")
     parser.add_argument("--curious-doors-port", type=int, default=7794)
+    parser.add_argument("--activation-broker-host", default="127.0.0.1")
+    parser.add_argument("--activation-broker-port", type=int, default=7795)
     parser.add_argument(
         "--no-health",
         action="store_true",
@@ -924,6 +1009,11 @@ def main() -> int:
         "--no-curious-doors",
         action="store_true",
         help="disable the loopback-only read-only Curious Doors surface",
+    )
+    parser.add_argument(
+        "--no-activation-broker",
+        action="store_true",
+        help="disable the loopback Static-OS activation broker surface",
     )
     parser.add_argument(
         "--no-auto-migrate",
@@ -997,6 +1087,7 @@ def main() -> int:
     state_parcel_service: StateParcelHTTPService | None = None
     grammar_exchange_service: OrganGrammarExchangeService | None = None
     curious_doors_service: OrganCuriousDoorsService | None = None
+    activation_broker_service: OrganActivationBrokerService | None = None
 
     if not args.no_serve:
         services = OrganServices(
@@ -1064,6 +1155,25 @@ def main() -> int:
                     "error": f"{type(exc).__name__}: {exc}",
                 }
 
+        if not args.no_activation_broker:
+            activation_broker_service = OrganActivationBrokerService(
+                daemon,
+                root=ROOT,
+                host=args.activation_broker_host,
+                port=args.activation_broker_port,
+            )
+            try:
+                activation_broker_service.start()
+            except Exception as exc:
+                daemon.service_state["activation_broker"] = {
+                    "state": "failed",
+                    "host": args.activation_broker_host,
+                    "port": args.activation_broker_port,
+                    "daemon_supplies_act": False,
+                    "broker_grants_consent": False,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+
         if not args.no_health:
             presence_service = PresenceHTTPService(
                 daemon,
@@ -1121,6 +1231,14 @@ def main() -> int:
             if args.no_serve or args.no_curious_doors
             else f"http://{args.curious_doors_host}:{args.curious_doors_port}/"
         ),
+        "activation_broker_endpoint": (
+            None
+            if args.no_serve or args.no_activation_broker
+            else (
+                f"http://{args.activation_broker_host}:"
+                f"{args.activation_broker_port}/"
+            )
+        ),
         "cycle_interval": args.interval,
         "authority_discovery": True,
     }, indent=2))
@@ -1137,6 +1255,8 @@ def main() -> int:
                 grammar_exchange_service.supervise()
             if curious_doors_service is not None:
                 curious_doors_service.supervise()
+            if activation_broker_service is not None:
+                activation_broker_service.supervise()
             state = daemon.cycle()
             work_status = (state.get("work") or {}).get("status")
             if (
@@ -1151,6 +1271,8 @@ def main() -> int:
     except KeyboardInterrupt:
         return 0
     finally:
+        if activation_broker_service is not None:
+            activation_broker_service.close()
         if curious_doors_service is not None:
             curious_doors_service.close()
         if grammar_exchange_service is not None:

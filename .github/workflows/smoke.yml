@@ -107,3 +107,6 @@ jobs:
 
       - name: One-operation activation ticket simulation
         run: python3 ghot/activation_ticket_sim.py
+
+      - name: Static-OS activation broker ceremony simulation
+        run: python3 ghot/activation_broker_sim.py

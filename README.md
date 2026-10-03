@@ -1563,3 +1563,91 @@ SPENT TICKET != FUTURE CONSENT
 Inspect with `python3 ghot/activation_ticket.py show <ticket-id>`.
 
 See `docs/ACTIVATION-TICKETS.md` and `experiments/028-activation-tickets.md`.
+
+
+## Use the Static-OS activation broker
+
+029 turns the 027→028 path into a visible local consent ceremony.
+
+A normal organ supervises:
+
+```text
+http://127.0.0.1:7795/
+```
+
+The root page lists current typed launches only. Selecting one opens a
+read-only destination preflight preview.
+
+The preview shows:
+
+```text
+destination
+possible effect
+preflight checks
+exact invocation proposal
+exact proposal address
+```
+
+Selection and preview grant no consent.
+
+Only a READY preview exposes the ACT form. The operator must type exactly:
+
+```text
+ACT
+```
+
+The submitted ACT is bound to the exact proposal address shown in preview.
+If current destination state produces a different proposal, ticket issuance is
+refused and a fresh preview is required.
+
+Browser POSTs must be same-origin with the loopback broker. CLI/local API calls
+without an Origin header remain supported.
+
+CLI preview:
+
+```bash
+python3 ghot/activation_broker.py preview <launch-id>
+```
+
+CLI ACT:
+
+```bash
+python3 ghot/activation_broker.py act \
+  <launch-id> \
+  <proposal-address> \
+  --confirm ACT
+```
+
+Manual serve:
+
+```bash
+python3 ghot/activation_broker.py serve
+```
+
+Disable the supervised broker:
+
+```bash
+python3 ghot/organ.py --no-activation-broker
+```
+
+Result presentation is receipt-grounded. The broker reports
+`verified_success=true` only when the signed 028 execution receipt verifies
+and explicitly says `EXECUTED` with `success=true`.
+
+```text
+BROKER != CONSENT
+UI CLICK != ACT TICKET
+PREVIEW != AUTHORITY
+PREVIEWED PROPOSAL != CHANGED PROPOSAL
+HTTP 200 != SUCCESS
+RESULT DISPLAY != SUCCESS CLAIM
+```
+
+Deterministic proof:
+
+```bash
+python3 ghot/activation_broker_sim.py
+```
+
+See `docs/ACTIVATION-BROKER.md` and
+`experiments/029-activation-broker.md`.
