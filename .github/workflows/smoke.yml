@@ -56,3 +56,6 @@ jobs:
 
       - name: Automatic remote dispatch simulation
         run: python3 ghot/auto_dispatch_sim.py
+
+      - name: Authority porch discovery simulation
+        run: python3 ghot/authority_discovery_sim.py
