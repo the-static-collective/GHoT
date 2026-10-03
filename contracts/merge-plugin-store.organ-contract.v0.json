@@ -1,0 +1,52 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.merge-plugin-store@0",
+  "version": "0",
+  "owner_project": "GHoT",
+  "description": "Validate, fixture-test, install, verify, remove, and discover declarative local merge-contract packages without executing package-supplied code.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/merge-plugin-package.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/merge-plugin-install-receipt.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/merge-contract.v0.json"
+  ],
+  "allowed_dispositions": ["VALIDATE","INSTALL","LIST","REMOVE","LOAD"],
+  "effect_classes": ["none","local-state-change"],
+  "receipt_kinds": [],
+  "authority_scope": "local-plugin-store-only",
+  "dependencies": [
+    "ghot.merge-contract-pantry@0",
+    "ghot.state-merge@0",
+    "relatte.identity-signature/v0"
+  ],
+  "implementation_refs": [
+    "ghot/merge_plugin.py",
+    "ghot/state_merge.py",
+    "ghot/merge_contract_pantry.py"
+  ],
+  "non_authorities": [
+    "installed plugin is not trust",
+    "installed plugin is not authority",
+    "plugin manifest is not executable code",
+    "plugin conformance pass is not semantic infallibility",
+    "plugin discovery is not selection",
+    "plugin selection is not merge proposal",
+    "plugin target may not escape its package-owned knowledge namespace",
+    "install receipt is not merge receipt",
+    "package signature is not required or inferred from install receipt"
+  ],
+  "extensions": {
+    "package_supplied_python": false,
+    "package_supplied_shell": false,
+    "package_supplied_imports": false,
+    "package_supplied_network": false,
+    "package_supplied_file_paths": false,
+    "supported_operation_kinds": ["catalog-object-snapshot/v0"],
+    "target_namespace": "GHOT_HOME/knowledge/plugins/<package-id>/",
+    "conformance_required_before_install": true,
+    "body_signed_install_receipt": true,
+    "manifest_rehash_required_for_discovery": true,
+    "invalid_or_tampered_packages_excluded_from_registry": true,
+    "built_in_contract_collision_refused": true
+  }
+}
