@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/authority-advert.v0.json",
+  "title": "GHoT Authority Advert V0",
+  "type": "object",
+  "required": [
+    "kind","version","advert_id","authority_id","owner_node_id","world_id",
+    "particular","public_key","capability_ref","crossing_schema","receipt_schema",
+    "signing_profile","algorithm","lease_port","crossing_path","issued_at",
+    "ttl_seconds","signing"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.authority.advert" },
+    "version": { "const": "0" },
+    "advert_id": { "type": "string", "minLength": 1 },
+    "authority_id": { "type": "string", "minLength": 1 },
+    "owner_node_id": { "type": "string", "minLength": 1 },
+    "world_id": { "type": "string", "minLength": 1 },
+    "particular": { "type": "string", "minLength": 1 },
+    "public_key": {
+      "type": "object",
+      "required": ["kty","crv","x","y"],
+      "properties": {
+        "kty": { "const": "EC" },
+        "crv": { "const": "P-256" },
+        "x": { "type": "string", "minLength": 1 },
+        "y": { "type": "string", "minLength": 1 }
+      }
+    },
+    "capability_ref": { "const": "ghot.work-lease/v0" },
+    "crossing_schema": { "const": "relatte.crossing-envelope/v0" },
+    "receipt_schema": { "const": "relatte.receipt/v0" },
+    "signing_profile": { "const": "relatte.identity-signature/v0" },
+    "algorithm": { "const": "ECDSA-P256-SHA256" },
+    "lease_port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+    "crossing_path": { "const": "/crossing" },
+    "issued_at": { "type": "string" },
+    "ttl_seconds": { "type": "integer", "minimum": 1 },
+    "signing": { "type": "object" }
+  }
+}
