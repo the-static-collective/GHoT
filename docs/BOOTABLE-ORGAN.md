@@ -1,3 +1,5 @@
+> **017 note:** Service-started organs now gate startup through declared state migrations. Existing organ-state v0 can migrate to canonical v1 with a BODY-signed migration receipt before the new boot manifest is signed.
+
 # Bootable Organ / Service Installation
 
 Experiment 015 turns the 014 organ daemon from "a command you run" into
@@ -237,7 +239,7 @@ that the body is currently online.
 For runtime health, inspect:
 
 ```text
-GHOT_HOME/organ/state.v0.json
+GHOT_HOME/organ/state.v1.json
 ```
 
 and the service manager itself.
