@@ -836,6 +836,14 @@ class OrganCuriousDoorsService:
             "auto_request": False,
             "auto_offer": False,
             "auto_install": False,
+            "navigation_executes": False,
+            "permission_transfer": False,
+            "evidence_get_only": True,
+            "typed_launches": True,
+            "launches_execute": False,
+            "launch_context_grants_consent": False,
+            "launch_context_transfers_permission": False,
+            "destination_revalidation_required": True,
         }
 
     def supervise(self) -> None:
@@ -862,6 +870,11 @@ class OrganCuriousDoorsService:
                 "host": self.host,
                 "port": self.port,
                 "read_only": True,
+                "typed_launches": True,
+                "launches_execute": False,
+                "launch_context_grants_consent": False,
+                "launch_context_transfers_permission": False,
+                "destination_revalidation_required": True,
                 "error": f"{type(exc).__name__}: {exc}",
             }
 
