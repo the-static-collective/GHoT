@@ -77,6 +77,23 @@ def contract_descriptor(contract_id: str, spec: dict[str, Any]) -> dict[str, Any
         "authority_effect": spec.get("authority_effect", "none"),
         "freshness_effect": spec.get("freshness_effect", "none"),
         "selection_required": bool(spec.get("selection_required", True)),
+        "origin": (
+            {
+                "kind": "plugin",
+                "package_id": spec.get("plugin_package_id"),
+                "package_version": spec.get("plugin_package_version"),
+                "package_address": spec.get("plugin_package_address"),
+                "operation_kind": spec.get("operation_kind"),
+            }
+            if spec.get("plugin_package_id")
+            else {
+                "kind": "builtin",
+                "package_id": None,
+                "package_version": None,
+                "package_address": None,
+                "operation_kind": "python-builtin",
+            }
+        ),
     })
 
 
