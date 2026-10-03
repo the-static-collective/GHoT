@@ -1,0 +1,67 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.portable-work-lease-authority@0",
+  "version": "0",
+  "owner_project": "GHoT",
+  "description": "Owner-local portable HOLD lease authority for remote GHoT execution.",
+  "accepted_crossing_kinds": [
+    "GHOT_LEASE_POLL",
+    "GHOT_LEASE_CLAIM",
+    "GHOT_LEASE_RENEW",
+    "GHOT_LEASE_COMPLETE",
+    "GHOT_LEASE_ABANDON"
+  ],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/reLATTE/schemas/crossing-envelope-v0.schema.json"
+  ],
+  "allowed_dispositions": [
+    "HOLD",
+    "ADMIT",
+    "REFUSE",
+    "RETURN"
+  ],
+  "effect_classes": [
+    "none",
+    "local-state-change",
+    "capability-issued",
+    "capability-revoked",
+    "return-created"
+  ],
+  "receipt_kinds": [
+    "VERIFIED",
+    "ADMITTED",
+    "REFUSED",
+    "RETURNED",
+    "EXECUTED",
+    "FAILED"
+  ],
+  "authority_scope": "owner-local",
+  "dependencies": [
+    "ghot.hold/v0",
+    "ghot.dispatch/v0",
+    "ghot.claim/v0",
+    "ghot.work-lease/v0",
+    "relatte.crossing-envelope/v0",
+    "relatte.receipt/v0"
+  ],
+  "implementation_refs": [
+    "ghot/lease_authority.py",
+    "ghot/portable_lease.py",
+    "ghot/lease_remote.py"
+  ],
+  "non_authorities": [
+    "remote worker is not queue owner",
+    "remote execution receipt does not release a HOLD by itself",
+    "network transport does not select the worker",
+    "discovery does not grant a lease",
+    "schema compatibility does not establish public-key identity",
+    "shared-secret HMAC does not claim the stronger public-key source-verification profile"
+  ],
+  "extensions": {
+    "dispatch_required_before_claim": true,
+    "single_writer_claim_authority": true,
+    "crossing_replay_is_idempotent": true,
+    "v0_source_verification_profile": "shared-secret-hmac-v0",
+    "public_key_identity_claimed": false
+  }
+}
