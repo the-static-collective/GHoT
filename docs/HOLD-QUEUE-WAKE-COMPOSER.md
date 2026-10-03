@@ -164,13 +164,14 @@ but does **not** enqueue a live HOLD or execute work.
 
 Planning is no longer confused with queue mutation.
 
-## Current V0 concurrency assumption
+## Concurrency
 
-The active queue is designed for one local Wake Composer process per GHoT home.
+Experiment 010 adds atomic claims and renewable work leases for multiple Wake
+Composer workers that share the same GHoT queue filesystem.
 
-Multiple simultaneous Wake Composer processes are not yet coordinated by a
-lease/claim protocol. A future experiment should add atomic claiming before
-execution if multi-worker wake processing is required.
+A runnable HOLD must be claimed before execution. A live lease excludes other
+workers; a crashed worker stops renewing and its expired claim can be
+recovered. See `docs/WORK-LEASES.md`.
 
 ## Laws
 
