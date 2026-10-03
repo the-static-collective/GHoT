@@ -1,0 +1,72 @@
+{
+  "schema": "relatte.organ-contract/v0",
+  "contract_id": "ghot.activation-tickets@0",
+  "version": "0",
+  "owner_project": "GHoT",
+  "description": "Convert one READY 027 launch preflight into one short-lived BODY-signed local activation ticket only after an explicit local ACT invocation, atomically spend it before execution-time revalidation, attempt at most one owning-subsystem operation, and sign the final execution outcome.",
+  "accepted_crossing_kinds": [],
+  "input_schema_refs": [
+    "https://the-static-collective.github.io/GHoT/schemas/launch-descriptor.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/launch-preflight.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/launch-invocation-proposal.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/activation-ticket.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/activation-claim.v0.json",
+    "https://the-static-collective.github.io/GHoT/schemas/activation-execution-receipt.v0.json"
+  ],
+  "allowed_dispositions": [
+    "ISSUE_AFTER_ACT",
+    "VERIFY_TICKET",
+    "CLAIM_ONCE",
+    "REVALIDATE_AT_EXECUTION",
+    "ATTEMPT_ONE_OPERATION",
+    "SIGN_EXECUTION_OUTCOME"
+  ],
+  "effect_classes": ["none","local-state-change","network-state-change"],
+  "receipt_kinds": [
+    "EXECUTED",
+    "FAILED",
+    "REFUSED_STALE",
+    "REFUSED_PROPOSAL_CHANGED"
+  ],
+  "authority_scope": "one-ticket-one-operation-owner-local",
+  "dependencies": [
+    "ghot.launch-routing@0",
+    "ghot.composition-wants@0",
+    "ghot.merge-plugin-parcel-inbox@0",
+    "ghot.merge-contract-pantry@0",
+    "relatte.identity-signature/v0"
+  ],
+  "implementation_refs": [
+    "ghot/activation_ticket.py",
+    "ghot/launch_preflight.py"
+  ],
+  "non_authorities": [
+    "readiness is not consent",
+    "ACT issuance is not human identity proof",
+    "BODY signature is not human identity",
+    "consent ticket is not blanket authority",
+    "one action is not session authority",
+    "ticket issuance is not execution",
+    "execution is not success",
+    "failed execution does not preserve ticket authority",
+    "stale refusal does not preserve ticket authority",
+    "spent ticket cannot revive",
+    "ticket does not authorize a different proposal",
+    "ticket does not authorize a different launch descriptor"
+  ],
+  "extensions": {
+    "explicit_consent_phrase": "ACT",
+    "default_ttl_seconds": 120,
+    "maximum_ttl_seconds": 600,
+    "one_operation": true,
+    "atomic_claim_before_execution_revalidation": true,
+    "claim_failure_mode": "fail-closed",
+    "ticket_spent_on_stale_refusal": true,
+    "ticket_spent_on_operation_failure": true,
+    "execution_revalidation_required": true,
+    "proposal_address_must_match": true,
+    "receipt_signed_by_local_body": true,
+    "human_identity_proven": false,
+    "session_authority": false
+  }
+}

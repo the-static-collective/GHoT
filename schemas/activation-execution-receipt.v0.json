@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/activation-execution-receipt.v0.json",
+  "title": "GHoT Activation Execution Receipt V0",
+  "type": "object",
+  "required": [
+    "kind","version","receipt_id","ticket_id","launch_id","destination",
+    "status","started_at","completed_at","proposal_address",
+    "execution_preflight_status","execution_preflight_proposal_address",
+    "result_address","error","ticket_spent","operation_attempted",
+    "success","issuer_particular","signing"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.activation.execution-receipt" },
+    "version": { "const": "0" },
+    "receipt_id": { "type": "string", "minLength": 1 },
+    "ticket_id": { "type": "string", "minLength": 1 },
+    "launch_id": { "type": "string", "minLength": 1 },
+    "destination": { "type": "object" },
+    "status": {
+      "enum": [
+        "EXECUTED",
+        "FAILED",
+        "REFUSED_STALE",
+        "REFUSED_PROPOSAL_CHANGED"
+      ]
+    },
+    "started_at": { "type": "string" },
+    "completed_at": { "type": "string" },
+    "proposal_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "execution_preflight_status": { "type": ["string","null"] },
+    "execution_preflight_proposal_address": {
+      "type": ["string","null"]
+    },
+    "result_address": {
+      "type": ["string","null"],
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "error": { "type": ["object","null"] },
+    "ticket_spent": { "const": true },
+    "operation_attempted": { "type": "boolean" },
+    "success": { "type": "boolean" },
+    "issuer_particular": { "type": "string", "minLength": 1 },
+    "signing": {
+      "type": "object",
+      "required": ["algorithm","public_key","signature","domain"],
+      "properties": {
+        "algorithm": { "const": "ECDSA-P256-SHA256" },
+        "public_key": { "type": "object" },
+        "signature": { "type": "string", "minLength": 1 },
+        "domain": {
+          "const": "ghot.activation-execution-receipt-signature/v0"
+        }
+      }
+    }
+  }
+}

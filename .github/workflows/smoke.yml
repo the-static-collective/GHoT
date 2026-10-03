@@ -104,3 +104,6 @@ jobs:
 
       - name: Typed launch descriptor simulation
         run: python3 ghot/launch_descriptor_sim.py
+
+      - name: One-operation activation ticket simulation
+        run: python3 ghot/activation_ticket_sim.py

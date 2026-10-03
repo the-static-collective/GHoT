@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/activation-ticket.v0.json",
+  "title": "GHoT Activation Ticket V0",
+  "type": "object",
+  "required": [
+    "kind","version","ticket_id","nonce","launch_id","descriptor",
+    "descriptor_address","proposal_address","destination","issued_at",
+    "ttl_seconds","one_operation","consent_mode","human_identity_proven",
+    "issuer_particular","signing"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.activation.ticket" },
+    "version": { "const": "0" },
+    "ticket_id": { "type": "string", "minLength": 1 },
+    "nonce": { "type": "string", "minLength": 1 },
+    "launch_id": { "type": "string", "minLength": 1 },
+    "descriptor": { "type": "object" },
+    "descriptor_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "proposal_address": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "destination": { "type": "object" },
+    "issued_at": { "type": "string" },
+    "ttl_seconds": { "type": "integer", "minimum": 1, "maximum": 600 },
+    "one_operation": { "const": true },
+    "consent_mode": { "const": "explicit-local-ACT" },
+    "human_identity_proven": { "const": false },
+    "issuer_particular": { "type": "string", "minLength": 1 },
+    "signing": {
+      "type": "object",
+      "required": ["algorithm","public_key","signature","domain"],
+      "properties": {
+        "algorithm": { "const": "ECDSA-P256-SHA256" },
+        "public_key": { "type": "object" },
+        "signature": { "type": "string", "minLength": 1 },
+        "domain": { "const": "ghot.activation-ticket-signature/v0" }
+      }
+    }
+  }
+}
