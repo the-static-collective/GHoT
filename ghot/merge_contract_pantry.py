@@ -29,6 +29,9 @@ INSPECTION_VERSION = "0"
 SELECTION_KIND = "ghot.merge-contract.selection"
 SELECTION_VERSION = "0"
 SELECTION_ID_DOMAIN = b"GHoT-MergeContractSelection-v0|"
+PROPOSAL_LINK_KIND = "ghot.merge-contract.proposal-link"
+PROPOSAL_LINK_VERSION = "0"
+PROPOSAL_LINK_ID_DOMAIN = b"GHoT-MergeContractProposalLink-v0|"
 
 
 def _safe_name(value: str) -> str:
@@ -103,12 +106,33 @@ def derive_selection_id(selection: dict[str, Any]) -> str:
     return "ghot-merge-contract-selection-v0:" + digest
 
 
+def _proposal_link_body(link: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "kind": link.get("kind"),
+        "version": link.get("version"),
+        "selection_id": link.get("selection_id"),
+        "plan_id": link.get("plan_id"),
+        "contract_id": link.get("contract_id"),
+        "parcel_id": link.get("parcel_id"),
+        "linked_at": link.get("linked_at"),
+    }
+
+
+def derive_proposal_link_id(link: dict[str, Any]) -> str:
+    digest = hashlib.sha256(
+        PROPOSAL_LINK_ID_DOMAIN
+        + jcs_bytes(identity_safe(_proposal_link_body(link)))
+    ).hexdigest()
+    return "ghot-merge-contract-proposal-link-v0:" + digest
+
+
 class MergeContractPantry:
     def __init__(self, root: Path | None = None) -> None:
         self.root = root or ROOT
         self.engine = StateMergeEngine(self.root)
         self.base = self.root / "state-merges"
         self.selections_dir = self.base / "selections"
+        self.proposal_links_dir = self.base / "proposal-links"
 
     def contracts(self) -> list[dict[str, Any]]:
         result = []
@@ -273,10 +297,33 @@ class MergeContractPantry:
         if contract_id not in inspection["compatible_contract_ids"]:
             raise ValueError("selected merge contract is no longer compatible")
 
-        return self.engine.propose(
+        plan = self.engine.propose(
             str(selection["parcel_id"]),
             contract_id=contract_id,
         )
+        link = {
+            "kind": PROPOSAL_LINK_KIND,
+            "version": PROPOSAL_LINK_VERSION,
+            "link_id": "",
+            "selection_id": selection["selection_id"],
+            "plan_id": plan["plan_id"],
+            "contract_id": contract_id,
+            "parcel_id": selection["parcel_id"],
+            "linked_at": timestamp_now(),
+        }
+        link["link_id"] = derive_proposal_link_id(link)
+        self.proposal_links_dir.mkdir(parents=True, exist_ok=True)
+        _write_atomic(
+            self.proposal_links_dir / f"{_safe_name(link['link_id'])}.json",
+            link,
+        )
+        return {
+            "kind": "ghot.merge-contract.proposal",
+            "version": "0",
+            "selection": selection,
+            "plan": plan,
+            "link": link,
+        }
 
 
 def main() -> int:
