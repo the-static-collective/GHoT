@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-guild-resource-view.v0.json",
+  "title": "GHoT Lightwalker Guild Resource View V0",
+  "type": "object",
+  "required": ["kind","version","authority","guild_id","snapshot_id","counts_by_category_position","native_buckets","unresolved_entry_ids","evidence_entry_ids","universal_total","collapse_status","laws","view_id"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.guild-resource-view" },
+    "version": { "const": "0" },
+    "authority": { "const": "derived-from-signed-snapshot" },
+    "guild_id": { "type": "string", "minLength": 1 },
+    "snapshot_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "counts_by_category_position": { "type": "object" },
+    "native_buckets": { "type": "array", "items": { "type": "object" } },
+    "unresolved_entry_ids": { "type": "array", "items": { "type": "string" } },
+    "evidence_entry_ids": { "type": "array", "items": { "type": "string" } },
+    "universal_total": { "type": "null" },
+    "collapse_status": { "const": "REFUSED_BY_PROTOCOL" },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "view_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false
+}
