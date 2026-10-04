@@ -764,13 +764,14 @@ def main() -> int:
             execution_fail_b,
             steward=guild_b,
         )
-        entry_b2 = next(
-            item
+        b_remaining_after_failure_case = sum(
+            int(item["native_measure"]["quantity"])
             for item in treasury_b2["entries"]
             if item["category"] == "capability"
             and item["position"] == "available"
+            and item["subject_ref"] == entry_b1["subject_ref"]
         )
-        assert entry_b2["native_measure"]["quantity"] == 0
+        assert b_remaining_after_failure_case == 0
 
         c_state_after_failure = fail_store_c.capacity_state(
             treasury_c1,
@@ -834,7 +835,7 @@ def main() -> int:
                         "downstream_settlement_refused": (
                             failed_settlement_refused
                         ),
-                        "source_b_remaining": 0,
+                        "source_b_remaining": b_remaining_after_failure_case,
                         "source_c_released_remaining": 30,
                     },
                     "crossings": {
