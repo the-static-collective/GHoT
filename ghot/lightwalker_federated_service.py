@@ -301,12 +301,19 @@ def verify_remote_capacity_proof(
 
 
 def make_federated_service_promise(
+    remote_snapshot: dict[str, Any],
     offer: dict[str, Any],
     remote_proof: dict[str, Any],
     *,
     promisor: IdentityKey,
     promised_at_cut: int,
 ) -> dict[str, Any]:
+    if not verify_remote_capacity_proof(
+        remote_snapshot, remote_proof
+    ):
+        raise LightwalkerEconomyError(
+            "invalid signed remote capacity proof"
+        )
     obligation = _future_service_obligation(
         offer, promisor.particular()
     )
@@ -379,11 +386,16 @@ def make_federated_service_promise(
 
 
 def verify_federated_service_promise(
+    remote_snapshot: dict[str, Any],
     offer: dict[str, Any],
     remote_proof: dict[str, Any],
     promise: dict[str, Any],
 ) -> bool:
     try:
+        if not verify_remote_capacity_proof(
+            remote_snapshot, remote_proof
+        ):
+            return False
         obligation = _future_service_obligation(
             offer, promise["promisor_particular"]
         )
@@ -455,6 +467,7 @@ def verify_federated_service_promise(
 
 
 def make_subcontract_request(
+    remote_snapshot: dict[str, Any],
     offer: dict[str, Any],
     acceptance: dict[str, Any],
     remote_proof: dict[str, Any],
@@ -464,7 +477,7 @@ def make_subcontract_request(
     requested_at_cut: int,
 ) -> dict[str, Any]:
     if not verify_federated_service_promise(
-        offer, remote_proof, promise
+        remote_snapshot, offer, remote_proof, promise
     ):
         raise LightwalkerEconomyError(
             "invalid federated service promise"
@@ -513,6 +526,7 @@ def make_subcontract_request(
 
 
 def verify_subcontract_request(
+    remote_snapshot: dict[str, Any],
     offer: dict[str, Any],
     acceptance: dict[str, Any],
     remote_proof: dict[str, Any],
@@ -521,7 +535,7 @@ def verify_subcontract_request(
 ) -> bool:
     try:
         if not verify_federated_service_promise(
-            offer, remote_proof, promise
+            remote_snapshot, offer, remote_proof, promise
         ):
             return False
         if not verify_exchange_acceptance(offer, acceptance):
@@ -595,7 +609,12 @@ def reserve_federated_subcontract(
             "remote proof does not match current capacity snapshot"
         )
     if not verify_subcontract_request(
-        offer, acceptance, remote_proof, promise, request
+        current_capacity_snapshot,
+        offer,
+        acceptance,
+        remote_proof,
+        promise,
+        request,
     ):
         raise LightwalkerEconomyError("invalid subcontract request")
     if (
@@ -677,6 +696,22 @@ def verify_subcontract_grant(
 ) -> bool:
     try:
         if not verify_remote_capacity_proof(snapshot, remote_proof):
+            return False
+        if not _verify_signed(
+            request,
+            id_field="request_id",
+            particular_field="promisor_particular",
+            domain=REQUEST_DOMAIN,
+            byte_domain=REQUEST_BYTES,
+        ):
+            return False
+        if request.get("remote_proof_id") != remote_proof["remote_proof_id"]:
+            return False
+        if request.get("remote_snapshot_id") != snapshot["snapshot_id"]:
+            return False
+        if request.get("remote_resource_entry_id") != remote_proof["resource_entry_id"]:
+            return False
+        if request.get("requested_measure") != grant.get("reserved_measure"):
             return False
         if not verify_reservation(
             snapshot, proposal, authorization, reservation
@@ -973,6 +1008,7 @@ def verify_subcontract_failure(
 
 
 def attest_promisor_performance(
+    remote_snapshot: dict[str, Any],
     offer: dict[str, Any],
     acceptance: dict[str, Any],
     remote_proof: dict[str, Any],
@@ -984,13 +1020,18 @@ def attest_promisor_performance(
     promisor: IdentityKey,
 ) -> dict[str, Any]:
     if not verify_federated_service_promise(
-        offer, remote_proof, promise
+        remote_snapshot, offer, remote_proof, promise
     ):
         raise LightwalkerEconomyError("invalid federated promise")
     if not verify_exchange_acceptance(offer, acceptance):
         raise LightwalkerEconomyError("invalid customer acceptance")
     if not verify_subcontract_request(
-        offer, acceptance, remote_proof, promise, request
+        remote_snapshot,
+        offer,
+        acceptance,
+        remote_proof,
+        promise,
+        request,
     ):
         raise LightwalkerEconomyError("invalid subcontract request")
     if grant.get("request_id") != request["request_id"]:
