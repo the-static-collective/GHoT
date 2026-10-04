@@ -113,3 +113,13 @@ jobs:
 
       - name: Ice Cube pantry grammar conformance
         run: python3 ghot/merge_plugin.py validate examples/merge-plugins/verified-ice-cube.package.json
+
+      - name: Checkout Dogram Ice Cube verifier
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/Dogram
+          ref: impl/ice-cube-001
+          path: _dogram_ice
+
+      - name: Ice Cube 030 cross-repo simulation
+        run: python3 ghot/ice_cube_sim.py --dogram-repo _dogram_ice
