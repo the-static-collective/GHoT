@@ -135,15 +135,24 @@ def _dag_node(dag: dict[str, Any], lease_id: str) -> dict[str, Any]:
 
 
 def verify_reclaim_receipt(
+    snapshot: dict[str, Any],
     dag: dict[str, Any],
     receipt: dict[str, Any],
 ) -> bool:
     try:
+        if not verify_treasury_snapshot(snapshot):
+            return False
         if receipt.get("kind") != RECLAIM_KIND:
             return False
         if receipt.get("version") != RECLAIM_VERSION:
             return False
         if receipt.get("authority") != "guild-local-expiry-reclaim":
+            return False
+        if receipt.get("guild_id") != snapshot["guild_id"]:
+            return False
+        if receipt.get("snapshot_id") != snapshot["snapshot_id"]:
+            return False
+        if receipt.get("steward_particular") != snapshot["steward_particular"]:
             return False
         if receipt.get("dag_id") != dag.get("dag_id"):
             return False
@@ -299,7 +308,7 @@ class ExpiredAuthorityReclaimStore:
             raise LightwalkerEconomyError("invalid treasury snapshot")
         if self.steward.particular() != snapshot["steward_particular"]:
             raise LightwalkerEconomyError("local steward does not own treasury")
-        if not verify_reclaim_receipt(dag, receipt):
+        if not verify_reclaim_receipt(snapshot, dag, receipt):
             raise LightwalkerEconomyError("invalid reclaim receipt")
         if receipt["guild_id"] != snapshot["guild_id"]:
             raise LightwalkerEconomyError("reclaim belongs to another Guild")
@@ -368,7 +377,7 @@ def verify_reclaimed_lease(
     try:
         if not verify_treasury_snapshot(snapshot):
             return False
-        if not verify_reclaim_receipt(dag, receipt):
+        if not verify_reclaim_receipt(snapshot, dag, receipt):
             return False
         if lease.get("kind") != LEASE_KIND:
             return False
@@ -409,12 +418,13 @@ def verify_reclaimed_lease(
 
 
 def make_reclaim_overlay(
+    snapshot: dict[str, Any],
     dag: dict[str, Any],
     receipts: list[dict[str, Any]],
 ) -> dict[str, Any]:
     reclaimed_by_lease: dict[str, dict[str, Any]] = {}
     for receipt in receipts:
-        if not verify_reclaim_receipt(dag, receipt):
+        if not verify_reclaim_receipt(snapshot, dag, receipt):
             raise LightwalkerEconomyError("invalid reclaim receipt")
         lease_id = receipt["expired_lease_id"]
         if lease_id in reclaimed_by_lease:
