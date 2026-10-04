@@ -39,6 +39,8 @@ SELECTION_KIND = "ghot.lightwalker.route-selection"
 SELECTION_VERSION = "0"
 ADMISSION_KIND = "ghot.lightwalker.route-admission-response"
 ADMISSION_VERSION = "0"
+BINDING_KIND = "ghot.lightwalker.policy-bound-reroute"
+BINDING_VERSION = "0"
 
 POLICY_DOMAIN = "ghot.lightwalker-route-policy-signature/v0"
 ADMISSION_DOMAIN = "ghot.lightwalker-route-admission-response-signature/v0"
@@ -407,6 +409,7 @@ def select_route(
             "SELECTED" if selected is not None else "NO_ELIGIBLE_ROUTE"
         ),
         "selected_candidate": selected,
+        "required_measure": policy["declared_measure"],
         "reservation_authority": "none",
         "execution_authority": "none",
         "owner_admission_required": True,
@@ -419,6 +422,27 @@ def select_route(
         ],
     }
     return {**body, "selection_id": content_address(body)}
+
+
+def verify_route_selection(
+    promise: dict[str, Any],
+    policy: dict[str, Any],
+    candidates: list[dict[str, Any]],
+    selection: dict[str, Any],
+) -> bool:
+    try:
+        expected = select_route(
+            promise,
+            policy,
+            candidates,
+            evaluation_cut=int(selection["evaluation_cut"]),
+            excluded_guild_ids=list(selection["excluded_guild_ids"]),
+            prior_selection_ids=list(selection["prior_selection_ids"]),
+        )
+        return expected == selection
+    except Exception:
+        return False
+
 
 
 def make_owner_admission_response(
@@ -451,7 +475,7 @@ def make_owner_admission_response(
     state = reservation_store.capacity_state(
         snapshot, proof["resource_entry_id"]
     )
-    required = selected["native_measure"]
+    required = selection["required_measure"]
     enough = (
         state["unit"] == required["unit"]
         and int(state["unencumbered_quantity"])
@@ -531,7 +555,7 @@ def verify_owner_admission_response(
             return False
         if response.get("resource_entry_id") != selected["resource_entry_id"]:
             return False
-        if response.get("required_measure") != selected["native_measure"]:
+        if response.get("required_measure") != selection["required_measure"]:
             return False
         if response.get("disposition") not in {
             "ADMITTABLE",
@@ -560,6 +584,7 @@ def make_policy_bound_reroute(
     promise: dict[str, Any],
     *,
     policy: dict[str, Any],
+    candidates: list[dict[str, Any]],
     selection: dict[str, Any],
     admission_response: dict[str, Any],
     original_source_id: str,
@@ -578,9 +603,11 @@ def make_policy_bound_reroute(
 ) -> dict[str, Any]:
     if not verify_route_policy(promise, policy):
         raise LightwalkerEconomyError("invalid route policy")
-    if selection.get("policy_id") != policy["policy_id"]:
+    if not verify_route_selection(
+        promise, policy, candidates, selection
+    ):
         raise LightwalkerEconomyError(
-            "selection belongs to another policy"
+            "selection does not recompute from signed candidate evidence"
         )
     if selection.get("source_slot_id") != original_source_id:
         raise LightwalkerEconomyError(
@@ -623,14 +650,35 @@ def make_policy_bound_reroute(
         promisor=promisor,
         rerouted_at_cut=rerouted_at_cut,
     )
-    return {
-        **reroute,
-        "route_policy_id": policy["policy_id"],
-        "route_selection_id": selection["selection_id"],
+    binding_body = {
+        "kind": BINDING_KIND,
+        "version": BINDING_VERSION,
+        "authority": "derived-policy-reroute-linkage",
+        "promise_id": promise["promise_id"],
+        "source_slot_id": original_source_id,
+        "policy_id": policy["policy_id"],
+        "selection_id": selection["selection_id"],
         "owner_admission_response_id": admission_response[
             "admission_response_id"
         ],
+        "reroute_id": reroute["reroute_id"],
+        "selected_capacity_guild_id": selected[
+            "capacity_guild_id"
+        ],
+        "selected_remote_proof_id": selected["remote_proof_id"],
+        "reservation_authority": "none",
+        "execution_authority": "none",
+        "laws": [
+            "POLICY != AUTHORITY",
+            "RECOMMENDATION != RESERVATION",
+            "AUTOMATIC ROUTING MAY NOT ERASE OWNER-LOCAL ADMISSION",
+        ],
     }
+    binding = {
+        **binding_body,
+        "binding_id": content_address(binding_body),
+    }
+    return reroute, binding
 
 
 __all__ = [
@@ -640,4 +688,5 @@ __all__ = [
     "select_route",
     "verify_owner_admission_response",
     "verify_route_policy",
+    "verify_route_selection",
 ]
