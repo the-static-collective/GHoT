@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-workmark.v0.json",
+  "title": "GHoT Lightwalker Workmark V0",
+  "type": "object",
+  "required": ["kind","version","authority","contribution_root","birth","declared_facts","laws","workmark_id"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.workmark" },
+    "version": { "const": "0" },
+    "authority": { "const": "none" },
+    "contribution_root": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "birth": { "type": "object" },
+    "declared_facts": { "type": "object" },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "workmark_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false
+}
