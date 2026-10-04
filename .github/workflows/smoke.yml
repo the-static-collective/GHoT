@@ -132,3 +132,6 @@ jobs:
 
       - name: Ice Field 033 ecology simulation
         run: python3 ghot/ice_field_sim.py --dogram-repo _dogram_ice
+
+      - name: Field Commons 001 simulation
+        run: python3 ghot/field_commons_sim.py --dogram-repo _dogram_ice
