@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-capacity-backed-service-settlement.v0.json",
+  "title": "GHoT Lightwalker Capacity-Backed Service Settlement V0",
+  "type": "object",
+  "required": ["kind","version","authority","guild_id","snapshot_id","promise_id","offer_id","acceptance_id","encumbrance_id","reservation_id","execution_receipt_id","finalization_id","service_attestation_id","counterparty_attestation_id","settlement_id","reserved_measure","service_performed","payment_inferred","execution_authority","laws","witness_id"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.capacity-backed-service-settlement" },
+    "version": { "const": "0" },
+    "authority": { "const": "derived-service-settlement-linkage" },
+    "guild_id": { "type": "string", "minLength": 1 },
+    "snapshot_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "promise_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "offer_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "acceptance_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "encumbrance_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "reservation_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "execution_receipt_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "finalization_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "service_attestation_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "counterparty_attestation_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "settlement_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "reserved_measure": { "type": "object" },
+    "service_performed": { "const": true },
+    "payment_inferred": { "const": false },
+    "execution_authority": { "const": "none" },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "witness_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false
+}
