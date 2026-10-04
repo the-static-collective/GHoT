@@ -1,0 +1,26 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-multi-source-completion.v0.json",
+  "title":"GHoT Lightwalker Multi-Source Completion V0",
+  "type":"object",
+  "required":["kind","version","authority","promise_id","required_source_ids","completion_ids","failure_ids","missing_source_ids","performed_measure","required_measure","status","customer_performance_proven","execution_authority","ownership_aggregated","laws","aggregate_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.multi-source-completion"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-multi-source-completion"},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "required_source_ids":{"type":"array","items":{"type":"string"}},
+    "completion_ids":{"type":"array","items":{"type":"string"}},
+    "failure_ids":{"type":"array","items":{"type":"string"}},
+    "missing_source_ids":{"type":"array","items":{"type":"string"}},
+    "performed_measure":{"type":"object"},
+    "required_measure":{"type":"object"},
+    "status":{"enum":["PARTIAL","COMPLETE","FAILED"]},
+    "customer_performance_proven":{"const":false},
+    "execution_authority":{"const":"none"},
+    "ownership_aggregated":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "aggregate_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}
