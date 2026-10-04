@@ -1,0 +1,30 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-route-policy.v0.json",
+  "title":"GHoT Lightwalker Route Policy V0",
+  "type":"object",
+  "required":["kind","version","authority","promisor_particular","promise_id","offer_id","source_slot_id","declared_measure","original_capacity_guild_id","ordered_guild_ids","required_capability","max_proof_age_cuts","max_failover_hops","created_at_cut","reservation_authority","execution_authority","ownership_authority","laws","policy_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.route-policy"},
+    "version":{"const":"0"},
+    "authority":{"const":"promisor-routing-policy-only"},
+    "promisor_particular":{"type":"string","minLength":1},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "offer_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "source_slot_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "declared_measure":{"type":"object"},
+    "original_capacity_guild_id":{"type":"string","minLength":1},
+    "ordered_guild_ids":{"type":"array","minItems":2,"items":{"type":"string"}},
+    "required_capability":{"type":"string","minLength":1},
+    "max_proof_age_cuts":{"type":"integer","minimum":0},
+    "max_failover_hops":{"type":"integer","minimum":1},
+    "created_at_cut":{"type":"integer","minimum":0},
+    "reservation_authority":{"const":"none"},
+    "execution_authority":{"const":"none"},
+    "ownership_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "policy_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}
