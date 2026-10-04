@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-settled-capacity-acquisition.v0.json",
+  "title": "GHoT Lightwalker Settled Capacity Acquisition V0",
+  "type": "object",
+  "required": ["kind","version","authority","guild_id","steward_particular","settlement_id","offer_id","acceptance_id","capacity_obligation_id","capacity_performance_attestation_id","capacity_subject_ref","native_measure","admitted_at_cut","execution_authority_granted","ownership_inferred","laws","acquisition_id","signing"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.settled-capacity-acquisition" },
+    "version": { "const": "0" },
+    "authority": { "const": "guild-local-capacity-admission" },
+    "guild_id": { "type": "string", "minLength": 1 },
+    "steward_particular": { "type": "string", "minLength": 1 },
+    "settlement_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "offer_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "acceptance_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "capacity_obligation_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "capacity_performance_attestation_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "capacity_subject_ref": { "type": "string", "minLength": 1 },
+    "native_measure": {
+      "type": "object",
+      "required": ["unit","quantity"],
+      "properties": {
+        "unit": { "type": "string", "minLength": 1 },
+        "quantity": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "admitted_at_cut": { "type": "integer", "minimum": 0 },
+    "execution_authority_granted": { "const": false },
+    "ownership_inferred": { "const": false },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "acquisition_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "signing": { "type": "object" }
+  },
+  "additionalProperties": false
+}

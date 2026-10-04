@@ -184,3 +184,6 @@ jobs:
 
       - name: Lightwalker Authority Metabolism 045 simulation
         run: python3 ghot/lightwalker_authority_metabolism_sim.py
+
+      - name: Lightwalker Metabolic Exchange 046 simulation
+        run: python3 ghot/lightwalker_metabolic_exchange_sim.py

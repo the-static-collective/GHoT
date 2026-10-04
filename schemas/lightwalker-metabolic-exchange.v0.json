@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-metabolic-exchange.v0.json",
+  "title": "GHoT Lightwalker Metabolic Exchange V0",
+  "type": "object",
+  "required": ["kind","version","authority","guild_id","settlement_id","acquisition_id","treasury_snapshot_id","treasury_entry_id","native_measure","metabolism_id","metabolism_history_digest","economic_authority","operational_authority","execution_authority","ownership_inferred","payment_inferred_from_consumption","laws","witness_id"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.metabolic-exchange" },
+    "version": { "const": "0" },
+    "authority": { "const": "derived-economic-operational-linkage" },
+    "guild_id": { "type": "string", "minLength": 1 },
+    "settlement_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "acquisition_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "treasury_snapshot_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "treasury_entry_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "native_measure": {
+      "type": "object",
+      "required": ["unit","quantity"],
+      "properties": {
+        "unit": { "type": "string", "minLength": 1 },
+        "quantity": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "metabolism_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "metabolism_history_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "economic_authority": { "const": "bilateral-evidence-only" },
+    "operational_authority": { "const": "separate-derived-history" },
+    "execution_authority": { "const": "none" },
+    "ownership_inferred": { "const": false },
+    "payment_inferred_from_consumption": { "const": false },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "witness_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false
+}
