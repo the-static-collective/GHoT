@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-economic-lens.v0.json",
+  "title": "GHoT Lightwalker Economic Lens V0",
+  "type": "object",
+  "required": ["kind","version","realm_id","unit","policy","assumptions"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.economic-lens" },
+    "version": { "const": "0" },
+    "realm_id": { "type": "string", "minLength": 1 },
+    "unit": { "type": ["string","null"] },
+    "policy": {
+      "type": "object",
+      "required": ["basis"],
+      "properties": {
+        "basis": {
+          "enum": ["fixed-per-verified-workmark","no-economic-interpretation"]
+        },
+        "amount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "assumptions": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  },
+  "additionalProperties": false
+}
