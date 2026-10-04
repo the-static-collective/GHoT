@@ -175,3 +175,6 @@ jobs:
 
       - name: Lightwalker Lease Handoff 042 simulation
         run: python3 ghot/lightwalker_lease_handoff_sim.py
+
+      - name: Lightwalker Lease Lineage 043 simulation
+        run: python3 ghot/lightwalker_lease_lineage_sim.py
