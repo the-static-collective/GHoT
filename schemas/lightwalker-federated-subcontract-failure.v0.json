@@ -1,0 +1,28 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-federated-subcontract-failure.v0.json",
+  "title":"GHoT Lightwalker Federated Subcontract Failure V0",
+  "type":"object",
+  "required":["kind","version","authority","capacity_guild_id","capacity_steward_particular","request_id","promise_id","grant_id","reservation_id","execution_receipt_id","finalization_id","failed_measure","status","capacity_released","downstream_performance_proven","laws","failure_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.federated-subcontract-failure"},
+    "version":{"const":"0"},
+    "authority":{"const":"capacity-guild-subcontract-failure"},
+    "capacity_guild_id":{"type":"string","minLength":1},
+    "capacity_steward_particular":{"type":"string","minLength":1},
+    "request_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "grant_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "reservation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "execution_receipt_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "finalization_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "failed_measure":{"type":"object"},
+    "status":{"const":"FAILED"},
+    "capacity_released":{"const":true},
+    "downstream_performance_proven":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "failure_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}
