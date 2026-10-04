@@ -187,3 +187,6 @@ jobs:
 
       - name: Lightwalker Metabolic Exchange 046 simulation
         run: python3 ghot/lightwalker_metabolic_exchange_sim.py
+
+      - name: Lightwalker Capacity-Backed Service 047 simulation
+        run: python3 ghot/lightwalker_capacity_backed_service_sim.py
