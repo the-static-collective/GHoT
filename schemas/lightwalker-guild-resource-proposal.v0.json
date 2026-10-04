@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-guild-resource-proposal.v0.json",
+  "title": "GHoT Lightwalker Guild Resource Proposal V0",
+  "type": "object",
+  "required": ["kind","version","authority","guild_id","snapshot_id","resource_entry_id","resource_subject_ref","proposer_particular","requested_measure","purpose_ref","proposed_at_cut","laws","proposal_id","signing"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.guild-resource-proposal" },
+    "version": { "const": "0" },
+    "authority": { "const": "proposal-only" },
+    "guild_id": { "type": "string", "minLength": 1 },
+    "snapshot_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "resource_entry_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "resource_subject_ref": { "type": "string", "minLength": 1 },
+    "proposer_particular": { "type": "string", "minLength": 1 },
+    "requested_measure": {
+      "type": "object",
+      "required": ["unit","quantity"],
+      "properties": {
+        "unit": { "type": "string", "minLength": 1 },
+        "quantity": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "purpose_ref": { "type": "string", "minLength": 1 },
+    "proposed_at_cut": { "type": "integer", "minimum": 0 },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "proposal_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "signing": { "type": "object" }
+  },
+  "additionalProperties": false
+}
