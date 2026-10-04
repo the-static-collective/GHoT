@@ -199,3 +199,6 @@ jobs:
 
       - name: Lightwalker Federated Reroute 050 simulation
         run: python3 ghot/lightwalker_federated_reroute_sim.py
+
+      - name: Lightwalker Route Policy 051 simulation
+        run: python3 ghot/lightwalker_route_policy_sim.py
