@@ -1,0 +1,27 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-multi-source-service-settlement.v0.json",
+  "title":"GHoT Lightwalker Multi-Source Service Settlement V0",
+  "type":"object",
+  "required":["kind","version","authority","promisor_particular","promise_id","source_ids","aggregate_id","promisor_attestation_id","customer_attestation_id","settlement_id","performed_measure","customer_service_performed","source_ownership_aggregated","promisor_remote_execution_authority","payment_inferred_from_source_execution","laws","witness_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.multi-source-service-settlement"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-multi-source-service-linkage"},
+    "promisor_particular":{"type":"string","minLength":1},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "source_ids":{"type":"array","items":{"type":"string"}},
+    "aggregate_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "promisor_attestation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "customer_attestation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "settlement_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "performed_measure":{"type":"object"},
+    "customer_service_performed":{"const":true},
+    "source_ownership_aggregated":{"const":false},
+    "promisor_remote_execution_authority":{"const":false},
+    "payment_inferred_from_source_execution":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "witness_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}
