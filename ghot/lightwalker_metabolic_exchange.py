@@ -19,6 +19,7 @@ from typing import Any
 
 from lightwalker_authority_metabolism import (
     METABOLISM_KIND,
+    derive_authority_metabolism,
 )
 from lightwalker_economy import (
     LightwalkerEconomyError,
@@ -139,13 +140,13 @@ def _capacity_obligation_for_guild(
     )
 
 
-def make_settled_capacity_acquisition(
+def _settled_capacity_acquisition_body(
     offer: dict[str, Any],
     acceptance: dict[str, Any],
     attestations: list[dict[str, Any]],
     settlement: dict[str, Any],
     *,
-    steward: IdentityKey,
+    steward_particular: str,
     guild_id: str,
     capacity_subject_ref: str,
     admitted_at_cut: int,
@@ -158,7 +159,7 @@ def make_settled_capacity_acquisition(
     obligation = _capacity_obligation_for_guild(
         offer,
         acceptance,
-        guild_particular=steward.particular(),
+        guild_particular=steward_particular,
     )
     if obligation.get("obligation_type") != "compute-capacity-delivery":
         raise LightwalkerEconomyError(
@@ -173,8 +174,6 @@ def make_settled_capacity_acquisition(
     if quantity <= 0:
         raise LightwalkerEconomyError("capacity quantity must be > 0")
 
-    # Find the exact performance attestation that proves the capacity-side
-    # obligation was fulfilled.
     matching = [
         item
         for item in attestations
@@ -186,12 +185,12 @@ def make_settled_capacity_acquisition(
             "capacity obligation needs one exact performance attestation"
         )
 
-    body = {
+    return {
         "kind": ACQUISITION_KIND,
         "version": ACQUISITION_VERSION,
         "authority": "guild-local-capacity-admission",
         "guild_id": _nonempty(guild_id, "guild_id"),
-        "steward_particular": steward.particular(),
+        "steward_particular": steward_particular,
         "settlement_id": settlement["settlement_id"],
         "offer_id": offer["offer_id"],
         "acceptance_id": acceptance["acceptance_id"],
@@ -214,6 +213,29 @@ def make_settled_capacity_acquisition(
             "SETTLEMENT EVIDENCE MAY SUPPORT TREASURY ADMISSION",
         ],
     }
+
+
+def make_settled_capacity_acquisition(
+    offer: dict[str, Any],
+    acceptance: dict[str, Any],
+    attestations: list[dict[str, Any]],
+    settlement: dict[str, Any],
+    *,
+    steward: IdentityKey,
+    guild_id: str,
+    capacity_subject_ref: str,
+    admitted_at_cut: int,
+) -> dict[str, Any]:
+    body = _settled_capacity_acquisition_body(
+        offer,
+        acceptance,
+        attestations,
+        settlement,
+        steward_particular=steward.particular(),
+        guild_id=guild_id,
+        capacity_subject_ref=capacity_subject_ref,
+        admitted_at_cut=admitted_at_cut,
+    )
     return _signed(
         body,
         id_field="acquisition_id",
@@ -229,33 +251,16 @@ def verify_settled_capacity_acquisition(
     acquisition: dict[str, Any],
 ) -> bool:
     try:
-        if acquisition.get("kind") != ACQUISITION_KIND:
-            return False
-        if acquisition.get("version") != ACQUISITION_VERSION:
-            return False
-        if acquisition.get("authority") != "guild-local-capacity-admission":
-            return False
-        if acquisition.get("execution_authority_granted") is not False:
-            return False
-        if acquisition.get("ownership_inferred") is not False:
-            return False
-        expected = make_settled_capacity_acquisition(
+        expected_body = _settled_capacity_acquisition_body(
             offer,
             acceptance,
             attestations,
             settlement,
-            steward=_VerifierIdentity(acquisition),
+            steward_particular=acquisition["steward_particular"],
             guild_id=acquisition["guild_id"],
             capacity_subject_ref=acquisition["capacity_subject_ref"],
             admitted_at_cut=int(acquisition["admitted_at_cut"]),
         )
-        # We cannot reproduce the signature with a verifier identity, so compare
-        # semantic body + verify actual signature separately.
-        expected_body = {
-            k: v
-            for k, v in expected.items()
-            if k not in {"acquisition_id", "signing"}
-        }
         actual_body = {
             k: v
             for k, v in acquisition.items()
@@ -270,22 +275,6 @@ def verify_settled_capacity_acquisition(
         )
     except Exception:
         return False
-
-
-class _VerifierIdentity:
-    """Minimal adapter used only to derive the expected admission body."""
-
-    def __init__(self, acquisition: dict[str, Any]) -> None:
-        self._particular = acquisition["steward_particular"]
-
-    def particular(self) -> str:
-        return self._particular
-
-    def public_jwk(self) -> dict[str, Any]:
-        return {}
-
-    def sign(self, payload: bytes) -> str:
-        return ""
 
 
 def acquisition_to_treasury_entry(
@@ -334,6 +323,16 @@ def derive_metabolic_exchange_witness(
     acquisition: dict[str, Any],
     treasury_snapshot: dict[str, Any],
     metabolism: dict[str, Any],
+    *,
+    root_lease: dict[str, Any],
+    descendant_leases: list[dict[str, Any]],
+    surrenders: list[dict[str, Any]],
+    source_uses: list[dict[str, Any]],
+    reclaim_receipts: list[dict[str, Any]],
+    reissued_leases: list[dict[str, Any]],
+    recycled_uses: list[dict[str, Any]],
+    source_observed_cut: int,
+    observed_cut: int,
 ) -> dict[str, Any]:
     if not verify_settled_capacity_acquisition(
         offer, acceptance, attestations, settlement, acquisition
@@ -363,6 +362,23 @@ def derive_metabolic_exchange_witness(
     if entry is None:
         raise LightwalkerEconomyError(
             "Treasury lacks exact acquired capacity entry"
+        )
+
+    recomputed_metabolism = derive_authority_metabolism(
+        treasury_snapshot,
+        root_lease=root_lease,
+        descendant_leases=descendant_leases,
+        surrenders=surrenders,
+        source_uses=source_uses,
+        reclaim_receipts=reclaim_receipts,
+        reissued_leases=reissued_leases,
+        recycled_uses=recycled_uses,
+        source_observed_cut=source_observed_cut,
+        observed_cut=observed_cut,
+    )
+    if recomputed_metabolism != metabolism:
+        raise LightwalkerEconomyError(
+            "supplied metabolism does not match underlying operational history"
         )
 
     if metabolism.get("kind") != METABOLISM_KIND:
