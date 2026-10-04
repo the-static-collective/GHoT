@@ -163,3 +163,6 @@ jobs:
 
       - name: Lightwalker Guild Authorization 038 simulation
         run: python3 ghot/lightwalker_guild_authorization_sim.py
+
+      - name: Lightwalker Guild 039 simulation
+        run: python3 ghot/lightwalker_guild_reservation_sim.py
