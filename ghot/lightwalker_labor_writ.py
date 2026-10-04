@@ -631,7 +631,15 @@ class LaborWritStore:
             bytes_domain=PERFORMANCE_RECEIPT_BYTES_DOMAIN,
             signer=self.issuer,
         )
-        self._exclusive_write(self._path(self.performance_dir, writ["writ_id"]), receipt)
+        try:
+            self._exclusive_write(
+                self._path(self.performance_dir, writ["writ_id"]),
+                receipt,
+            )
+        except FileExistsError as exc:
+            raise LightwalkerEconomyError(
+                "Labor Writ already has a terminal performance receipt"
+            ) from exc
         return receipt
 
 
