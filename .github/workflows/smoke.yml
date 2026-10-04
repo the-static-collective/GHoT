@@ -193,3 +193,6 @@ jobs:
 
       - name: Lightwalker Federated Service 048 simulation
         run: python3 ghot/lightwalker_federated_service_sim.py
+
+      - name: Lightwalker Multi-Source Service 049 simulation
+        run: python3 ghot/lightwalker_multi_source_service_sim.py
