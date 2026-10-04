@@ -82,6 +82,7 @@ def derive_authority_metabolism(
     reclaim_receipts: list[dict[str, Any]],
     reissued_leases: list[dict[str, Any]],
     recycled_uses: list[dict[str, Any]],
+    source_observed_cut: int,
     observed_cut: int,
 ) -> dict[str, Any]:
     if not verify_treasury_snapshot(snapshot):
@@ -93,7 +94,7 @@ def derive_authority_metabolism(
         descendant_leases=descendant_leases,
         surrenders=surrenders,
         uses=source_uses,
-        observed_cut=observed_cut,
+        observed_cut=source_observed_cut,
     )
 
     reclaim_by_id: dict[str, dict[str, Any]] = {}
@@ -274,6 +275,7 @@ def derive_authority_metabolism(
         "root_lease_id": dag["root_lease_id"],
         "source_dag_id": dag["dag_id"],
         "source_history_digest": dag["history_digest"],
+        "source_observed_cut": int(source_observed_cut),
         "observed_cut": int(observed_cut),
         "recycled_paths": recycled_rows,
         "totals": {
