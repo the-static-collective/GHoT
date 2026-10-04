@@ -160,3 +160,6 @@ jobs:
 
       - name: Lightwalker Guild Treasury 037 simulation
         run: python3 ghot/lightwalker_guild_treasury_sim.py
+
+      - name: Lightwalker Guild Authorization 038 simulation
+        run: python3 ghot/lightwalker_guild_authorization_sim.py
