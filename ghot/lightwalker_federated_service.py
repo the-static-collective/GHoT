@@ -35,6 +35,7 @@ from lightwalker_heterogeneous_exchange import (
     sign_obligation_performance,
     verify_exchange_acceptance,
     verify_exchange_offer,
+    verify_exchange_settlement,
     verify_obligation_performance,
 )
 from relatte_identity import (
