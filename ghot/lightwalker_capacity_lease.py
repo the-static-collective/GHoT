@@ -401,6 +401,11 @@ class NodeLeaseBudget:
             finally:
                 fcntl.flock(h.fileno(), fcntl.LOCK_UN)
 
+    def _freeze_path(self, lease_id: str) -> Path:
+        return self.root / "lease-budget" / "frozen" / (
+            lease_id.replace(":", "_").replace("/", "_") + ".json"
+        )
+
     def _uses(self, lease_id: str) -> list[dict[str, Any]]:
         if not self.uses_dir.exists():
             return []
@@ -415,6 +420,10 @@ class NodeLeaseBudget:
         if self.node.particular() != lease["node_particular"]:
             raise LightwalkerEconomyError("node does not hold lease")
         with self._locked():
+            if self._freeze_path(lease["lease_id"]).exists():
+                raise LightwalkerEconomyError(
+                    "lease authority surrendered/frozen"
+                )
             uses = self._uses(lease["lease_id"])
             consumed = sum(
                 int(x["consumed_measure"]["quantity"])
@@ -449,6 +458,10 @@ class NodeLeaseBudget:
             raise LightwalkerEconomyError("use quantity must be > 0")
 
         with self._locked():
+            if self._freeze_path(lease["lease_id"]).exists():
+                raise LightwalkerEconomyError(
+                    "lease authority surrendered/frozen"
+                )
             uses = self._uses(lease["lease_id"])
             consumed = sum(
                 int(x["consumed_measure"]["quantity"])
@@ -500,6 +513,10 @@ class NodeLeaseBudget:
             os.close(fd)
 
     def release_receipt(self, lease: dict[str, Any], *, observed_cut: int) -> dict[str, Any]:
+        if self._freeze_path(lease["lease_id"]).exists():
+            raise LightwalkerEconomyError(
+                "lease authority surrendered/frozen"
+            )
         state = self.state(lease)
         body = {
             "kind": "ghot.lightwalker.guild-capacity-lease-release",
