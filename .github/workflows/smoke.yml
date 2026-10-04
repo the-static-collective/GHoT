@@ -166,3 +166,6 @@ jobs:
 
       - name: Lightwalker Guild 039 simulation
         run: python3 ghot/lightwalker_guild_reservation_sim.py
+
+      - name: Lightwalker Distributed Reservation 040 simulation
+        run: python3 ghot/lightwalker_distributed_reservation_sim.py
