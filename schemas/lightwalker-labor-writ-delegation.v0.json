@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-labor-writ-delegation.v0.json",
+  "title": "GHoT Lightwalker Labor Writ Delegation V0",
+  "type": "object",
+  "required": ["kind","version","writ_id","from_holder_particular","to_holder_particular","delegated_at_cut","delegation_index","prior_delegation_id","scope_digest","laws","delegation_id","signing"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.labor-writ-delegation" },
+    "version": { "const": "0" },
+    "writ_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "from_holder_particular": { "type": "string", "minLength": 1 },
+    "to_holder_particular": { "type": "string", "minLength": 1 },
+    "delegated_at_cut": { "type": "integer", "minimum": 0 },
+    "delegation_index": { "type": "integer", "minimum": 1 },
+    "prior_delegation_id": { "type": ["string","null"] },
+    "scope_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "delegation_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "signing": { "type": "object" }
+  },
+  "additionalProperties": false
+}

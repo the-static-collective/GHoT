@@ -154,3 +154,6 @@ jobs:
           python3 ghot/lightwalker_heterogeneous_sim.py \
             --dogram-ice-repo _dogram_ice \
             --dogram-contribution-repo _dogram_contribution
+
+      - name: Lightwalker Labor Writ 036 simulation
+        run: python3 ghot/lightwalker_labor_writ_sim.py

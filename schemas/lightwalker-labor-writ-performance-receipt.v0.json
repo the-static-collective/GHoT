@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-labor-writ-performance-receipt.v0.json",
+  "title": "GHoT Lightwalker Labor Writ Performance Receipt V0",
+  "type": "object",
+  "required": ["kind","version","issuer_particular","writ_id","redemption_receipt_id","redeemer_particular","scope_digest","evidence_ref","outcome","writ_exhausted","laws","performance_receipt_id","signing"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.labor-writ-performance-receipt" },
+    "version": { "const": "0" },
+    "issuer_particular": { "type": "string", "minLength": 1 },
+    "writ_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "redemption_receipt_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "redeemer_particular": { "type": "string", "minLength": 1 },
+    "scope_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "evidence_ref": { "type": "string", "minLength": 1 },
+    "outcome": { "enum": ["FULFILLED","FAILED"] },
+    "writ_exhausted": { "const": true },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "performance_receipt_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "signing": { "type": "object" }
+  },
+  "additionalProperties": false
+}
