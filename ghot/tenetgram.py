@@ -53,9 +53,6 @@ FORBIDDEN_SEED_FIELDS = {
     "exchange_rate",
     "common_unit",
     "human_worth",
-    "automatic_request",
-    "automatic_execution",
-    "automatic_notification",
 }
 
 
