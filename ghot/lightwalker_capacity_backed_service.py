@@ -289,6 +289,16 @@ def verify_capacity_backed_service_promise(
             return False
         if promise.get("offer_id") != offer["offer_id"]:
             return False
+        if promise.get("valid_through_cut") != int(
+            offer["valid_through_cut"]
+        ):
+            return False
+        if int(promise.get("promised_at_cut", -1)) < 0:
+            return False
+        if int(promise["promised_at_cut"]) > int(
+            promise["valid_through_cut"]
+        ):
+            return False
         obligation = _service_obligation(
             offer,
             guild_particular=promise["steward_particular"],
@@ -298,6 +308,8 @@ def verify_capacity_backed_service_promise(
         entry = _resource_entry(
             snapshot, str(promise.get("resource_entry_id"))
         )
+        if promise.get("resource_subject_ref") != entry["subject_ref"]:
+            return False
         if entry["category"] != "capability" or entry["position"] != "available":
             return False
         measure = entry.get("native_measure")
@@ -451,7 +463,17 @@ def verify_service_encumbrance(
             return False
         if encumbrance.get("reservation_id") != reservation["reservation_id"]:
             return False
+        if encumbrance.get("resource_entry_id") != promise["resource_entry_id"]:
+            return False
+        if encumbrance.get("steward_particular") != promise["steward_particular"]:
+            return False
+        if proposal.get("purpose_ref") != "service-promise:" + promise["promise_id"]:
+            return False
+        if proposal.get("requested_measure") != promise["promised_measure"]:
+            return False
         if encumbrance.get("reserved_measure") != promise["promised_measure"]:
+            return False
+        if encumbrance.get("status") != "ENCUMBERED":
             return False
         if encumbrance.get("performance_proven") is not False:
             return False
