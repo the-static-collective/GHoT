@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-market-offer.v0.json",
+  "title": "GHoT Lightwalker Market Offer V0",
+  "type": "object",
+  "required": ["kind","version","authority","offeror_particular","projection_id","workmark_id","deliverable_ref","consideration","valid_through_cut","laws","offer_id"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.market-offer" },
+    "version": { "const": "0" },
+    "authority": { "const": "offeror-local" },
+    "offeror_particular": { "type": "string", "minLength": 1 },
+    "projection_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "workmark_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "deliverable_ref": { "type": "string", "minLength": 1 },
+    "consideration": {
+      "type": "object",
+      "required": ["realm_id","unit","quantity"],
+      "properties": {
+        "realm_id": { "type": "string", "minLength": 1 },
+        "unit": { "type": "string", "minLength": 1 },
+        "quantity": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "valid_through_cut": { "type": "integer", "minimum": 0 },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "offer_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false
+}
