@@ -129,3 +129,6 @@ jobs:
 
       - name: Ice Cube 032 return-home simulation
         run: python3 ghot/ice_cube_return_sim.py --dogram-repo _dogram_ice
+
+      - name: Ice Field 033 ecology simulation
+        run: python3 ghot/ice_field_sim.py --dogram-repo _dogram_ice
