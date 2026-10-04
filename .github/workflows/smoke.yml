@@ -178,3 +178,6 @@ jobs:
 
       - name: Lightwalker Lease Lineage 043 simulation
         run: python3 ghot/lightwalker_lease_lineage_sim.py
+
+      - name: Lightwalker Authority Compost 044 simulation
+        run: python3 ghot/lightwalker_authority_compost_sim.py
