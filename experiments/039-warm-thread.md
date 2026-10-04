@@ -115,18 +115,62 @@ python3 ghot/warm_thread_sim.py
 The proposal command is the bounded cross-repo producer intended for the Full
 Measure Warm Thread world receiver.
 
+## Closed-loop world residue
+
+The paired Full Measure branch `experiment/warm-thread-world-001` now consumes
+the real proposal producer, executes only locally authorized world steps, and
+exports honest residue.
+
+The hostile return specimen is:
+
+~~~text
+Alice released tree
+Bob cut wood
+Cara refused haul
+David still needs heat
+~~~
+
+GHoT consumes that residue as observation-only state and can compose a fresh
+child path:
+
+~~~text
+completed: release-tree, cut-tree
+preserved unchanged
+        +
+new Erin haul capability
+        +
+David remaining heat need
+        ↓
+Erin HAUL
+David ACCEPT
+~~~
+
+Cara is not scored, blamed, silently reselected, or carried into the child as
+an obligation.
+
+~~~text
+REFUSAL != DEFECT
+COMPLETED STEP != REEXECUTE
+RESIDUE != SCORE
+RECOMPOSITION != RETROACTIVE AUTHORITY
+NEW CANDIDATE != OLD ACTOR OBLIGATION
+~~~
+
 ## Next aperture
 
-Full Measure should receive this proposal as an inhabited local-world candidate,
-preserve finite resources and residual need, and require a fresh human act at
-each step. A failed or refused step should become honest residue that GHoT can
-later recompose from without scoring the person who declined.
+The first composition/world pulse is now closed at the proposal/residue layer.
 
-Twilio may later become an ordinary-human input/output door, but messaging must
-remain transport:
+The next hard seam is real carriage and ordinary-human ingress:
+
+1. carry the proposal and residue through an actual signed reLATTE crossing;
+2. keep destination HOLD / explicit ADMIT;
+3. admit HAVE / NEED / CAN declarations from a human-facing door such as SMS
+   without promoting a message into truth or consent.
 
 ~~~text
 MESSAGE != TRUTH
 MATCH != CONSENT
 PHONE NUMBER != HUMAN AUTHORITY
+TRANSPORT != ADMISSION
+SIGNED != TRUE
 ~~~
