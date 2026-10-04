@@ -1,0 +1,25 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-route-pareto-frontier.v0.json",
+  "title":"GHoT Lightwalker Route Pareto Frontier V0",
+  "type":"object",
+  "required":["kind","version","authority","constraint_evaluation_id","promise_id","source_slot_id","objective_directions","frontier","dominated","winner","local_score","preference_authority","reservation_authority","laws","frontier_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.route-pareto-frontier"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-pareto-tradeoff-view-only"},
+    "constraint_evaluation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "source_slot_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "objective_directions":{"type":"object"},
+    "frontier":{"type":"array","items":{"type":"object"}},
+    "dominated":{"type":"array","items":{"type":"object"}},
+    "winner":{"type":"null"},
+    "local_score":{"type":"null"},
+    "preference_authority":{"const":"none"},
+    "reservation_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "frontier_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}
