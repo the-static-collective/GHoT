@@ -190,3 +190,6 @@ jobs:
 
       - name: Lightwalker Capacity-Backed Service 047 simulation
         run: python3 ghot/lightwalker_capacity_backed_service_sim.py
+
+      - name: Lightwalker Federated Service 048 simulation
+        run: python3 ghot/lightwalker_federated_service_sim.py

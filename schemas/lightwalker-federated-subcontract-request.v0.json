@@ -1,0 +1,28 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-federated-subcontract-request.v0.json",
+  "title":"GHoT Lightwalker Federated Subcontract Request V0",
+  "type":"object",
+  "required":["kind","version","authority","promisor_particular","promise_id","offer_id","acceptance_id","remote_proof_id","capacity_guild_id","remote_snapshot_id","remote_resource_entry_id","requested_measure","requested_at_cut","reservation_authority","ownership_transfer_requested","laws","request_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.federated-subcontract-request"},
+    "version":{"const":"0"},
+    "authority":{"const":"promisor-subcontract-request-only"},
+    "promisor_particular":{"type":"string","minLength":1},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "offer_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "acceptance_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "remote_proof_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "capacity_guild_id":{"type":"string","minLength":1},
+    "remote_snapshot_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "remote_resource_entry_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "requested_measure":{"type":"object"},
+    "requested_at_cut":{"type":"integer","minimum":0},
+    "reservation_authority":{"const":"none"},
+    "ownership_transfer_requested":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "request_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}

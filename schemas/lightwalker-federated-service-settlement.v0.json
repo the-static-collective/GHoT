@@ -1,0 +1,33 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-federated-service-settlement.v0.json",
+  "title":"GHoT Lightwalker Federated Service Settlement V0",
+  "type":"object",
+  "required":["kind","version","authority","promisor_particular","capacity_guild_id","remote_snapshot_id","remote_proof_id","promise_id","request_id","grant_id","remote_reservation_id","remote_execution_receipt_id","completion_id","promisor_attestation_id","customer_attestation_id","settlement_id","performed_measure","customer_service_performed","capacity_ownership_transferred","promisor_remote_execution_authority","payment_inferred_from_remote_execution","laws","witness_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.federated-service-settlement"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-federated-service-linkage"},
+    "promisor_particular":{"type":"string","minLength":1},
+    "capacity_guild_id":{"type":"string","minLength":1},
+    "remote_snapshot_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "remote_proof_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "request_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "grant_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "remote_reservation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "remote_execution_receipt_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "completion_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "promisor_attestation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "customer_attestation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "settlement_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "performed_measure":{"type":"object"},
+    "customer_service_performed":{"const":true},
+    "capacity_ownership_transferred":{"const":false},
+    "promisor_remote_execution_authority":{"const":false},
+    "payment_inferred_from_remote_execution":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "witness_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}
