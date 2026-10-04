@@ -9,6 +9,8 @@ from warm_thread import (
     compose,
     dead_tree_specimen,
     execution_readiness,
+    make_record,
+    recompose_from_residue,
 )
 
 
@@ -94,11 +96,67 @@ def main() -> int:
         "actor/step mismatch",
     )
 
+    residue = {
+        "format": "full-measure.warm-thread-residue",
+        "version": 1,
+        "warmThreadId": proposal["warm_thread_id"],
+        "phase": "held-residual",
+        "completedSteps": ["release-tree", "cut-tree"],
+        "unresolvedRelation": "haul-firewood",
+        "remainingNeed": {
+            "kind": "home-heat",
+            "actor": "david",
+            "status": "open",
+            "urgency": "tonight",
+            "exactAddress": "withheld-from-shared-state",
+        },
+        "resources": {
+            "tree": {"state": "transformed-to-cut-firewood"},
+            "cutter": {"minutesAvailable": 0},
+            "truck": {"loadsAvailable": 1, "radiusMiles": 8},
+            "firewood": {"state": "cut-at-source"},
+        },
+        "residue": [
+            {
+                "sequence": 2,
+                "stepId": "haul-load",
+                "actor": "cara",
+                "outcome": "REFUSED",
+                "remainingNeed": "open",
+                "recompositionGap": "haul-firewood",
+                "note": "truck unavailable after all",
+                "humanWorthJudgment": None,
+                "authority": "observation-only",
+            }
+        ],
+        "authority": "observation-only",
+        "humanWorthJudgment": None,
+        "score": None,
+        "sharedWorldChanged": False,
+    }
+    erin = make_record(
+        record_id="can-haul-replacement-001",
+        kind="can",
+        actor="erin",
+        subject="pickup-truck",
+        relation="haul-firewood",
+        window="now",
+        locality="neighborhood-a",
+        claims={"capacity": "one-load", "radius": "8-miles"},
+    )
+    child = recompose_from_residue(residue, [erin])
+    assert child["status"] == "composable"
+    assert child["preserved_completed_steps"] == ["release-tree", "cut-tree"]
+    assert [step["actor"] for step in child["steps"]] == ["erin", "david"]
+    assert all(step["actor"] != "cara" for step in child["steps"])
+    assert child["requested_effect"]["automatic_execution_requested"] is False
+
     print("WARM THREAD 039: VERIFIED")
     print("candidate path composed without price/rank")
     print("missing truck -> durable gap")
     print("Alice ACT does not authorize Bob")
     print("all four ACTs -> READY, execution still false")
+    print("Full Measure refusal residue -> fresh haul candidate without scoring Cara")
     return 0
 
 
