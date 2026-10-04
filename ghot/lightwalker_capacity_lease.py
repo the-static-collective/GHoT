@@ -195,6 +195,15 @@ class GuildCapacityLeaseIssuer:
     def _closed(self, lease_id: str) -> bool:
         return self._close_path(lease_id).exists()
 
+    def _close_record(self, lease_id: str) -> dict[str, Any] | None:
+        path = self._close_path(lease_id)
+        if not path.exists():
+            return None
+        value = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(value, dict):
+            raise LightwalkerEconomyError("invalid lease close record")
+        return value
+
     def issue(
         self,
         snapshot: dict[str, Any],
@@ -222,14 +231,26 @@ class GuildCapacityLeaseIssuer:
             raise LightwalkerEconomyError("lease expiry precedes issuance")
 
         with self._locked():
-            active = [
-                x for x in self._all_leases(snapshot["snapshot_id"], resource_entry_id)
-                if not self._closed(x["lease_id"])
-            ]
-            leased = sum(int(x["leased_measure"]["quantity"]) for x in active)
+            all_leases = self._all_leases(
+                snapshot["snapshot_id"], resource_entry_id
+            )
+            active = [x for x in all_leases if not self._closed(x["lease_id"])]
+            active_leased = sum(
+                int(x["leased_measure"]["quantity"]) for x in active
+            )
+            closed_consumed = 0
+            for prior in all_leases:
+                close = self._close_record(prior["lease_id"])
+                if close is not None:
+                    closed_consumed += int(
+                        close["consumed_measure"]["quantity"]
+                    )
             visible = int(measure["quantity"])
-            if q > visible - leased:
-                raise LightwalkerEconomyError("lease exceeds unpartitioned capacity")
+            unpartitioned = visible - active_leased - closed_consumed
+            if q > unpartitioned:
+                raise LightwalkerEconomyError(
+                    "lease exceeds unpartitioned capacity"
+                )
 
             body = {
                 "kind": LEASE_KIND,
@@ -268,18 +289,19 @@ class GuildCapacityLeaseIssuer:
         snapshot: dict[str, Any],
         lease: dict[str, Any],
         *,
-        consumed_quantity: int,
-        node_release_receipt_id: str,
+        node_release_receipt: dict[str, Any],
         observed_cut: int,
     ) -> dict[str, Any]:
         if not verify_capacity_lease(snapshot, lease):
             raise LightwalkerEconomyError("invalid capacity lease")
         if self.steward.particular() != lease["steward_particular"]:
             raise LightwalkerEconomyError("local steward does not own lease")
-        consumed = _nni(consumed_quantity, "consumed_quantity")
+        if not verify_release_receipt(lease, node_release_receipt):
+            raise LightwalkerEconomyError("invalid node release receipt")
+        consumed = int(
+            node_release_receipt["consumed_measure"]["quantity"]
+        )
         leased = int(lease["leased_measure"]["quantity"])
-        if consumed > leased:
-            raise LightwalkerEconomyError("consumption exceeds lease")
         with self._locked():
             if self._closed(lease["lease_id"]):
                 raise LightwalkerEconomyError("lease already closed")
@@ -300,7 +322,9 @@ class GuildCapacityLeaseIssuer:
                     "unit": lease["leased_measure"]["unit"],
                     "quantity": leased - consumed,
                 },
-                "node_release_receipt_id": _nonempty(node_release_receipt_id, "node_release_receipt_id"),
+                "node_release_receipt_id": node_release_receipt[
+                    "release_receipt_id"
+                ],
                 "observed_cut": _nni(observed_cut, "observed_cut"),
                 "status": "CLOSED",
                 "laws": [
@@ -507,6 +531,73 @@ class NodeLeaseBudget:
         )
 
 
+def verify_lease_use(lease: dict[str, Any], use: dict[str, Any]) -> bool:
+    try:
+        if use.get("kind") != USE_KIND or use.get("version") != USE_VERSION:
+            return False
+        if use.get("lease_id") != lease["lease_id"]:
+            return False
+        if use.get("node_particular") != lease["node_particular"]:
+            return False
+        if use.get("status") not in {"EXECUTED", "FAILED"}:
+            return False
+        if use.get("status") == "EXECUTED":
+            measure = use.get("consumed_measure")
+            if not isinstance(measure, dict):
+                return False
+            if measure.get("unit") != lease["leased_measure"]["unit"]:
+                return False
+        if use.get("status") == "FAILED" and use.get("consumed_measure") is not None:
+            return False
+        return _verify_signed(
+            use,
+            id_field="use_id",
+            particular_field="node_particular",
+            domain=USE_DOMAIN,
+            byte_domain=USE_BYTES,
+        )
+    except Exception:
+        return False
+
+
+def verify_release_receipt(
+    lease: dict[str, Any],
+    receipt: dict[str, Any],
+) -> bool:
+    try:
+        if receipt.get("kind") != "ghot.lightwalker.guild-capacity-lease-release":
+            return False
+        if receipt.get("version") != "0":
+            return False
+        if receipt.get("lease_id") != lease["lease_id"]:
+            return False
+        if receipt.get("node_particular") != lease["node_particular"]:
+            return False
+        if receipt.get("status") != "RELEASED":
+            return False
+        consumed = receipt.get("consumed_measure")
+        returned = receipt.get("returned_measure")
+        if not isinstance(consumed, dict) or not isinstance(returned, dict):
+            return False
+        unit = lease["leased_measure"]["unit"]
+        if consumed.get("unit") != unit or returned.get("unit") != unit:
+            return False
+        if int(consumed["quantity"]) + int(returned["quantity"]) != int(
+            lease["leased_measure"]["quantity"]
+        ):
+            return False
+        return _verify_signed(
+            receipt,
+            id_field="release_receipt_id",
+            particular_field="node_particular",
+            domain=USE_DOMAIN,
+            byte_domain=USE_BYTES,
+        )
+    except Exception:
+        return False
+
+
+
 def settle_closed_leases_to_treasury(
     snapshot: dict[str, Any],
     *,
@@ -552,4 +643,6 @@ __all__ = [
     "make_lease_crossing",
     "settle_closed_leases_to_treasury",
     "verify_capacity_lease",
+    "verify_lease_use",
+    "verify_release_receipt",
 ]
