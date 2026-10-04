@@ -1,0 +1,111 @@
+{
+  "kind": "ghot.merge-plugin.package",
+  "version": "0",
+  "package_id": "ghot.plugin.verified-ice-cube",
+  "package_version": "0",
+  "contract": {
+    "contract_id": "ghot.ice-cube-result->verified-ice-cube-catalog/v0",
+    "title": "Remember verified Ice Cube specimen",
+    "description": "Merge an owner-admitted Dogram-verified Ice Cube result into an observational local specimen pantry.",
+    "category": "verified-math-artifact-memory",
+    "source": {
+      "state_kind": "ghot.ice-cube-result",
+      "state_version": "0",
+      "selector": "$",
+      "payload_type": "object"
+    },
+    "target": {
+      "relative_path": "knowledge/plugins/ghot.plugin.verified-ice-cube/verified-ice-cubes.v0.json",
+      "state_kind": "ghot.verified-ice-cube-catalog",
+      "state_version": "0"
+    },
+    "authority_effect": "none",
+    "freshness_effect": "none",
+    "selection_required": true
+  },
+  "schemas": {
+    "target": {
+      "kind": "ghot.verified-ice-cube-catalog",
+      "version": "0",
+      "shape": "catalog"
+    }
+  },
+  "operation": {
+    "kind": "catalog-object-snapshot/v0",
+    "entry_fields": {
+      "source_particular": "source.particular",
+      "source_node_id": "source.node_id",
+      "specimen_id": "payload.specimen_id",
+      "family": "payload.family",
+      "work_address": "payload.work_address",
+      "specimen_address": "payload.specimen_address",
+      "render_address": "payload.render_address",
+      "dogram_receipt_address": "payload.dogram_receipt_address",
+      "dogram_status": "payload.dogram_status",
+      "execution_receipt_id": "payload.execution_receipt_id",
+      "parcel_id": "parcel.id",
+      "payload_address": "payload.address"
+    },
+    "key_fields": [
+      "specimen_id",
+      "specimen_address"
+    ]
+  },
+  "fixtures": [
+    {
+      "name": "verified-ice-cube",
+      "local_before": {
+        "kind": "ghot.verified-ice-cube-catalog",
+        "version": "0",
+        "entries": [],
+        "merged_parcels": []
+      },
+      "parcel": {
+        "parcel_id": "fixture-ice-parcel-1",
+        "parcel_address": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "source": {
+          "particular": "fixture-worker",
+          "node_id": "fixture-node"
+        },
+        "payload": {
+          "address": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "value": {
+            "kind": "ghot.ice-cube-result",
+            "version": "0",
+            "specimen_id": "ice-cube-fixture-001",
+            "family": "lucas-halley-mandelbrot-mapping-torus/v0",
+            "work_address": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "specimen_address": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "render_address": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "dogram_receipt_address": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            "dogram_status": "OK",
+            "execution_receipt_id": "relatte-receipt-v0:fixture"
+          }
+        }
+      },
+      "expected_after": {
+        "kind": "ghot.verified-ice-cube-catalog",
+        "version": "0",
+        "entries": [
+          {
+            "source_particular": "fixture-worker",
+            "source_node_id": "fixture-node",
+            "specimen_id": "ice-cube-fixture-001",
+            "family": "lucas-halley-mandelbrot-mapping-torus/v0",
+            "work_address": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "specimen_address": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "render_address": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "dogram_receipt_address": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            "dogram_status": "OK",
+            "execution_receipt_id": "relatte-receipt-v0:fixture",
+            "parcel_id": "fixture-ice-parcel-1",
+            "payload_address": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        ],
+        "merged_parcels": [
+          "fixture-ice-parcel-1"
+        ]
+      }
+    }
+  ]
+}
