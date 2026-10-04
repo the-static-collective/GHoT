@@ -172,3 +172,6 @@ jobs:
 
       - name: Lightwalker Capacity Lease 041 simulation
         run: python3 ghot/lightwalker_capacity_lease_sim.py
+
+      - name: Lightwalker Lease Handoff 042 simulation
+        run: python3 ghot/lightwalker_lease_handoff_sim.py
