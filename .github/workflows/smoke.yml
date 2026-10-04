@@ -129,3 +129,16 @@ jobs:
 
       - name: Lightwalker Economy 032 vertical-slice simulation
         run: python3 ghot/lightwalker_economy_sim.py --dogram-repo _dogram_ice
+
+      - name: Checkout Dogram Contribution Field
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/Dogram
+          ref: design/contribution-field-001
+          path: _dogram_contribution
+
+      - name: Lightwalker Time Assay 033 simulation
+        run: |
+          python3 ghot/lightwalker_time_assay_sim.py \
+            --dogram-ice-repo _dogram_ice \
+            --dogram-contribution-repo _dogram_contribution
