@@ -404,11 +404,12 @@ def _node_id_at(root: Path) -> str:
     return node_id
 
 
-def verify_with_dogram(
+def dogram_receipt_for(
     dogram_repo: Path,
     specimen: dict[str, Any],
     render_bytes: bytes,
 ) -> dict[str, Any]:
+    """Run Dogram and return its receipt without upgrading status to truth."""
     dogram_repo = dogram_repo.resolve()
     module_path = dogram_repo / "dogram" / "ice_cube.py"
     if not module_path.exists():
@@ -416,6 +417,7 @@ def verify_with_dogram(
             "Dogram Ice Cube verifier not found; use Dogram branch impl/ice-cube-001"
         )
     old_path = list(sys.path)
+    prior_module = sys.modules.pop("dogram.ice_cube", None)
     try:
         sys.path.insert(0, str(dogram_repo))
         importlib.invalidate_caches()
@@ -425,7 +427,21 @@ def verify_with_dogram(
             raise RuntimeError(f"wrong Dogram module loaded: {origin}")
         receipt = module.verify_ice_cube(specimen, render_bytes)
     finally:
+        sys.modules.pop("dogram.ice_cube", None)
+        if prior_module is not None:
+            sys.modules["dogram.ice_cube"] = prior_module
         sys.path[:] = old_path
+    if not isinstance(receipt, dict):
+        raise RuntimeError("Dogram verifier did not return a receipt object")
+    return receipt
+
+
+def verify_with_dogram(
+    dogram_repo: Path,
+    specimen: dict[str, Any],
+    render_bytes: bytes,
+) -> dict[str, Any]:
+    receipt = dogram_receipt_for(dogram_repo, specimen, render_bytes)
     if receipt.get("status") != "OK":
         raise RuntimeError(
             "Dogram refused Ice Cube specimen: "
@@ -547,6 +563,8 @@ def mine_ice_cube(
         "dogram_status": dogram_receipt["status"],
         "execution_receipt_id": execution_receipt["receipt_id"],
         "work_crossing_id": crossing["crossing_id"],
+        "work_crossing": crossing,
+        "execution_receipt": execution_receipt,
         "render_encoding": "base64",
         "render_base64": base64.b64encode(render_bytes).decode("ascii"),
         "specimen": specimen,
