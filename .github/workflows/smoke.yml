@@ -205,3 +205,6 @@ jobs:
 
       - name: Lightwalker Route Scoring 052 simulation
         run: python3 ghot/lightwalker_route_scoring_sim.py
+
+      - name: Lightwalker Constraint Routing 053 simulation
+        run: python3 ghot/lightwalker_constraint_routing_sim.py
