@@ -1,0 +1,27 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-route-constraint-evaluation.v0.json",
+  "title":"GHoT Lightwalker Route Constraint Evaluation V0",
+  "type":"object",
+  "required":["kind","version","authority","promise_id","route_policy_id","constraint_policy_id","source_slot_id","evaluation_cut","candidate_rows","eligible_remote_proof_ids","ineligible_remote_proof_ids","winner","score_semantics","preference_authority","reservation_authority","laws","evaluation_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.route-constraint-evaluation"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-hard-eligibility-only"},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "route_policy_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "constraint_policy_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "source_slot_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "evaluation_cut":{"type":"integer","minimum":0},
+    "candidate_rows":{"type":"array","items":{"type":"object"}},
+    "eligible_remote_proof_ids":{"type":"array","items":{"type":"string"}},
+    "ineligible_remote_proof_ids":{"type":"array","items":{"type":"string"}},
+    "winner":{"type":"null"},
+    "score_semantics":{"type":"null"},
+    "preference_authority":{"const":"none"},
+    "reservation_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "evaluation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}
