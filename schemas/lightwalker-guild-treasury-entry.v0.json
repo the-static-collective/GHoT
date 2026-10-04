@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-guild-treasury-entry.v0.json",
+  "title": "GHoT Lightwalker Guild Treasury Entry V0",
+  "type": "object",
+  "required": ["kind","version","category","position","subject_ref","source_ref","evidence_refs","native_measure","metadata","laws","entry_id"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.guild-treasury-entry" },
+    "version": { "const": "0" },
+    "category": { "enum": ["capability","claim","obligation","right","receipt","credit","money-reference"] },
+    "position": { "enum": ["available","encumbered","outstanding","resolved","evidence","external-reference"] },
+    "subject_ref": { "type": "string", "minLength": 1 },
+    "source_ref": { "type": "string", "minLength": 1 },
+    "evidence_refs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "native_measure": {
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["unit","quantity"],
+          "properties": {
+            "unit": { "type": "string", "minLength": 1 },
+            "quantity": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "metadata": { "type": "object" },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "entry_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false
+}
