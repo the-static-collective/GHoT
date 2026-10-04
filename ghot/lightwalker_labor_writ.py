@@ -152,8 +152,10 @@ def issue_labor_writ(
         raise LightwalkerEconomyError("unsupported delegation mode")
     if mode == "nondelegable" and maximum != 0:
         raise LightwalkerEconomyError("nondelegable writ must allow zero delegations")
-    if mode == "bounded" and maximum < 1:
-        raise LightwalkerEconomyError("bounded delegation needs at least one hop")
+    if mode == "bounded" and maximum != 1:
+        raise LightwalkerEconomyError(
+            "v0 bounded delegation supports exactly one hop"
+        )
     if redemption_policy.get("one_redemption") is not True:
         raise LightwalkerEconomyError("v0 requires one_redemption = true")
 
@@ -223,9 +225,20 @@ def verify_delegation(writ: dict[str, Any], delegation: dict[str, Any]) -> bool:
         if delegation.get("scope_digest") != writ["scope_digest"]:
             return False
         index = int(delegation.get("delegation_index", -1))
-        if index < 1 or index > int(writ["delegation_policy"]["max_delegations"]):
+        if index != 1:
             return False
-        if int(delegation.get("delegated_at_cut", -1)) > int(writ["expires_after_cut"]):
+        if writ["delegation_policy"]["mode"] != "bounded":
+            return False
+        if int(writ["delegation_policy"]["max_delegations"]) != 1:
+            return False
+        if delegation.get("from_holder_particular") != writ["initial_holder_particular"]:
+            return False
+        if delegation.get("prior_delegation_id") is not None:
+            return False
+        delegated_cut = int(delegation.get("delegated_at_cut", -1))
+        if delegated_cut < int(writ["issued_at_cut"]):
+            return False
+        if delegated_cut > int(writ["expires_after_cut"]):
             return False
         return _verify_signed_payload(
             delegation,
@@ -260,6 +273,10 @@ def delegate_labor_writ(
     prior_delegation: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     current_holder, prior_count = _resolve_holder(writ, prior_delegation)
+    if prior_delegation is not None:
+        raise LightwalkerEconomyError(
+            "v0 Labor Writ supports exactly one delegation hop"
+        )
     if signer.particular() != current_holder:
         raise LightwalkerEconomyError("delegation signer is not current holder")
     policy = writ["delegation_policy"]
@@ -353,7 +370,10 @@ def verify_redemption_request(
             return False
         if request.get("delegation_id") != (delegation or {}).get("delegation_id"):
             return False
-        if int(request.get("requested_at_cut", -1)) > int(writ["expires_after_cut"]):
+        requested_cut = int(request.get("requested_at_cut", -1))
+        if requested_cut < int(writ["issued_at_cut"]):
+            return False
+        if requested_cut > int(writ["expires_after_cut"]):
             return False
         return _verify_signed_payload(
             request,
@@ -465,6 +485,8 @@ def verify_redemption_receipt(writ: dict[str, Any], receipt: dict[str, Any]) -> 
         return False
     if receipt.get("kind") != REDEMPTION_RECEIPT_KIND or receipt.get("version") != REDEMPTION_RECEIPT_VERSION:
         return False
+    if receipt.get("issuer_particular") != writ["issuer_particular"]:
+        return False
     if receipt.get("writ_id") != writ["writ_id"] or receipt.get("scope_digest") != writ["scope_digest"]:
         return False
     if receipt.get("writ_exhausted") is not True:
@@ -486,6 +508,8 @@ def verify_performance_receipt(
     if not verify_redemption_receipt(writ, redemption_receipt):
         return False
     if receipt.get("kind") != PERFORMANCE_RECEIPT_KIND or receipt.get("version") != PERFORMANCE_RECEIPT_VERSION:
+        return False
+    if receipt.get("issuer_particular") != writ["issuer_particular"]:
         return False
     if receipt.get("writ_id") != writ["writ_id"]:
         return False
@@ -541,6 +565,10 @@ class LaborWritStore:
         if not verify_redemption_request(writ, request, delegation=delegation):
             raise LightwalkerEconomyError("invalid redemption request")
         cut = _nonnegative_int(observed_cut, "observed_cut")
+        if cut < int(request["requested_at_cut"]):
+            raise LightwalkerEconomyError(
+                "issuer cannot observe redemption before it was requested"
+            )
         if cut > int(writ["expires_after_cut"]):
             raise LightwalkerEconomyError("Labor Writ expired")
 
@@ -601,6 +629,10 @@ class LaborWritStore:
     ) -> dict[str, Any]:
         if not verify_redemption_receipt(writ, redemption_receipt):
             raise LightwalkerEconomyError("invalid redemption receipt")
+        if self.issuer.particular() != writ["issuer_particular"]:
+            raise LightwalkerEconomyError(
+                "local issuer does not own this Labor Writ"
+            )
         if outcome not in {"FULFILLED", "FAILED"}:
             raise LightwalkerEconomyError("unsupported performance outcome")
         claim_path = self._path(self.claims_dir, writ["writ_id"])
