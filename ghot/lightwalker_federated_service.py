@@ -61,6 +61,8 @@ COMPLETION_KIND = "ghot.lightwalker.federated-subcontract-completion"
 COMPLETION_VERSION = "0"
 FAILURE_KIND = "ghot.lightwalker.federated-subcontract-failure"
 FAILURE_VERSION = "0"
+SETTLEMENT_WITNESS_KIND = "ghot.lightwalker.federated-service-settlement"
+SETTLEMENT_WITNESS_VERSION = "0"
 
 REMOTE_PROOF_DOMAIN = "ghot.lightwalker-remote-capacity-proof-signature/v0"
 PROMISE_DOMAIN = "ghot.lightwalker-federated-service-promise-signature/v0"
@@ -711,6 +713,8 @@ def verify_subcontract_grant(
             return False
         if request.get("remote_resource_entry_id") != remote_proof["resource_entry_id"]:
             return False
+        if request.get("promise_id") != grant.get("promise_id"):
+            return False
         if request.get("requested_measure") != grant.get("reserved_measure"):
             return False
         if not verify_reservation(
@@ -1055,6 +1059,150 @@ def attest_promisor_performance(
     )
 
 
+def derive_federated_service_settlement(
+    remote_snapshot: dict[str, Any],
+    offer: dict[str, Any],
+    acceptance: dict[str, Any],
+    remote_proof: dict[str, Any],
+    promise: dict[str, Any],
+    request: dict[str, Any],
+    proposal: dict[str, Any],
+    authorization: dict[str, Any],
+    reservation: dict[str, Any],
+    grant: dict[str, Any],
+    execution_receipt: dict[str, Any],
+    finalization: dict[str, Any],
+    completion: dict[str, Any],
+    promisor_attestation: dict[str, Any],
+    customer_attestation: dict[str, Any],
+    settlement: dict[str, Any],
+) -> dict[str, Any]:
+    if not verify_federated_service_promise(
+        remote_snapshot, offer, remote_proof, promise
+    ):
+        raise LightwalkerEconomyError("invalid federated promise")
+    if not verify_exchange_acceptance(offer, acceptance):
+        raise LightwalkerEconomyError("invalid customer acceptance")
+    if not verify_subcontract_request(
+        remote_snapshot,
+        offer,
+        acceptance,
+        remote_proof,
+        promise,
+        request,
+    ):
+        raise LightwalkerEconomyError("invalid subcontract request")
+    if not verify_subcontract_grant(
+        remote_snapshot,
+        remote_proof,
+        request,
+        proposal,
+        authorization,
+        reservation,
+        grant,
+    ):
+        raise LightwalkerEconomyError("invalid subcontract grant")
+    if not verify_execution_receipt(
+        remote_snapshot, proposal, authorization, execution_receipt
+    ):
+        raise LightwalkerEconomyError(
+            "invalid remote execution receipt"
+        )
+    if execution_receipt.get("success") is not True:
+        raise LightwalkerEconomyError(
+            "federated settlement requires successful remote execution"
+        )
+    if not verify_finalization(reservation, finalization):
+        raise LightwalkerEconomyError(
+            "invalid remote reservation finalization"
+        )
+    if finalization.get("status") != "CONSUMED":
+        raise LightwalkerEconomyError(
+            "federated settlement requires consumed remote reservation"
+        )
+    if not verify_subcontract_completion(grant, completion):
+        raise LightwalkerEconomyError(
+            "invalid remote subcontract completion"
+        )
+    if completion.get("execution_receipt_id") != execution_receipt[
+        "execution_receipt_id"
+    ]:
+        raise LightwalkerEconomyError(
+            "completion does not bind exact remote execution"
+        )
+    if not verify_obligation_performance(
+        offer, acceptance, promisor_attestation
+    ):
+        raise LightwalkerEconomyError(
+            "invalid promisor performance attestation"
+        )
+    if promisor_attestation.get("role") != "OFFEROR":
+        raise LightwalkerEconomyError(
+            "promisor attestation must be offeror performance"
+        )
+    if (
+        promisor_attestation.get("evidence_ref")
+        != completion["completion_id"]
+    ):
+        raise LightwalkerEconomyError(
+            "promisor performance is not grounded in remote completion"
+        )
+    if not verify_obligation_performance(
+        offer, acceptance, customer_attestation
+    ):
+        raise LightwalkerEconomyError(
+            "invalid customer performance attestation"
+        )
+    if customer_attestation.get("role") != "ACCEPTOR":
+        raise LightwalkerEconomyError(
+            "customer attestation must be acceptor performance"
+        )
+    if not verify_exchange_settlement(
+        offer,
+        acceptance,
+        [promisor_attestation, customer_attestation],
+        settlement,
+    ):
+        raise LightwalkerEconomyError(
+            "invalid customer-facing federated settlement"
+        )
+
+    body = {
+        "kind": SETTLEMENT_WITNESS_KIND,
+        "version": SETTLEMENT_WITNESS_VERSION,
+        "authority": "derived-federated-service-linkage",
+        "promisor_particular": promise["promisor_particular"],
+        "capacity_guild_id": remote_proof["capacity_guild_id"],
+        "remote_snapshot_id": remote_snapshot["snapshot_id"],
+        "remote_proof_id": remote_proof["remote_proof_id"],
+        "promise_id": promise["promise_id"],
+        "request_id": request["request_id"],
+        "grant_id": grant["grant_id"],
+        "remote_reservation_id": reservation["reservation_id"],
+        "remote_execution_receipt_id": execution_receipt[
+            "execution_receipt_id"
+        ],
+        "completion_id": completion["completion_id"],
+        "promisor_attestation_id": promisor_attestation["attestation_id"],
+        "customer_attestation_id": customer_attestation["attestation_id"],
+        "settlement_id": settlement["settlement_id"],
+        "performed_measure": completion["performed_measure"],
+        "customer_service_performed": True,
+        "capacity_ownership_transferred": False,
+        "promisor_remote_execution_authority": False,
+        "payment_inferred_from_remote_execution": False,
+        "laws": [
+            "PROMISOR != CAPACITY HOLDER",
+            "REMOTE CAPACITY PROOF != LOCAL AUTHORITY",
+            "SUBCONTRACT != OWNERSHIP TRANSFER",
+            "UPSTREAM RESERVATION != DOWNSTREAM PERFORMANCE",
+            "REMOTE COMPLETION MAY SUPPORT DOWNSTREAM PERFORMANCE EVIDENCE",
+        ],
+    }
+    return {**body, "witness_id": content_address(body)}
+
+
+
 def make_federated_evidence_crossing(
     evidence: dict[str, Any],
     *,
@@ -1071,6 +1219,7 @@ def make_federated_evidence_crossing(
         "grant_id",
         "completion_id",
         "failure_id",
+        "witness_id",
     ):
         if isinstance(evidence.get(field), str):
             evidence_id = evidence[field]
@@ -1134,6 +1283,7 @@ def make_federated_evidence_crossing(
 
 __all__ = [
     "attest_promisor_performance",
+    "derive_federated_service_settlement",
     "make_federated_evidence_crossing",
     "make_federated_service_promise",
     "make_remote_capacity_proof",
