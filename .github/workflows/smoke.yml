@@ -148,3 +148,9 @@ jobs:
           python3 ghot/lightwalker_market_sim.py \
             --dogram-ice-repo _dogram_ice \
             --dogram-contribution-repo _dogram_contribution
+
+      - name: Lightwalker Heterogeneous Exchange 035 simulation
+        run: |
+          python3 ghot/lightwalker_heterogeneous_sim.py \
+            --dogram-ice-repo _dogram_ice \
+            --dogram-contribution-repo _dogram_contribution
