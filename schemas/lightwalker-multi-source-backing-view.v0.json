@@ -1,0 +1,24 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-multi-source-backing-view.v0.json",
+  "title":"GHoT Lightwalker Multi-Source Backing View V0",
+  "type":"object",
+  "required":["kind","version","authority","promise_id","required_source_ids","grant_ids","missing_source_ids","required_measure","reserved_measure","status","execution_authority","ownership_aggregated","laws","backing_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.multi-source-backing-view"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-multi-source-backing-view"},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "required_source_ids":{"type":"array","items":{"type":"string"}},
+    "grant_ids":{"type":"array","items":{"type":"string"}},
+    "missing_source_ids":{"type":"array","items":{"type":"string"}},
+    "required_measure":{"type":"object"},
+    "reserved_measure":{"type":"object"},
+    "status":{"enum":["PARTIAL","COMPLETE"]},
+    "execution_authority":{"const":"none"},
+    "ownership_aggregated":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "backing_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}

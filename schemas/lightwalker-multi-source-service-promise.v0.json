@@ -1,0 +1,27 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-multi-source-service-promise.v0.json",
+  "title":"GHoT Lightwalker Multi-Source Service Promise V0",
+  "type":"object",
+  "required":["kind","version","authority","promisor_particular","offer_id","service_obligation_id","promised_measure","sources","promised_at_cut","valid_through_cut","sources_reserved","full_backing_proven","local_execution_authority","ownership_aggregated","laws","promise_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.multi-source-service-promise"},
+    "version":{"const":"0"},
+    "authority":{"const":"promisor-multi-source-economic-promise-only"},
+    "promisor_particular":{"type":"string","minLength":1},
+    "offer_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "service_obligation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "promised_measure":{"type":"object"},
+    "sources":{"type":"array","minItems":2,"items":{"type":"object"}},
+    "promised_at_cut":{"type":"integer","minimum":0},
+    "valid_through_cut":{"type":"integer","minimum":0},
+    "sources_reserved":{"const":0},
+    "full_backing_proven":{"const":false},
+    "local_execution_authority":{"const":false},
+    "ownership_aggregated":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}

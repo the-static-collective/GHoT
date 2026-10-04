@@ -1,0 +1,28 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-multi-source-subcontract-completion.v0.json",
+  "title":"GHoT Lightwalker Multi-Source Subcontract Completion V0",
+  "type":"object",
+  "required":["kind","version","authority","capacity_guild_id","capacity_steward_particular","source_id","request_id","grant_id","reservation_id","execution_receipt_id","finalization_id","performed_measure","status","customer_performance_proven","ownership_transfer","laws","completion_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.multi-source-subcontract-completion"},
+    "version":{"const":"0"},
+    "authority":{"const":"source-guild-subcontract-performance"},
+    "capacity_guild_id":{"type":"string","minLength":1},
+    "capacity_steward_particular":{"type":"string","minLength":1},
+    "source_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "request_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "grant_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "reservation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "execution_receipt_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "finalization_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "performed_measure":{"type":"object"},
+    "status":{"const":"FULFILLED"},
+    "customer_performance_proven":{"const":false},
+    "ownership_transfer":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "completion_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}
