@@ -1,0 +1,27 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-rerouted-service-completion.v0.json",
+  "title":"GHoT Lightwalker Rerouted Service Completion V0",
+  "type":"object",
+  "required":["kind","version","authority","promise_id","reroute_ids","effective_completion_ids","missing_source_slot_ids","routes","performed_measure","required_measure","status","customer_performance_proven","execution_authority","ownership_aggregated","promise_rewritten","laws","aggregate_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.rerouted-service-completion"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-rerouted-service-completion"},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "reroute_ids":{"type":"array","items":{"type":"string"}},
+    "effective_completion_ids":{"type":"array","items":{"type":"string"}},
+    "missing_source_slot_ids":{"type":"array","items":{"type":"string"}},
+    "routes":{"type":"array","items":{"type":"object"}},
+    "performed_measure":{"type":"object"},
+    "required_measure":{"type":"object"},
+    "status":{"enum":["PARTIAL","COMPLETE"]},
+    "customer_performance_proven":{"const":false},
+    "execution_authority":{"const":"none"},
+    "ownership_aggregated":{"const":false},
+    "promise_rewritten":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "aggregate_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}
