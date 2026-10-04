@@ -1229,6 +1229,27 @@ def make_federated_evidence_crossing(
             "federated evidence lacks content identifier"
         )
 
+    kind = evidence.get("kind")
+    if kind in {
+        REMOTE_PROOF_KIND,
+        GRANT_KIND,
+        COMPLETION_KIND,
+        FAILURE_KIND,
+    }:
+        expected_signer = evidence.get("capacity_steward_particular")
+    elif kind == REQUEST_KIND:
+        expected_signer = evidence.get("promisor_particular")
+    elif kind == SETTLEMENT_WITNESS_KIND:
+        expected_signer = evidence.get("promisor_particular")
+    else:
+        raise LightwalkerEconomyError(
+            "unsupported federated evidence kind for crossing"
+        )
+    if signer.particular() != expected_signer:
+        raise LightwalkerEconomyError(
+            "federated crossing signer does not own artifact role"
+        )
+
     envelope = {
         "schema": "relatte.crossing-envelope/v0",
         "crossing_id": "",
