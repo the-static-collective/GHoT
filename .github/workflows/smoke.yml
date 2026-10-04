@@ -157,3 +157,6 @@ jobs:
 
       - name: Lightwalker Labor Writ 036 simulation
         run: python3 ghot/lightwalker_labor_writ_sim.py
+
+      - name: Lightwalker Guild Treasury 037 simulation
+        run: python3 ghot/lightwalker_guild_treasury_sim.py
