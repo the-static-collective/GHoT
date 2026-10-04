@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from typing import Any
 
 FORMAT = "ghot.warm-thread-proposal"
@@ -318,6 +319,113 @@ def execution_readiness(
     }
 
 
+
+RESIDUE_FORMAT = "full-measure.warm-thread-residue"
+RECOMPOSITION_FORMAT = "ghot.warm-thread-recomposition"
+
+
+def recompose_from_residue(
+    residue: dict[str, Any],
+    candidates: list[dict[str, Any]],
+) -> dict[str, Any]:
+    if not isinstance(residue, dict):
+        raise WarmThreadError("residue must be an object")
+    if residue.get("format") != RESIDUE_FORMAT or residue.get("version") != 1:
+        raise WarmThreadError("unsupported Full Measure residue")
+    if residue.get("authority") != "observation-only":
+        raise WarmThreadError("residue may not carry execution authority")
+    if residue.get("humanWorthJudgment") is not None:
+        raise WarmThreadError("human-worth judgment may not drive recomposition")
+    if residue.get("score") is not None:
+        raise WarmThreadError("score may not drive recomposition")
+    if residue.get("sharedWorldChanged") is not False:
+        raise WarmThreadError("shared-world mutation claim is outside this seam")
+
+    need = residue.get("remainingNeed")
+    resources = residue.get("resources")
+    if not isinstance(need, dict) or need.get("status") != "open":
+        raise WarmThreadError("recomposition requires an unresolved need")
+    if not isinstance(resources, dict):
+        raise WarmThreadError("residue resources are required")
+    firewood = resources.get("firewood")
+    if not isinstance(firewood, dict) or firewood.get("state") != "cut-at-source":
+        raise WarmThreadError("frozen recomposition expects cut firewood at source")
+    completed = residue.get("completedSteps")
+    if completed != ["release-tree", "cut-tree"]:
+        raise WarmThreadError("completed-step lineage mismatch")
+
+    unresolved = residue.get("unresolvedRelation")
+    matching = [
+        item for item in candidates
+        if isinstance(item, dict)
+        and item.get("kind") == "can"
+        and item.get("relation") == unresolved
+    ]
+
+    base = {
+        "format": RECOMPOSITION_FORMAT,
+        "version": 1,
+        "authority": "proposal-only",
+        "parent_warm_thread_id": residue.get("warmThreadId"),
+        "residue_ref": _address("warm-thread-residue", residue),
+        "preserved_completed_steps": list(completed),
+        "remaining_need": {
+            "kind": need.get("kind"),
+            "actor": need.get("actor"),
+            "status": need.get("status"),
+            "urgency": need.get("urgency"),
+            "exactAddress": "withheld",
+        },
+        "unresolved_relation": unresolved,
+        "status": "composable" if matching else "gap",
+        "laws": [
+            "REFUSAL != DEFECT",
+            "COMPLETED STEP != REEXECUTE",
+            "RESIDUE != SCORE",
+            "RECOMPOSITION != RETROACTIVE AUTHORITY",
+            "NEW CANDIDATE != OLD ACTOR OBLIGATION",
+        ],
+        "requested_effect": {
+            "operation": "consider-recomposed-warm-thread",
+            "automatic_execution_requested": False,
+            "automatic_location_release_requested": False,
+            "automatic_settlement_requested": False,
+        },
+    }
+
+    if not matching:
+        base["steps"] = []
+        base["recomposition_id"] = _address("warm-thread-recomposition", base)
+        return base
+
+    replacement = matching[0]
+    receiver = _nonempty(need.get("actor"), "remainingNeed.actor")
+    steps = [
+        {
+            "step_id": "haul-load-recomposed",
+            "kind": "transport-resource",
+            "actor": replacement["actor"],
+            "subject": "cut-firewood",
+            "requested_effect": "move-one-load-within-declared-radius",
+            "authorization": "required-separately",
+            "consumes_future_authority": False,
+        },
+        {
+            "step_id": "accept-delivery-recomposed",
+            "kind": "accept-resource",
+            "actor": receiver,
+            "subject": "one-firewood-load",
+            "requested_effect": "accept-firewood-for-home-heat",
+            "authorization": "required-separately",
+            "consumes_future_authority": False,
+        },
+    ]
+    base["replacement_candidate_id"] = replacement["record_id"]
+    base["steps"] = steps
+    base["recomposition_id"] = _address("warm-thread-recomposition", base)
+    return base
+
+
 def dead_tree_specimen() -> dict[str, Any]:
     records = [
         make_record(
@@ -375,10 +483,27 @@ def dead_tree_specimen() -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=["specimen", "proposal"])
+    parser.add_argument("command", choices=["specimen", "proposal", "recompose"])
+    parser.add_argument("--replacement-actor", default="erin")
     args = parser.parse_args()
     specimen = dead_tree_specimen()
-    value = specimen if args.command == "specimen" else specimen["proposal"]
+    if args.command == "specimen":
+        value = specimen
+    elif args.command == "proposal":
+        value = specimen["proposal"]
+    else:
+        residue = json.load(sys.stdin)
+        candidate = make_record(
+            record_id="can-haul-replacement-001",
+            kind="can",
+            actor=args.replacement_actor,
+            subject="pickup-truck",
+            relation="haul-firewood",
+            window="now",
+            locality="neighborhood-a",
+            claims={"capacity": "one-load", "radius": "8-miles"},
+        )
+        value = recompose_from_residue(residue, [candidate])
     print(json.dumps(value, indent=2, sort_keys=True))
     return 0
 
