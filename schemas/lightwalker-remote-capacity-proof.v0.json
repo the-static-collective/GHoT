@@ -1,0 +1,27 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-remote-capacity-proof.v0.json",
+  "title":"GHoT Lightwalker Remote Capacity Proof V0",
+  "type":"object",
+  "required":["kind","version","authority","capacity_guild_id","snapshot_id","resource_entry_id","resource_subject_ref","capacity_steward_particular","native_measure","observed_cut","valid_through_cut","capacity_reserved","execution_authority_granted","ownership_transfer","laws","remote_proof_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.remote-capacity-proof"},
+    "version":{"const":"0"},
+    "authority":{"const":"remote-capacity-evidence-only"},
+    "capacity_guild_id":{"type":"string","minLength":1},
+    "snapshot_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "resource_entry_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "resource_subject_ref":{"type":"string","minLength":1},
+    "capacity_steward_particular":{"type":"string","minLength":1},
+    "native_measure":{"type":"object"},
+    "observed_cut":{"type":"integer","minimum":0},
+    "valid_through_cut":{"type":"integer","minimum":0},
+    "capacity_reserved":{"const":false},
+    "execution_authority_granted":{"const":false},
+    "ownership_transfer":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "remote_proof_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}
