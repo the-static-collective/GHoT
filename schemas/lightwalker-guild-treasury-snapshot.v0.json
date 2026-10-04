@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-guild-treasury-snapshot.v0.json",
+  "title": "GHoT Lightwalker Guild Treasury Snapshot V0",
+  "type": "object",
+  "required": ["kind","version","authority","guild_id","steward_particular","prior_snapshot_id","sequence","entries","laws","snapshot_id","signing"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.guild-treasury-snapshot" },
+    "version": { "const": "0" },
+    "authority": { "const": "guild-local-inventory" },
+    "guild_id": { "type": "string", "minLength": 1 },
+    "steward_particular": { "type": "string", "minLength": 1 },
+    "prior_snapshot_id": { "type": ["string","null"] },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "entries": { "type": "array", "items": { "type": "object" } },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "snapshot_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "signing": { "type": "object" }
+  },
+  "additionalProperties": false
+}
