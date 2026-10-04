@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-assay-lens.v0.json",
+  "title": "GHoT Lightwalker Assay Lens V0",
+  "type": "object",
+  "required": ["kind","version","realm_id","unit","policy","assumptions"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.assay-lens" },
+    "version": { "const": "0" },
+    "realm_id": { "type": "string", "minLength": 1 },
+    "unit": { "type": "string", "minLength": 1 },
+    "policy": {
+      "type": "object",
+      "required": ["basis","base_amount","per_descendant"],
+      "properties": {
+        "basis": { "const": "base-plus-descendants" },
+        "base_amount": { "type": "integer", "minimum": 0 },
+        "per_descendant": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "assumptions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "additionalProperties": false
+}
