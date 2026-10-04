@@ -1,0 +1,40 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-route-constraint-policy.v0.json",
+  "title":"GHoT Lightwalker Route Constraint Policy V0",
+  "type":"object",
+  "required":["kind","version","authority","promisor_particular","promise_id","route_policy_id","source_slot_id","trusted_assessor_particular","trusted_measurer_particular","constraints","max_attestation_age_cuts","created_at_cut","preference_authority","score_authority","reservation_authority","admission_authority","laws","constraint_policy_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.route-constraint-policy"},
+    "version":{"const":"0"},
+    "authority":{"const":"promisor-hard-eligibility-policy-only"},
+    "promisor_particular":{"type":"string","minLength":1},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "route_policy_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "source_slot_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "trusted_assessor_particular":{"type":"string","minLength":1},
+    "trusted_measurer_particular":{"type":"string","minLength":1},
+    "constraints":{
+      "type":"object",
+      "required":["allowed_jurisdictions","min_privacy_class","require_renewable_evidence","max_expected_completion_cuts","forbidden_sovereign_groups"],
+      "properties":{
+        "allowed_jurisdictions":{"type":"array","minItems":1,"items":{"type":"string"}},
+        "min_privacy_class":{"type":"integer","minimum":0},
+        "require_renewable_evidence":{"type":"boolean"},
+        "max_expected_completion_cuts":{"type":"integer","minimum":0},
+        "forbidden_sovereign_groups":{"type":"array","items":{"type":"string"}}
+      },
+      "additionalProperties":false
+    },
+    "max_attestation_age_cuts":{"type":"integer","minimum":0},
+    "created_at_cut":{"type":"integer","minimum":0},
+    "preference_authority":{"const":"none"},
+    "score_authority":{"const":"none"},
+    "reservation_authority":{"const":"none"},
+    "admission_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "constraint_policy_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}
