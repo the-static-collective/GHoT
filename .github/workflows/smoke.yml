@@ -110,3 +110,6 @@ jobs:
 
       - name: Static-OS activation broker ceremony simulation
         run: python3 ghot/activation_broker_sim.py
+
+      - name: Ice Cube pantry grammar conformance
+        run: python3 ghot/merge_plugin.py validate examples/merge-plugins/verified-ice-cube.package.json
