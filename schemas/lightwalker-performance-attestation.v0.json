@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-performance-attestation.v0.json",
+  "title": "GHoT Lightwalker Performance Attestation V0",
+  "type": "object",
+  "required": ["kind","version","acceptance_id","offer_id","role","actor_particular","evidence_ref","status","attestation_id","signing"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.performance-attestation" },
+    "version": { "const": "0" },
+    "acceptance_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "offer_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "role": { "enum": ["DELIVERY","CONSIDERATION"] },
+    "actor_particular": { "type": "string", "minLength": 1 },
+    "evidence_ref": { "type": "string", "minLength": 1 },
+    "status": { "const": "FULFILLED" },
+    "attestation_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "signing": { "type": "object" }
+  },
+  "additionalProperties": false
+}
