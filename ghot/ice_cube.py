@@ -649,6 +649,9 @@ def execute_capability(
         "max_halley_iter",
         "tolerance",
         "fiber_count",
+        "return_url",
+        "return_particular",
+        "return_chunk_size",
     }
     unknown = sorted(set(payload) - allowed)
     if unknown:
@@ -671,6 +674,33 @@ def execute_capability(
         dogram_repo=dogram_repo,
         work=work,
     )
+    return_url = payload.get("return_url")
+    return_particular = payload.get("return_particular")
+    return_record = None
+    if return_url is not None or return_particular is not None:
+        if not isinstance(return_url, str) or not return_url:
+            raise ValueError("return_url must be a non-empty string")
+        if not isinstance(return_particular, str) or not return_particular:
+            raise ValueError("return_particular must be a non-empty string")
+        from ice_cube_return import make_return_bundle, send_return_bundle
+
+        chunk_size = int(payload.get("return_chunk_size") or (128 * 1024))
+        return_bundle = make_return_bundle(
+            worker_root,
+            mined["result_path"],
+            target_particular=return_particular,
+            chunk_size=chunk_size,
+        )
+        return_receipt = send_return_bundle(return_bundle, return_url)
+        return_record = {
+            "parcel_id": return_bundle["state_parcel_bundle"]["parcel"]["parcel_id"],
+            "crossing_id": return_bundle["state_parcel_bundle"]["crossing"]["crossing_id"],
+            "receiver_receipt_id": return_receipt.get("receipt_id"),
+            "receiver_disposition": return_receipt.get("kind"),
+            "receiver_semantic_effect": return_receipt.get("semantic_effect"),
+            "chunk_count": len(return_bundle["chunks"]),
+        }
+
     return {
         "capability": ICE_CUBE_CAPABILITY,
         "specimen_id": mined["specimen"]["specimen_id"],
@@ -685,6 +715,7 @@ def execute_capability(
         "result_path": str(mined["result_path"]),
         "render_path": str(mined["render_path"]),
         "artifact_stays_on_executor": True,
+        "verified_return": return_record,
     }
 
 
