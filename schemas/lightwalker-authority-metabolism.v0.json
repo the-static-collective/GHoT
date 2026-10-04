@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-authority-metabolism.v0.json",
+  "title": "GHoT Lightwalker Authority Metabolism V0",
+  "type": "object",
+  "required": ["kind","version","authority","guild_id","snapshot_id","resource_entry_id","root_lease_id","source_dag_id","source_history_digest","source_observed_cut","observed_cut","recycled_paths","totals","history_digest","conservation_status","spending_authority","laws","metabolism_id"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.authority-metabolism" },
+    "version": { "const": "0" },
+    "authority": { "const": "derived-end-to-end-conservation-audit" },
+    "guild_id": { "type": "string", "minLength": 1 },
+    "snapshot_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "resource_entry_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "root_lease_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "source_dag_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "source_history_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "source_observed_cut": { "type": "integer", "minimum": 0 },
+    "observed_cut": { "type": "integer", "minimum": 0 },
+    "recycled_paths": { "type": "array", "items": { "type": "object" } },
+    "totals": {
+      "type": "object",
+      "required": ["root_quantity","source_consumed_quantity","source_returned_quantity","source_live_quantity","source_unreclaimed_expired_quantity","reclaimed_unissued_quantity","recycled_consumed_quantity","recycled_live_quantity","recycled_expired_quantity","accounted_quantity"],
+      "properties": {
+        "root_quantity": { "type": "integer", "minimum": 0 },
+        "source_consumed_quantity": { "type": "integer", "minimum": 0 },
+        "source_returned_quantity": { "type": "integer", "minimum": 0 },
+        "source_live_quantity": { "type": "integer", "minimum": 0 },
+        "source_unreclaimed_expired_quantity": { "type": "integer", "minimum": 0 },
+        "reclaimed_unissued_quantity": { "type": "integer", "minimum": 0 },
+        "recycled_consumed_quantity": { "type": "integer", "minimum": 0 },
+        "recycled_live_quantity": { "type": "integer", "minimum": 0 },
+        "recycled_expired_quantity": { "type": "integer", "minimum": 0 },
+        "accounted_quantity": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "history_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "conservation_status": { "const": "BALANCED" },
+    "spending_authority": { "const": "none" },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "metabolism_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false
+}
