@@ -167,6 +167,9 @@ jobs:
       - name: Warm Thread 039 simulation
         run: python3 ghot/warm_thread_sim.py
 
+      - name: TenetGram 040 simulation
+        run: python3 ghot/tenetgram_sim.py
+
       - name: Setup Node for Warm Thread world return
         uses: actions/setup-node@v4
         with:
@@ -198,4 +201,31 @@ jobs:
           assert all(step["actor"] != "cara" for step in value["steps"])
           assert value["requested_effect"]["automatic_execution_requested"] is False
           print("Warm Thread closed loop: VERIFIED")
+          PY
+
+      - name: TenetGram 040 from real Full Measure consequence
+        run: |
+          GHOT_WARM_THREAD_DIR="${{ github.workspace }}" \
+            node _full_measure_warm/experiments/warm-thread-world-001/residue-producer.mjs \
+            > /tmp/tenetgram-consequence.json
+          python3 ghot/tenetgram.py emit \
+            --issuer alice \
+            --field neighborhood-a \
+            --relation local-neighbor \
+            < /tmp/tenetgram-consequence.json \
+            > /tmp/tenetgram.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          gram = json.loads(Path("/tmp/tenetgram.json").read_text())
+          assert gram["format"] == "ghot.tenetgram"
+          assert gram["authority"] == "carriage-only"
+          assert gram["front"]["seed_count"] == 1
+          seed = gram["front"]["seeds"][0]
+          assert seed["target_field"] == "neighborhood-a"
+          assert seed["status"] == "dormant"
+          assert seed["notification_requested"] is False
+          assert seed["request_requested"] is False
+          assert seed["execution_requested"] is False
+          print("TenetGram real consequence emission: VERIFIED")
           PY
