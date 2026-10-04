@@ -126,3 +126,6 @@ jobs:
 
       - name: Ice Cube 031 background-organ simulation
         run: python3 ghot/ice_cube_daemon_sim.py --dogram-repo _dogram_ice
+
+      - name: Ice Cube 032 return-home simulation
+        run: python3 ghot/ice_cube_return_sim.py --dogram-repo _dogram_ice
