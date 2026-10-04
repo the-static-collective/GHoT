@@ -639,6 +639,12 @@ def settle_closed_leases_to_treasury(
     measure = entry["native_measure"]
     if not closes:
         raise LightwalkerEconomyError("at least one lease close is required")
+    close_ids = [x.get("close_id") for x in closes]
+    if len(close_ids) != len(set(close_ids)):
+        raise LightwalkerEconomyError("duplicate lease close")
+    lease_ids = [x.get("lease_id") for x in closes]
+    if len(lease_ids) != len(set(lease_ids)):
+        raise LightwalkerEconomyError("duplicate closed lease")
     if any(not verify_lease_close(x) for x in closes):
         raise LightwalkerEconomyError("invalid lease close")
     consumed = sum(int(x["consumed_measure"]["quantity"]) for x in closes)
