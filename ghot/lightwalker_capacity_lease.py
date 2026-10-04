@@ -458,6 +458,10 @@ class NodeLeaseBudget:
             raise LightwalkerEconomyError("use quantity must be > 0")
 
         with self._locked():
+            if self._freeze_path(lease["lease_id"]).exists():
+                raise LightwalkerEconomyError(
+                    "lease authority surrendered/frozen"
+                )
             uses = self._uses(lease["lease_id"])
             consumed = sum(
                 int(x["consumed_measure"]["quantity"])
