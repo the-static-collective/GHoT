@@ -1,0 +1,29 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-route-admission-response.v0.json",
+  "title":"GHoT Lightwalker Route Admission Response V0",
+  "type":"object",
+  "required":["kind","version","authority","selection_id","capacity_guild_id","capacity_steward_particular","snapshot_id","remote_proof_id","resource_entry_id","required_measure","owner_local_state","observed_cut","disposition","reason","reservation_created","execution_authority_granted","laws","admission_response_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.route-admission-response"},
+    "version":{"const":"0"},
+    "authority":{"const":"owner-local-admission-response-only"},
+    "selection_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "capacity_guild_id":{"type":"string","minLength":1},
+    "capacity_steward_particular":{"type":"string","minLength":1},
+    "snapshot_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "remote_proof_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "resource_entry_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "required_measure":{"type":"object"},
+    "owner_local_state":{"type":"object"},
+    "observed_cut":{"type":"integer","minimum":0},
+    "disposition":{"enum":["ADMITTABLE","REFUSED"]},
+    "reason":{"type":"string","minLength":1},
+    "reservation_created":{"const":false},
+    "execution_authority_granted":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "admission_response_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}
