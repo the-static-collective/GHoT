@@ -364,7 +364,7 @@ def main() -> int:
         except Exception:
             rejected_without_authority = True
         assert rejected_without_authority
-        assert not inbox.list()[1:]  # seed only; no child return was launched.
+        assert len(inbox.list()) == 1  # seed only; no child return was launched.
 
         original_gather = energy_scheduler.gather_candidates
         try:
