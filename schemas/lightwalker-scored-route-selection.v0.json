@@ -1,0 +1,31 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-scored-route-selection.v0.json",
+  "title":"GHoT Lightwalker Scored Route Selection V0",
+  "type":"object",
+  "required":["kind","version","authority","promise_id","route_policy_id","scoring_policy_id","source_slot_id","evaluation_cut","excluded_guild_ids","prior_selection_ids","candidate_rows","selection_status","selected_candidate","required_measure","score_semantics","value_authority","reservation_authority","execution_authority","owner_admission_required","laws","selection_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.scored-route-selection"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-local-preference-recommendation-only"},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "route_policy_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "scoring_policy_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "source_slot_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "evaluation_cut":{"type":"integer","minimum":0},
+    "excluded_guild_ids":{"type":"array","items":{"type":"string"}},
+    "prior_selection_ids":{"type":"array","items":{"type":"string"}},
+    "candidate_rows":{"type":"array","items":{"type":"object"}},
+    "selection_status":{"enum":["SELECTED","NO_ELIGIBLE_ROUTE"]},
+    "selected_candidate":{"type":["object","null"]},
+    "required_measure":{"type":"object"},
+    "score_semantics":{"const":"local-comparison-only"},
+    "value_authority":{"const":"none"},
+    "reservation_authority":{"const":"none"},
+    "execution_authority":{"const":"none"},
+    "owner_admission_required":{"const":true},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "selection_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}

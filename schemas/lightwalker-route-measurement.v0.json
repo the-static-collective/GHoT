@@ -1,0 +1,37 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-route-measurement.v0.json",
+  "title":"GHoT Lightwalker Route Measurement V0",
+  "type":"object",
+  "required":["kind","version","authority","measurer_particular","capacity_guild_id","snapshot_id","remote_proof_id","resource_entry_id","observed_cut","metrics","score","preference_authority","reservation_authority","execution_authority","laws","measurement_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.route-measurement"},
+    "version":{"const":"0"},
+    "authority":{"const":"measurement-evidence-only"},
+    "measurer_particular":{"type":"string","minLength":1},
+    "capacity_guild_id":{"type":"string","minLength":1},
+    "snapshot_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "remote_proof_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "resource_entry_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "observed_cut":{"type":"integer","minimum":0},
+    "metrics":{
+      "type":"object",
+      "required":["latency_ms","reliability_ppm","energy_mwh_per_compute_minute","expected_completion_cuts"],
+      "properties":{
+        "latency_ms":{"type":"integer","minimum":0},
+        "reliability_ppm":{"type":"integer","minimum":0,"maximum":1000000},
+        "energy_mwh_per_compute_minute":{"type":"integer","minimum":0},
+        "expected_completion_cuts":{"type":"integer","minimum":0}
+      },
+      "additionalProperties":false
+    },
+    "score":{"type":"null"},
+    "preference_authority":{"const":"none"},
+    "reservation_authority":{"const":"none"},
+    "execution_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "measurement_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}

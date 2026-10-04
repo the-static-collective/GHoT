@@ -1,0 +1,42 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-route-scoring-policy.v0.json",
+  "title":"GHoT Lightwalker Route Scoring Policy V0",
+  "type":"object",
+  "required":["kind","version","authority","promisor_particular","promise_id","route_policy_id","source_slot_id","profile_name","trusted_measurer_particular","weights","max_measurement_age_cuts","created_at_cut","score_semantics","value_authority","reservation_authority","execution_authority","admission_authority","laws","scoring_policy_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.route-scoring-policy"},
+    "version":{"const":"0"},
+    "authority":{"const":"promisor-local-preference-only"},
+    "promisor_particular":{"type":"string","minLength":1},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "route_policy_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "source_slot_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "profile_name":{"type":"string","minLength":1},
+    "trusted_measurer_particular":{"type":"string","minLength":1},
+    "weights":{
+      "type":"object",
+      "required":["freshness","quantity_headroom","reliability","latency","energy","completion_window"],
+      "properties":{
+        "freshness":{"type":"integer","minimum":0},
+        "quantity_headroom":{"type":"integer","minimum":0},
+        "reliability":{"type":"integer","minimum":0},
+        "latency":{"type":"integer","minimum":0},
+        "energy":{"type":"integer","minimum":0},
+        "completion_window":{"type":"integer","minimum":0}
+      },
+      "additionalProperties":false
+    },
+    "max_measurement_age_cuts":{"type":"integer","minimum":0},
+    "created_at_cut":{"type":"integer","minimum":0},
+    "score_semantics":{"const":"local-comparison-only"},
+    "value_authority":{"const":"none"},
+    "reservation_authority":{"const":"none"},
+    "execution_authority":{"const":"none"},
+    "admission_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "scoring_policy_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}

@@ -202,3 +202,6 @@ jobs:
 
       - name: Lightwalker Route Policy 051 simulation
         run: python3 ghot/lightwalker_route_policy_sim.py
+
+      - name: Lightwalker Route Scoring 052 simulation
+        run: python3 ghot/lightwalker_route_scoring_sim.py
