@@ -123,3 +123,6 @@ jobs:
 
       - name: Ice Cube 030 cross-repo simulation
         run: python3 ghot/ice_cube_sim.py --dogram-repo _dogram_ice
+
+      - name: Ice Cube 031 background-organ simulation
+        run: python3 ghot/ice_cube_daemon_sim.py --dogram-repo _dogram_ice

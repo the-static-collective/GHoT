@@ -12,6 +12,7 @@ The daemon composes existing GHoT subsystems rather than replacing them:
 - liveness field refresh
 - trusted authority porch discovery
 - portable lease worker
+- local HOLD wake worker for power-aware deferred work
 
 Subsystem failures are recorded and retried on later cycles. One failed loop
 does not erase body identity or the rest of the organ's state.
@@ -49,6 +50,8 @@ from state_parcel import parcel_handler
 from grammar_exchange import GrammarExchangeService
 from curious_doors import CuriousDoorsHTTPService
 from activation_broker import ActivationBrokerHTTPService
+from hold_queue import HoldQueue
+from wake_composer import wake_all
 
 
 BodyProbe = Callable[[], dict[str, Any]]
@@ -206,6 +209,31 @@ class OrganDaemon:
         )
         return result
 
+    def _wake_local_holds(self, local_id: str) -> dict[str, Any]:
+        queue = HoldQueue(self.root)
+        held = queue.list(status="held")
+        if not held:
+            return {
+                "kind": "ghot.organ.hold-wake",
+                "version": "0",
+                "status": "no-held-work",
+                "held_count": 0,
+                "results": [],
+            }
+        result = wake_all(
+            queue=queue,
+            timeout=self.discovery_timeout,
+            worker_id=f"{local_id}:organ",
+            lease_seconds=self.lease_seconds,
+        )
+        return {
+            "kind": "ghot.organ.hold-wake",
+            "version": "0",
+            "status": "evaluated",
+            "held_count": len(held),
+            **result,
+        }
+
     def cycle(self, *, at: float | None = None) -> dict[str, Any]:
         when = time.time() if at is None else float(at)
         self.cycle_count += 1
@@ -290,6 +318,21 @@ class OrganDaemon:
                 "error": work["error"],
             })
 
+        try:
+            held_work = self._wake_local_holds(local_id)
+        except Exception as exc:
+            held_work = {
+                "kind": "ghot.organ.hold-wake",
+                "version": "0",
+                "status": "wake-error",
+                "error": f"{type(exc).__name__}: {exc}",
+                "results": [],
+            }
+            errors.append({
+                "subsystem": "hold-wake",
+                "error": held_work["error"],
+            })
+
         state = {
             "kind": "ghot.organ.state",
             "version": "1",
@@ -301,6 +344,7 @@ class OrganDaemon:
             "field": field_snapshot,
             "authorities": self._authority_summary(authorities),
             "work": work,
+            "held_work": held_work,
             "services": self.service_state,
             "errors": errors,
             "presence": dict(self.presence_context),
@@ -325,6 +369,8 @@ class OrganDaemon:
                 if isinstance(work.get("authority_receipt"), dict)
                 else None
             ),
+            "held_work_status": held_work.get("status"),
+            "held_work_results": len(held_work.get("results") or []),
             "errors": errors,
         }
         event_fingerprint = _fingerprint(event_projection)

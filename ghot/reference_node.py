@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from executor_pantry import derive_offers, execute_adapter, pantry_report, probe_executors
+from ice_cube import ICE_CUBE_CAPABILITY, capability_offer, execute_capability
 from power_field import apply_power_policy, probe_power
 from relatte_identity import ALGORITHM, IdentityKey
 
@@ -77,7 +78,11 @@ def _base_offers(executors: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "system.power",
         ]
     ]
-    return builtins + derive_offers(executors)
+    offers = builtins + derive_offers(executors)
+    ice_cube = capability_offer()
+    if ice_cube is not None:
+        offers.append(ice_cube)
+    return offers
 
 
 def body_identity() -> dict[str, Any]:
@@ -210,6 +215,8 @@ def execute(
             output = pantry_report()
         elif capability == "system.power":
             output = current_body["power"]
+        elif capability == ICE_CUBE_CAPABILITY:
+            output = execute_capability(payload, worker_root=ROOT)
         else:
             output = execute_adapter(capability, payload)
     except Exception as exc:

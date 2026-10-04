@@ -20,6 +20,7 @@ import hashlib
 import importlib
 import json
 import math
+import os
 import sys
 import uuid
 from pathlib import Path
@@ -43,6 +44,7 @@ RESULT_KIND = "ghot.ice-cube-result"
 RESULT_VERSION = "0"
 CAPABILITY_REF = "ghot.ice-cube/v0"
 EXECUTION_CONTRACT = "ghot.ice-cube-worker@0"
+ICE_CUBE_CAPABILITY = "ghot.ice-cube/v0"
 
 
 def canonical_bytes(value: Any) -> bytes:
@@ -568,6 +570,103 @@ def mine_ice_cube(
         "result": result,
         "result_path": result_path,
         "result_relative_path": str(result_path.relative_to(worker_root)),
+    }
+
+
+
+def configured_dogram_repo() -> Path | None:
+    raw = os.environ.get("GHOT_DOGRAM_REPO")
+    if not raw or not raw.strip():
+        return None
+    path = Path(raw).expanduser().resolve()
+    if not (path / "dogram" / "ice_cube.py").is_file():
+        return None
+    return path
+
+
+def capability_offer() -> dict[str, Any] | None:
+    dogram_repo = configured_dogram_repo()
+    if dogram_repo is None:
+        return None
+    return {
+        "kind": "ghot.offer",
+        "version": "0",
+        "capability": ICE_CUBE_CAPABILITY,
+        "available": True,
+        "executor": "ghot.ice-cube",
+        "limits": {
+            "remote_shell": False,
+            "bounded_adapter_only": True,
+            "artifact_stays_on_executor": True,
+            "dogram_required": True,
+        },
+        "configuration": {
+            "dogram_repo_present": True,
+            "dogram_repo_path": str(dogram_repo),
+        },
+    }
+
+
+def execute_capability(
+    payload: Any,
+    *,
+    worker_root: Path,
+) -> dict[str, Any]:
+    dogram_repo = configured_dogram_repo()
+    if dogram_repo is None:
+        raise RuntimeError(
+            "GHOT_DOGRAM_REPO must point to a Dogram checkout with dogram/ice_cube.py"
+        )
+    if payload is None:
+        payload = {}
+    if not isinstance(payload, dict):
+        raise ValueError("ghot.ice-cube/v0 payload must be an object")
+
+    allowed = {
+        "lucas_index",
+        "c_re",
+        "c_im",
+        "width",
+        "height",
+        "max_halley_iter",
+        "tolerance",
+        "fiber_count",
+    }
+    unknown = sorted(set(payload) - allowed)
+    if unknown:
+        raise ValueError(
+            "unsupported Ice Cube payload fields: " + ", ".join(unknown)
+        )
+
+    work = build_work(
+        lucas_index=int(payload.get("lucas_index", 5)),
+        c_re=str(payload.get("c_re", "0")),
+        c_im=str(payload.get("c_im", "0")),
+        width=int(payload.get("width", 96)),
+        height=int(payload.get("height", 96)),
+        max_halley_iter=int(payload.get("max_halley_iter", 12)),
+        tolerance=str(payload.get("tolerance", "1e-9")),
+        fiber_count=int(payload.get("fiber_count", 72)),
+    )
+    mined = mine_ice_cube(
+        worker_root=worker_root,
+        dogram_repo=dogram_repo,
+        work=work,
+    )
+    return {
+        "capability": ICE_CUBE_CAPABILITY,
+        "specimen_id": mined["specimen"]["specimen_id"],
+        "family": mined["specimen"]["family"],
+        "work_address": work_address(work),
+        "work_crossing_id": mined["work_crossing"]["crossing_id"],
+        "execution_receipt_id": mined["execution_receipt"]["receipt_id"],
+        "dogram_status": mined["dogram_receipt"]["status"],
+        "dogram_claim_scope": mined["dogram_receipt"]["result"]["claim_scope"],
+        "specimen_address": mined["specimen_address"],
+        "render_address": mined["specimen"]["render"]["address"],
+        "result_path": str(mined["result_path"]),
+        "render_path": str(mined["render_path"]),
+        "artifact_stays_on_executor": True,
     }
 
 
