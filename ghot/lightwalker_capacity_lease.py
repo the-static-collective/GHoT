@@ -598,6 +598,36 @@ def verify_release_receipt(
 
 
 
+def verify_lease_close(close: dict[str, Any]) -> bool:
+    try:
+        if close.get("kind") != CLOSE_KIND or close.get("version") != CLOSE_VERSION:
+            return False
+        if close.get("status") != "CLOSED":
+            return False
+        leased = close.get("leased_measure")
+        consumed = close.get("consumed_measure")
+        returned = close.get("returned_measure")
+        if not all(isinstance(x, dict) for x in [leased, consumed, returned]):
+            return False
+        unit = leased.get("unit")
+        if consumed.get("unit") != unit or returned.get("unit") != unit:
+            return False
+        if int(consumed["quantity"]) + int(returned["quantity"]) != int(
+            leased["quantity"]
+        ):
+            return False
+        return _verify_signed(
+            close,
+            id_field="close_id",
+            particular_field="steward_particular",
+            domain=CLOSE_DOMAIN,
+            byte_domain=CLOSE_BYTES,
+        )
+    except Exception:
+        return False
+
+
+
 def settle_closed_leases_to_treasury(
     snapshot: dict[str, Any],
     *,
@@ -607,7 +637,13 @@ def settle_closed_leases_to_treasury(
 ) -> dict[str, Any]:
     entry = _resource(snapshot, resource_entry_id)
     measure = entry["native_measure"]
+    if not closes:
+        raise LightwalkerEconomyError("at least one lease close is required")
+    if any(not verify_lease_close(x) for x in closes):
+        raise LightwalkerEconomyError("invalid lease close")
     consumed = sum(int(x["consumed_measure"]["quantity"]) for x in closes)
+    if any(x["snapshot_id"] != snapshot["snapshot_id"] for x in closes):
+        raise LightwalkerEconomyError("close references different snapshot")
     if any(x["resource_entry_id"] != resource_entry_id for x in closes):
         raise LightwalkerEconomyError("close references different resource")
     if any(x["steward_particular"] != steward.particular() for x in closes):
@@ -643,6 +679,7 @@ __all__ = [
     "make_lease_crossing",
     "settle_closed_leases_to_treasury",
     "verify_capacity_lease",
+    "verify_lease_close",
     "verify_lease_use",
     "verify_release_receipt",
 ]
