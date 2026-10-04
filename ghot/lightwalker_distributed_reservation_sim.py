@@ -234,6 +234,7 @@ def main() -> int:
                 snapshot0,
                 reconciliation_a,
                 [claim_a, claim_b],
+                proposals,
                 steward=outsider,
             )
         )
@@ -243,12 +244,14 @@ def main() -> int:
             snapshot0,
             reconciliation_a,
             [claim_a, claim_b],
+            proposals,
             steward=guild,
         )
         assert verify_conflict_resolution(
             snapshot0,
             reconciliation_a,
             [claim_a, claim_b],
+            proposals,
             resolution,
         )
 
@@ -281,6 +284,7 @@ def main() -> int:
             snapshot0,
             reconciliation_a,
             [claim_a, claim_b],
+            proposals,
             tampered_resolution,
         )
         assert tampered_resolution_refused
