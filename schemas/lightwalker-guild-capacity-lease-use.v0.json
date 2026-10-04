@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-guild-capacity-lease-use.v0.json",
+  "title": "GHoT Lightwalker Guild Capacity Lease Use V0",
+  "type": "object",
+  "required": ["kind","version","lease_id","node_particular","purpose_ref","observed_cut","status","success","consumed_measure","attempted_measure","laws","use_id","signing"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.guild-capacity-lease-use" },
+    "version": { "const": "0" },
+    "lease_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "node_particular": { "type": "string", "minLength": 1 },
+    "purpose_ref": { "type": "string", "minLength": 1 },
+    "observed_cut": { "type": "integer", "minimum": 0 },
+    "status": { "enum": ["EXECUTED","FAILED"] },
+    "success": { "type": "boolean" },
+    "consumed_measure": { "type": ["object","null"] },
+    "attempted_measure": { "type": "object" },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "use_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "signing": { "type": "object" }
+  },
+  "additionalProperties": false
+}

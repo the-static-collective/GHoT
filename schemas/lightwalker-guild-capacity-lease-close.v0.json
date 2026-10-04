@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-guild-capacity-lease-close.v0.json",
+  "title": "GHoT Lightwalker Guild Capacity Lease Close V0",
+  "type": "object",
+  "required": ["kind","version","lease_id","guild_id","snapshot_id","resource_entry_id","steward_particular","leased_measure","consumed_measure","returned_measure","node_release_receipt_id","observed_cut","status","laws","close_id","signing"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.guild-capacity-lease-close" },
+    "version": { "const": "0" },
+    "lease_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "guild_id": { "type": "string", "minLength": 1 },
+    "snapshot_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "resource_entry_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "steward_particular": { "type": "string", "minLength": 1 },
+    "leased_measure": { "type": "object" },
+    "consumed_measure": { "type": "object" },
+    "returned_measure": { "type": "object" },
+    "node_release_receipt_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "observed_cut": { "type": "integer", "minimum": 0 },
+    "status": { "const": "CLOSED" },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "close_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "signing": { "type": "object" }
+  },
+  "additionalProperties": false
+}
