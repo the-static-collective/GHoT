@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-distributed-reservation-reconciliation.v0.json",
+  "title": "GHoT Lightwalker Distributed Reservation Reconciliation V0",
+  "type": "object",
+  "required": ["kind","version","authority","guild_id","snapshot_id","resource_entry_id","unit","visible_quantity","claim_ids","total_claimed_quantity","status","overcommit_quantity","laws","reconciliation_id"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.distributed-reservation-reconciliation" },
+    "version": { "const": "0" },
+    "authority": { "const": "derived-conflict-observation" },
+    "guild_id": { "type": "string", "minLength": 1 },
+    "snapshot_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "resource_entry_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "unit": { "type": "string", "minLength": 1 },
+    "visible_quantity": { "type": "integer", "minimum": 0 },
+    "claim_ids": { "type": "array", "items": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" } },
+    "total_claimed_quantity": { "type": "integer", "minimum": 0 },
+    "status": { "enum": ["NO_CONFLICT","CONFLICT"] },
+    "overcommit_quantity": { "type": "integer", "minimum": 0 },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "reconciliation_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false
+}
