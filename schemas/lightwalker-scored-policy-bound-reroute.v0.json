@@ -1,0 +1,29 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-scored-policy-bound-reroute.v0.json",
+  "title":"GHoT Lightwalker Scored Policy-Bound Reroute V0",
+  "type":"object",
+  "required":["kind","version","authority","promise_id","source_slot_id","route_policy_id","scoring_policy_id","selection_id","owner_admission_response_id","reroute_id","selected_capacity_guild_id","selected_remote_proof_id","selected_local_score","score_semantics","value_authority","reservation_authority","execution_authority","laws","binding_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.scored-policy-bound-reroute"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-scored-reroute-linkage"},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "source_slot_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "route_policy_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "scoring_policy_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "selection_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "owner_admission_response_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "reroute_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "selected_capacity_guild_id":{"type":"string","minLength":1},
+    "selected_remote_proof_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "selected_local_score":{"type":"integer"},
+    "score_semantics":{"const":"local-comparison-only"},
+    "value_authority":{"const":"none"},
+    "reservation_authority":{"const":"none"},
+    "execution_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "binding_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}
