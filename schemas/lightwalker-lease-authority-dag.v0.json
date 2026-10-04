@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-lease-authority-dag.v0.json",
+  "title": "GHoT Lightwalker Lease Authority DAG V0",
+  "type": "object",
+  "required": ["kind","version","authority","guild_id","snapshot_id","resource_entry_id","root_lease_id","observed_cut","nodes","edges","ancestor_lease_ids","live_leaf_lease_ids","expired_leaf_lease_ids","totals","history_digest","conservation_status","laws","dag_id"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.lease-authority-dag" },
+    "version": { "const": "0" },
+    "authority": { "const": "derived-lineage-observation" },
+    "guild_id": { "type": "string", "minLength": 1 },
+    "snapshot_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "resource_entry_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "root_lease_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "observed_cut": { "type": "integer", "minimum": 0 },
+    "nodes": { "type": "array", "items": { "type": "object" } },
+    "edges": { "type": "array", "items": { "type": "object" } },
+    "ancestor_lease_ids": { "type": "array", "items": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" } },
+    "live_leaf_lease_ids": { "type": "array", "items": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" } },
+    "expired_leaf_lease_ids": { "type": "array", "items": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" } },
+    "totals": {
+      "type": "object",
+      "required": ["root_quantity","consumed_quantity","returned_to_guild_quantity","live_leaf_remaining_quantity","expired_leaf_remaining_quantity","accounted_quantity"],
+      "properties": {
+        "root_quantity": { "type": "integer", "minimum": 0 },
+        "consumed_quantity": { "type": "integer", "minimum": 0 },
+        "returned_to_guild_quantity": { "type": "integer", "minimum": 0 },
+        "live_leaf_remaining_quantity": { "type": "integer", "minimum": 0 },
+        "expired_leaf_remaining_quantity": { "type": "integer", "minimum": 0 },
+        "accounted_quantity": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "history_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "conservation_status": { "const": "BALANCED" },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "dag_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false
+}
