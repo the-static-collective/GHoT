@@ -360,16 +360,33 @@ def reconcile_claims(
     return {**body, "reconciliation_id": content_address(body)}
 
 
+def verify_reconciliation(
+    snapshot: dict[str, Any],
+    claims: list[dict[str, Any]],
+    proposals_by_id: dict[str, dict[str, Any]],
+    reconciliation: dict[str, Any],
+) -> bool:
+    try:
+        return reconcile_claims(snapshot, claims, proposals_by_id) == reconciliation
+    except LightwalkerEconomyError:
+        return False
+
+
 def make_conflict_resolution(
     snapshot: dict[str, Any],
     reconciliation: dict[str, Any],
     claims: list[dict[str, Any]],
+    proposals_by_id: dict[str, dict[str, Any]],
     *,
     steward: IdentityKey,
     rule: str = "lowest-claim-id",
 ) -> dict[str, Any]:
     if steward.particular() != snapshot["steward_particular"]:
         raise LightwalkerEconomyError("only Guild steward may resolve conflict")
+    if not verify_reconciliation(
+        snapshot, claims, proposals_by_id, reconciliation
+    ):
+        raise LightwalkerEconomyError("resolution requires verified reconciliation")
     if reconciliation.get("status") != "CONFLICT":
         raise LightwalkerEconomyError("resolution requires a conflict")
     claim_ids = sorted(item["claim_id"] for item in claims)
@@ -413,10 +430,13 @@ def verify_conflict_resolution(
     snapshot: dict[str, Any],
     reconciliation: dict[str, Any],
     claims: list[dict[str, Any]],
+    proposals_by_id: dict[str, dict[str, Any]],
     resolution: dict[str, Any],
 ) -> bool:
     try:
-        if not verify_treasury_snapshot(snapshot):
+        if not verify_reconciliation(
+            snapshot, claims, proposals_by_id, reconciliation
+        ):
             return False
         if reconciliation.get("status") != "CONFLICT":
             return False
@@ -477,7 +497,7 @@ def execution_gate(
     if resolution is None:
         return "BLOCKED_CONFLICT"
     if not verify_conflict_resolution(
-        snapshot, reconciliation, claims, resolution
+        snapshot, reconciliation, claims, proposals_by_id, resolution
     ):
         raise LightwalkerEconomyError("invalid conflict resolution")
     if claim["claim_id"] in resolution["selected_claim_ids"]:
@@ -524,4 +544,5 @@ __all__ = [
     "reconcile_claims",
     "verify_conflict_resolution",
     "verify_local_reservation_claim",
+    "verify_reconciliation",
 ]
