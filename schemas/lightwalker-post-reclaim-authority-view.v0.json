@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-post-reclaim-authority-view.v0.json",
+  "title": "GHoT Lightwalker Post-Reclaim Authority View V0",
+  "type": "object",
+  "required": ["kind","version","authority","dag_id","history_digest","root_lease_id","observed_cut","consumed_quantity","returned_to_guild_quantity","live_leaf_remaining_quantity","expired_leaf_remaining_quantity","reclaimed_expired_quantity","unreclaimed_expired_quantity","reclaimed_lease_ids","accounted_quantity","laws","view_id"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.post-reclaim-authority-view" },
+    "version": { "const": "0" },
+    "authority": { "const": "derived-post-reclaim-view" },
+    "dag_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "history_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "root_lease_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "observed_cut": { "type": "integer", "minimum": 0 },
+    "consumed_quantity": { "type": "integer", "minimum": 0 },
+    "returned_to_guild_quantity": { "type": "integer", "minimum": 0 },
+    "live_leaf_remaining_quantity": { "type": "integer", "minimum": 0 },
+    "expired_leaf_remaining_quantity": { "type": "integer", "minimum": 0 },
+    "reclaimed_expired_quantity": { "type": "integer", "minimum": 0 },
+    "unreclaimed_expired_quantity": { "type": "integer", "minimum": 0 },
+    "reclaimed_lease_ids": { "type": "array", "items": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" } },
+    "accounted_quantity": { "type": "integer", "minimum": 0 },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "view_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false
+}
