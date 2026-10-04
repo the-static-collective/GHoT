@@ -163,3 +163,39 @@ jobs:
 
       - name: Lightwalker Guild Authorization 038 simulation
         run: python3 ghot/lightwalker_guild_authorization_sim.py
+
+      - name: Warm Thread 039 simulation
+        run: python3 ghot/warm_thread_sim.py
+
+      - name: Setup Node for Warm Thread world return
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Checkout Full Measure Warm Thread world
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/full-measure-world-layer
+          ref: experiment/warm-thread-world-001
+          path: _full_measure_warm
+          persist-credentials: false
+
+      - name: Warm Thread 039 closed-loop residue recomposition
+        run: |
+          GHOT_WARM_THREAD_DIR="${{ github.workspace }}" \
+            node _full_measure_warm/experiments/warm-thread-world-001/residue-producer.mjs \
+            > /tmp/warm-thread-residue.json
+          python3 ghot/warm_thread.py recompose --replacement-actor erin \
+            < /tmp/warm-thread-residue.json \
+            > /tmp/warm-thread-recomposed.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          value = json.loads(Path("/tmp/warm-thread-recomposed.json").read_text())
+          assert value["status"] == "composable"
+          assert value["preserved_completed_steps"] == ["release-tree", "cut-tree"]
+          assert [step["actor"] for step in value["steps"]] == ["erin", "david"]
+          assert all(step["actor"] != "cara" for step in value["steps"])
+          assert value["requested_effect"]["automatic_execution_requested"] is False
+          print("Warm Thread closed loop: VERIFIED")
+          PY
