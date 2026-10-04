@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-guild-resource-authorization.v0.json",
+  "title": "GHoT Lightwalker Guild Resource Authorization V0",
+  "type": "object",
+  "required": ["kind","version","authority","guild_id","snapshot_id","proposal_id","resource_entry_id","steward_particular","executor_particular","authorized_measure","purpose_ref","authorized_at_cut","expires_after_cut","one_execution_attempt","laws","authorization_id","signing"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.guild-resource-authorization" },
+    "version": { "const": "0" },
+    "authority": { "const": "guild-local-bounded-authorization" },
+    "guild_id": { "type": "string", "minLength": 1 },
+    "snapshot_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "proposal_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "resource_entry_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "steward_particular": { "type": "string", "minLength": 1 },
+    "executor_particular": { "type": "string", "minLength": 1 },
+    "authorized_measure": {
+      "type": "object",
+      "required": ["unit","quantity"],
+      "properties": {
+        "unit": { "type": "string", "minLength": 1 },
+        "quantity": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "purpose_ref": { "type": "string", "minLength": 1 },
+    "authorized_at_cut": { "type": "integer", "minimum": 0 },
+    "expires_after_cut": { "type": "integer", "minimum": 0 },
+    "one_execution_attempt": { "const": true },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "authorization_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "signing": { "type": "object" }
+  },
+  "additionalProperties": false
+}
