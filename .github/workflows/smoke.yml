@@ -196,3 +196,6 @@ jobs:
 
       - name: Lightwalker Multi-Source Service 049 simulation
         run: python3 ghot/lightwalker_multi_source_service_sim.py
+
+      - name: Lightwalker Federated Reroute 050 simulation
+        run: python3 ghot/lightwalker_federated_reroute_sim.py
