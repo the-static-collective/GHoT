@@ -1,0 +1,28 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-federated-substitute-completion.v0.json",
+  "title":"GHoT Lightwalker Federated Substitute Completion V0",
+  "type":"object",
+  "required":["kind","version","authority","capacity_guild_id","capacity_steward_particular","reroute_id","original_source_id","grant_id","reservation_id","execution_receipt_id","finalization_id","performed_measure","status","promise_rewritten","ownership_transfer","laws","completion_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.federated-substitute-completion"},
+    "version":{"const":"0"},
+    "authority":{"const":"substitute-guild-performance"},
+    "capacity_guild_id":{"type":"string","minLength":1},
+    "capacity_steward_particular":{"type":"string","minLength":1},
+    "reroute_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "original_source_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "grant_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "reservation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "execution_receipt_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "finalization_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "performed_measure":{"type":"object"},
+    "status":{"const":"FULFILLED"},
+    "promise_rewritten":{"const":false},
+    "ownership_transfer":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "completion_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}
