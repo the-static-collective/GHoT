@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-exchange-obligation.v0.json",
+  "title": "GHoT Lightwalker Exchange Obligation V0",
+  "type": "object",
+  "required": ["kind","version","obligation_type","resource_ref","terms","evidence_policy","laws","obligation_id"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.exchange-obligation" },
+    "version": { "const": "0" },
+    "obligation_type": { "type": "string", "minLength": 1 },
+    "resource_ref": { "type": "string", "minLength": 1 },
+    "terms": { "type": "object" },
+    "evidence_policy": { "type": "string", "minLength": 1 },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "obligation_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false
+}

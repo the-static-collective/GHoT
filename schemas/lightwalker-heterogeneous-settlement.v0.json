@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-heterogeneous-settlement.v0.json",
+  "title": "GHoT Lightwalker Heterogeneous Settlement V0",
+  "type": "object",
+  "required": ["kind","version","authority","offer_id","acceptance_id","offeror_obligation","acceptor_obligation","orientation_refs","offeror_attestation_id","acceptor_attestation_id","status","laws","settlement_id"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.heterogeneous-settlement" },
+    "version": { "const": "0" },
+    "authority": { "const": "bilateral-evidence-only" },
+    "offer_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "acceptance_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "offeror_obligation": { "type": "object" },
+    "acceptor_obligation": { "type": "object" },
+    "orientation_refs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "offeror_attestation_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "acceptor_attestation_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "status": { "const": "SETTLED" },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "settlement_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false
+}

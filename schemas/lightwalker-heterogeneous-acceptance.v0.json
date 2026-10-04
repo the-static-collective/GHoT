@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-heterogeneous-acceptance.v0.json",
+  "title": "GHoT Lightwalker Heterogeneous Acceptance V0",
+  "type": "object",
+  "required": ["kind","version","authority","offer_id","offeror_particular","acceptor_particular","accepted_at_cut","terms_digest","status","laws","acceptance_id"],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.heterogeneous-acceptance" },
+    "version": { "const": "0" },
+    "authority": { "const": "acceptor-local" },
+    "offer_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "offeror_particular": { "type": "string", "minLength": 1 },
+    "acceptor_particular": { "type": "string", "minLength": 1 },
+    "accepted_at_cut": { "type": "integer", "minimum": 0 },
+    "terms_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "status": { "const": "ACCEPTED" },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "acceptance_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false
+}
