@@ -169,3 +169,6 @@ jobs:
 
       - name: Lightwalker Distributed Reservation 040 simulation
         run: python3 ghot/lightwalker_distributed_reservation_sim.py
+
+      - name: Lightwalker Capacity Lease 041 simulation
+        run: python3 ghot/lightwalker_capacity_lease_sim.py
