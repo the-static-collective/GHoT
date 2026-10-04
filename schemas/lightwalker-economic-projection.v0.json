@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://the-static-collective.github.io/GHoT/schemas/lightwalker-economic-projection.v0.json",
+  "title": "GHoT Lightwalker Economic Projection V0",
+  "type": "object",
+  "required": [
+    "kind","version","authority","realm_id","workmark_id","lens_id","status",
+    "unit","quantity","source_facts","laws","projection_id"
+  ],
+  "properties": {
+    "kind": { "const": "ghot.lightwalker.economic-projection" },
+    "version": { "const": "0" },
+    "authority": { "const": "realm-local" },
+    "realm_id": { "type": "string", "minLength": 1 },
+    "workmark_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "lens_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "status": { "enum": ["ELIGIBLE","NO_ECONOMIC_INTERPRETATION"] },
+    "unit": { "type": ["string","null"] },
+    "quantity": { "type": ["integer","null"], "minimum": 0 },
+    "source_facts": { "type": "object" },
+    "laws": { "type": "array", "items": { "type": "string" } },
+    "projection_id": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false
+}
