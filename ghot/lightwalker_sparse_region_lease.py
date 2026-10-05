@@ -384,6 +384,12 @@ def verify_sparse_region_lease(
             "assignment_owner_particular"
         ]:
             return False
+        if not isinstance(lease.get("node_id"), str) or not lease["node_id"]:
+            return False
+        if not isinstance(
+            lease.get("node_particular"), str
+        ) or not lease["node_particular"]:
+            return False
         if lease.get("missing_region_set_digest") != missing_set[
             "missing_region_set_digest"
         ]:
@@ -532,6 +538,12 @@ class SparseRegionLeaseIssuer:
             )
         if pixel_region_plan_id != missing_set["pixel_region_plan_id"]:
             raise LightwalkerEconomyError("region plan mismatch")
+        if not isinstance(node_id, str) or not node_id:
+            raise LightwalkerEconomyError("node_id must be non-empty")
+        if not isinstance(node_particular, str) or not node_particular:
+            raise LightwalkerEconomyError(
+                "node_particular must be non-empty"
+            )
         ordered_missing = list(missing_set["missing_region_ids"])
         order = {
             region_id: index
