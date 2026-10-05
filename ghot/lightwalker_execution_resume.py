@@ -186,6 +186,69 @@ def verify_resume(
         return False
 
 
+def verify_resumed_checkpoint(
+    resume: dict[str, Any],
+    checkpoint: dict[str, Any],
+) -> bool:
+    try:
+        if not verify_resume(resume):
+            return False
+        if checkpoint.get("kind") != RESUME_CHECKPOINT_KIND:
+            return False
+        if checkpoint.get("version") != RESUME_CHECKPOINT_VERSION:
+            return False
+        if checkpoint.get("authority") != "owner-local-resumed-checkpoint":
+            return False
+        if checkpoint.get("resume_id") != resume["resume_id"]:
+            return False
+        if checkpoint.get("old_run_id") != resume["old_run_id"]:
+            return False
+        if checkpoint.get("source_checkpoint_id") != (
+            resume["source_checkpoint_id"]
+        ):
+            return False
+        if checkpoint.get("source_partial_result_ref") != (
+            resume["source_partial_result_ref"]
+        ):
+            return False
+        if checkpoint.get("new_reservation_id") != (
+            resume["new_reservation_id"]
+        ):
+            return False
+        if checkpoint.get("new_steward_particular") != (
+            resume["new_steward_particular"]
+        ):
+            return False
+        if checkpoint.get("new_executor_particular") != (
+            resume["new_executor_particular"]
+        ):
+            return False
+        prior = int(resume["prior_progress_percent"])
+        total = int(checkpoint.get("total_progress_percent", -1))
+        new_work = int(checkpoint.get("new_work_progress_percent", -1))
+        if not (prior < total < 100):
+            return False
+        if new_work != total - prior:
+            return False
+        if checkpoint.get("prior_progress_percent") != prior:
+            return False
+        if checkpoint.get("service_complete") is not False:
+            return False
+        if checkpoint.get("settlement_authority") != "none":
+            return False
+        if checkpoint.get("prior_work_reexecuted") is not False:
+            return False
+        return _verify_signed(
+            checkpoint,
+            id_field="resumed_checkpoint_id",
+            particular_field="new_steward_particular",
+            domain=RESUME_CHECKPOINT_DOMAIN,
+            byte_domain=RESUME_CHECKPOINT_BYTES,
+        )
+    except Exception:
+        return False
+
+
 class ResumedExecutionStore:
     """Owner-local durable resumed execution over a distinct reservation."""
 
@@ -810,4 +873,5 @@ class ResumedExecutionStore:
 __all__ = [
     "ResumedExecutionStore",
     "verify_resume",
+    "verify_resumed_checkpoint",
 ]
