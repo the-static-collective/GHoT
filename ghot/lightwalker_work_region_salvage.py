@@ -526,15 +526,46 @@ def verify_branch_region_work_receipt(
         return False
 
 
+def _verify_branch_bundle(
+    work: dict[str, Any],
+    plan: dict[str, Any],
+    bundle: dict[str, Any],
+) -> bool:
+    try:
+        required = {
+            "child_node",
+            "checkpoint",
+            "stop",
+            "reservation",
+            "finalization",
+            "receipt",
+        }
+        if set(bundle) != required:
+            return False
+        return verify_branch_region_work_receipt(
+            work,
+            plan,
+            bundle["child_node"],
+            bundle["checkpoint"],
+            bundle["stop"],
+            bundle["reservation"],
+            bundle["finalization"],
+            bundle["receipt"],
+        )
+    except Exception:
+        return False
+
+
 def derive_non_overlapping_region_salvage(
     work: dict[str, Any],
     plan: dict[str, Any],
+    parent_node: dict[str, Any],
     parent_checkpoint: dict[str, Any],
     parent_coverage: dict[str, Any],
     fork: dict[str, Any],
     resolution: dict[str, Any],
-    winning_receipt: dict[str, Any],
-    losing_receipt: dict[str, Any],
+    winning_bundle: dict[str, Any],
+    losing_bundle: dict[str, Any],
 ) -> dict[str, Any]:
     if not verify_region_coverage_attestation(
         work,
@@ -544,25 +575,18 @@ def derive_non_overlapping_region_salvage(
     ):
         raise LightwalkerEconomyError("invalid parent region coverage")
     if not verify_recursive_branch_resolution(
-        {
-            "recursive_node_id": fork["parent_node_id"],
-            "new_steward_particular": fork["parent_steward_particular"],
-        },
+        parent_node,
         parent_checkpoint,
         fork,
         resolution,
     ):
-        # Full parent node verification is performed by the 064 producer.
-        # Here require the already-signed resolution fields to match the fork
-        # exactly; the simulator also verifies it with the full parent node.
-        if resolution.get("recursive_branch_fork_id") != fork[
-            "recursive_branch_fork_id"
-        ]:
-            raise LightwalkerEconomyError("resolution/fork mismatch")
-        if resolution.get("parent_checkpoint_id") != fork[
-            "parent_checkpoint_id"
-        ]:
-            raise LightwalkerEconomyError("resolution checkpoint mismatch")
+        raise LightwalkerEconomyError("invalid recursive branch resolution")
+    if not _verify_branch_bundle(work, plan, winning_bundle):
+        raise LightwalkerEconomyError("invalid winning branch region bundle")
+    if not _verify_branch_bundle(work, plan, losing_bundle):
+        raise LightwalkerEconomyError("invalid losing branch region bundle")
+    winning_receipt = winning_bundle["receipt"]
+    losing_receipt = losing_bundle["receipt"]
     if winning_receipt.get("child_node_id") != resolution[
         "winning_child_node_id"
     ]:
@@ -571,16 +595,6 @@ def derive_non_overlapping_region_salvage(
         "losing_child_node_ids"
     ]:
         raise LightwalkerEconomyError("losing region receipt is not loser")
-    for receipt in (winning_receipt, losing_receipt):
-        if receipt.get("pixel_region_plan_id") != plan[
-            "pixel_region_plan_id"
-        ]:
-            raise LightwalkerEconomyError("branch receipt plan mismatch")
-        claims = receipt.get("region_claims")
-        if not isinstance(claims, list) or not _verify_claims(
-            work, plan, claims
-        ):
-            raise LightwalkerEconomyError("invalid branch region claims")
 
     parent_ids = {
         row["region_id"] for row in parent_coverage["region_claims"]
@@ -906,10 +920,13 @@ def missing_region_ids(
 def derive_region_composed_completion(
     work: dict[str, Any],
     plan: dict[str, Any],
+    parent_node: dict[str, Any],
     parent_checkpoint: dict[str, Any],
     parent_coverage: dict[str, Any],
-    winning_receipt: dict[str, Any],
-    losing_receipt: dict[str, Any],
+    fork: dict[str, Any],
+    resolution: dict[str, Any],
+    winning_bundle: dict[str, Any],
+    losing_bundle: dict[str, Any],
     nonoverlap: dict[str, Any],
     admission: dict[str, Any],
     terminal_evidence: dict[str, Any],
@@ -918,17 +935,36 @@ def derive_region_composed_completion(
         work, plan, parent_checkpoint, parent_coverage
     ):
         raise LightwalkerEconomyError("invalid parent coverage")
+    if not verify_recursive_branch_resolution(
+        parent_node,
+        parent_checkpoint,
+        fork,
+        resolution,
+    ):
+        raise LightwalkerEconomyError("invalid recursive branch resolution")
+    if not _verify_branch_bundle(work, plan, winning_bundle):
+        raise LightwalkerEconomyError("invalid winning branch region bundle")
+    if not _verify_branch_bundle(work, plan, losing_bundle):
+        raise LightwalkerEconomyError("invalid losing branch region bundle")
+    winning_receipt = winning_bundle["receipt"]
+    losing_receipt = losing_bundle["receipt"]
+    expected_nonoverlap = derive_non_overlapping_region_salvage(
+        work,
+        plan,
+        parent_node,
+        parent_checkpoint,
+        parent_coverage,
+        fork,
+        resolution,
+        winning_bundle,
+        losing_bundle,
+    )
+    if nonoverlap != expected_nonoverlap:
+        raise LightwalkerEconomyError("non-overlap evidence mismatch")
     if not verify_salvaged_region_admission(
         plan,
         nonoverlap,
-        {
-            "recursive_branch_resolution_id": admission[
-                "recursive_branch_resolution_id"
-            ],
-            "parent_steward_particular": admission[
-                "parent_steward_particular"
-            ],
-        },
+        resolution,
         admission,
     ):
         raise LightwalkerEconomyError("invalid salvage admission")
