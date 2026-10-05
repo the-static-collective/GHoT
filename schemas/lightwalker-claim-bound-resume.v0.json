@@ -1,0 +1,26 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-claim-bound-resume.v0.json",
+  "title":"GHoT Lightwalker Claim-Bound Resume V0",
+  "type":"object",
+  "required":["kind","version","authority","source_run_id","source_checkpoint_id","resume_claim_id","claim_decision_id","claim_gate_status","resume_resolution_id","resume_id","new_reservation_id","claim_is_execution","ownership_transfer","source_history_rewritten","laws","claim_bound_resume_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.claim-bound-resume"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-claim-resume-lineage-only"},
+    "source_run_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "source_checkpoint_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "resume_claim_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "claim_decision_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "claim_gate_status":{"enum":["ELIGIBLE_ACTIVE","ELIGIBLE_RESOLVED"]},
+    "resume_resolution_id":{"type":["string","null"]},
+    "resume_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "new_reservation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "claim_is_execution":{"const":false},
+    "ownership_transfer":{"const":false},
+    "source_history_rewritten":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "claim_bound_resume_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}

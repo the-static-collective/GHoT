@@ -229,3 +229,6 @@ jobs:
 
       - name: Lightwalker Execution Resume 060 simulation
         run: python3 ghot/lightwalker_execution_resume_sim.py
+
+      - name: Lightwalker Resume Claim 061 simulation
+        run: python3 ghot/lightwalker_resume_claim_sim.py
