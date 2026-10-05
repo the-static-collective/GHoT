@@ -75,7 +75,11 @@ The request asks an explicitly selected Blender instrument to grow six unborn fi
 - unresolved disposition;
 - one `haunted-blender/dream-sixup-preview/v1`;
 - exactly six proposal-preview entries covering the ecology once;
-- matching ecology identity.
+- matching ecology identity;
+- common checkpoint equal to the exact parent Toaster capsule hash;
+- relation id equal to the exact breed request relation;
+- ecology generation equal to parent history generation + 1;
+- donor packet capability equal to the expected Blender six-up capability.
 
 The resulting session state is:
 
