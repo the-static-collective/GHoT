@@ -1147,6 +1147,16 @@ def main() -> int:
         assert terminal_region_evidence["region_count"] == 15
         assert final_r["consumed_measure"]["quantity"] == 15
 
+        terminal_bundle = {
+            "claim_set": claim_set_r,
+            "snapshot": r["snapshot"],
+            "proposal": proposal_r,
+            "authorization": auth_r,
+            "reservation": reservation_r,
+            "execution": execution_r,
+            "finalization": final_r,
+            "evidence": terminal_region_evidence,
+        }
         composition = derive_region_composed_completion(
             render_work,
             region_plan,
@@ -1159,7 +1169,7 @@ def main() -> int:
             losing_bundle,
             nonoverlap,
             admission,
-            terminal_region_evidence,
+            terminal_bundle,
         )
         canonical_render, _ = render_pgm(render_work)
         assert composition["canonical_render_address"] == content_address(
