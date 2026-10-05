@@ -503,11 +503,20 @@ class ResumedExecutionStore:
     def checkpoint(
         self,
         resume: dict[str, Any],
+        snapshot: dict[str, Any],
+        proposal: dict[str, Any],
+        authorization: dict[str, Any],
+        reservation: dict[str, Any],
         *,
+        promise: dict[str, Any],
+        route_policy: dict[str, Any],
+        bundles: list[dict[str, Any]],
+        supplied_temporal_intersection: dict[str, Any],
         executor: IdentityKey,
         observed_cut: int,
         total_progress_percent: int,
         partial_result_ref: str,
+        revalidation_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         if not verify_resume(resume):
             raise LightwalkerEconomyError(
@@ -524,6 +533,34 @@ class ResumedExecutionStore:
             raise LightwalkerEconomyError(
                 "resumed checkpoint executor mismatch"
             )
+        if reservation["reservation_id"] != resume[
+            "new_reservation_id"
+        ]:
+            raise LightwalkerEconomyError(
+                "resumed checkpoint reservation mismatch"
+            )
+        if not verify_reservation(
+            snapshot,
+            proposal,
+            authorization,
+            reservation,
+        ):
+            raise LightwalkerEconomyError(
+                "invalid resumed checkpoint reservation"
+            )
+        cut = _nni(observed_cut, "observed_cut")
+        gate = derive_execution_gate(
+            promise,
+            route_policy,
+            bundles,
+            reservation,
+            reservation,
+            supplied_temporal_intersection,
+            observed_cut=cut,
+            execution_started_at_cut=int(resume["resumed_at_cut"]),
+            revalidation_context=revalidation_context,
+            migration_context=None,
+        )
         total = _progress(
             total_progress_percent,
             "total_progress_percent",
@@ -566,9 +603,9 @@ class ResumedExecutionStore:
             "previous_resumed_checkpoint_id": state[
                 "last_resumed_checkpoint_id"
             ],
-            "checkpoint_at_cut": _nni(
-                observed_cut, "observed_cut"
-            ),
+            "checkpoint_at_cut": cut,
+            "continuation_gate_id": gate["execution_gate_id"],
+            "continuation_evidence_path": gate["evidence_path"],
             "prior_progress_percent": prior,
             "new_work_progress_percent": new_work,
             "total_progress_percent": total,
@@ -624,9 +661,14 @@ class ResumedExecutionStore:
         authorization: dict[str, Any],
         reservation: dict[str, Any],
         *,
+        promise: dict[str, Any],
+        route_policy: dict[str, Any],
+        bundles: list[dict[str, Any]],
+        supplied_temporal_intersection: dict[str, Any],
         executor: IdentityKey,
         observed_cut: int,
         result_ref: str,
+        revalidation_context: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
         if not verify_resume(resume):
             raise LightwalkerEconomyError(
@@ -649,6 +691,19 @@ class ResumedExecutionStore:
             raise LightwalkerEconomyError(
                 "completion executor mismatch"
             )
+        cut = _nni(observed_cut, "observed_cut")
+        gate = derive_execution_gate(
+            promise,
+            route_policy,
+            bundles,
+            reservation,
+            reservation,
+            supplied_temporal_intersection,
+            observed_cut=cut,
+            execution_started_at_cut=int(resume["resumed_at_cut"]),
+            revalidation_context=revalidation_context,
+            migration_context=None,
+        )
         prior = int(state["prior_progress_percent"])
         remaining = int(state["remaining_work_percent"])
         if prior + remaining != 100:
@@ -667,9 +722,7 @@ class ResumedExecutionStore:
                 authorization,
                 reservation,
                 executor=executor,
-                observed_cut=_nni(
-                    observed_cut, "observed_cut"
-                ),
+                observed_cut=cut,
                 simulate_success=True,
                 result_ref=_nonempty(
                     result_ref, "result_ref"
@@ -691,9 +744,9 @@ class ResumedExecutionStore:
             ],
             "new_steward_particular": self.steward.particular(),
             "new_executor_particular": executor.particular(),
-            "completed_at_cut": _nni(
-                observed_cut, "observed_cut"
-            ),
+            "completed_at_cut": cut,
+            "completion_gate_id": gate["execution_gate_id"],
+            "completion_evidence_path": gate["evidence_path"],
             "prior_progress_percent": prior,
             "remaining_work_percent": remaining,
             "new_work_counted_percent": remaining,
