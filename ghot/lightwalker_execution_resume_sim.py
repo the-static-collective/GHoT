@@ -570,7 +570,7 @@ def main() -> int:
             observed_cut=8,
             reason="RELEASE_FOR_RESUME_MIGRATION",
         )
-        assert stop_f["reservation_status"] == "RELEASED"
+        assert stop_f["reservation_status"] == "PARTIALLY_CONSUMED"
         assert stop_f["progress_percent"] == 40
 
         # 40% of 30 = 12 completed lineage units. E may reserve exactly 18.
