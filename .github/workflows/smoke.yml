@@ -247,3 +247,6 @@ jobs:
 
       - name: Lightwalker Work Region Salvage 066 simulation
         run: python3 ghot/lightwalker_work_region_salvage_sim.py
+
+      - name: Lightwalker Sparse Region Lease 067 simulation
+        run: python3 ghot/lightwalker_sparse_region_lease_sim.py
