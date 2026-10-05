@@ -308,6 +308,10 @@ def probe_power() -> dict[str, Any]:
 
 
 def capability_power_class(capability: str) -> str:
+    if capability == "mineral.registry/v0":
+        return "light"
+    if capability.startswith("mineral."):
+        return "heavy"
     if capability == "ghot.ice-cube/v0":
         return "heavy"
     if capability.startswith(ESSENTIAL_PREFIXES):
