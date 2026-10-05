@@ -211,7 +211,7 @@ def main() -> int:
             policy_name="customer-long-run-boundary",
             assessor=customer_assessor,
             measurer=measurer,
-            created_at_cut=7,
+            created_at_cut=6,
             forbidden_groups=[],
         )
         customer_v3 = policy_fragment(
@@ -222,7 +222,7 @@ def main() -> int:
             policy_name="customer-long-run-boundary",
             assessor=customer_assessor,
             measurer=measurer,
-            created_at_cut=8,
+            created_at_cut=7,
             forbidden_groups=["group:f"],
         )
 
@@ -245,7 +245,7 @@ def main() -> int:
             policy_name="promisor-long-run-boundary",
             assessor=promisor_assessor,
             measurer=measurer,
-            created_at_cut=7,
+            created_at_cut=6,
             forbidden_groups=[],
         )
         promisor_v3 = policy_fragment(
@@ -256,7 +256,7 @@ def main() -> int:
             policy_name="promisor-long-run-boundary",
             assessor=promisor_assessor,
             measurer=measurer,
-            created_at_cut=8,
+            created_at_cut=7,
             forbidden_groups=[],
         )
 
@@ -276,7 +276,7 @@ def main() -> int:
             issuer=customer,
             version_number=2,
             effective_from_cut=7,
-            declared_at_cut=7,
+            declared_at_cut=6,
             previous_version=cv1,
         )
         cv3 = make_policy_version(
@@ -286,7 +286,7 @@ def main() -> int:
             issuer=customer,
             version_number=3,
             effective_from_cut=8,
-            declared_at_cut=8,
+            declared_at_cut=7,
             previous_version=cv2,
         )
 
@@ -306,7 +306,7 @@ def main() -> int:
             issuer=guild_a,
             version_number=2,
             effective_from_cut=7,
-            declared_at_cut=7,
+            declared_at_cut=6,
             previous_version=pv1,
         )
         pv3 = make_policy_version(
@@ -316,7 +316,7 @@ def main() -> int:
             issuer=guild_a,
             version_number=3,
             effective_from_cut=8,
-            declared_at_cut=8,
+            declared_at_cut=7,
             previous_version=pv2,
         )
 
@@ -327,7 +327,7 @@ def main() -> int:
             current_version=cv2,
             issuer=customer,
             mode="IMMEDIATE_REVALIDATION",
-            declared_at_cut=7,
+            declared_at_cut=6,
         )
         promisor_t12 = make_policy_transition(
             promise,
@@ -336,7 +336,7 @@ def main() -> int:
             current_version=pv2,
             issuer=guild_a,
             mode="IMMEDIATE_REVALIDATION",
-            declared_at_cut=7,
+            declared_at_cut=6,
         )
         customer_t23 = make_policy_transition(
             promise,
@@ -345,7 +345,7 @@ def main() -> int:
             current_version=cv3,
             issuer=customer,
             mode="IMMEDIATE_REVALIDATION",
-            declared_at_cut=8,
+            declared_at_cut=7,
         )
         promisor_t23 = make_policy_transition(
             promise,
@@ -354,7 +354,7 @@ def main() -> int:
             current_version=pv3,
             issuer=guild_a,
             mode="IMMEDIATE_REVALIDATION",
-            declared_at_cut=8,
+            declared_at_cut=7,
         )
 
         bundles_12 = [
