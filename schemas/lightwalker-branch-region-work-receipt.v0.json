@@ -1,0 +1,31 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-branch-region-work-receipt.v0.json",
+  "title":"GHoT Lightwalker Branch Region Work Receipt V0",
+  "type":"object",
+  "required":["kind","version","authority","pixel_region_plan_id","continuation_lineage_id","work_address","child_node_id","checkpoint_id","stop_id","reservation_id","finalization_id","worker_particular","work_measure","artifact_ref","region_count","region_claims","continuation_authority","settlement_authority","laws","branch_region_work_receipt_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.branch-region-work-receipt"},
+    "version":{"const":"0"},
+    "authority":{"const":"owner-local-exact-region-work-receipt"},
+    "pixel_region_plan_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "continuation_lineage_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "work_address":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "child_node_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "checkpoint_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "stop_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "reservation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "finalization_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "worker_particular":{"type":"string","minLength":1},
+    "work_measure":{"type":"object"},
+    "artifact_ref":{"type":"string","minLength":1},
+    "region_count":{"type":"integer","minimum":1},
+    "region_claims":{"type":"array","minItems":1,"items":{"type":"object"}},
+    "continuation_authority":{"const":"none"},
+    "settlement_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "branch_region_work_receipt_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}

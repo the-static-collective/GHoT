@@ -244,3 +244,6 @@ jobs:
 
       - name: Lightwalker Recursive Branch Salvage 065 simulation
         run: python3 ghot/lightwalker_recursive_branch_salvage_sim.py
+
+      - name: Lightwalker Work Region Salvage 066 simulation
+        run: python3 ghot/lightwalker_work_region_salvage_sim.py

@@ -1,0 +1,32 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-non-overlapping-region-salvage.v0.json",
+  "title":"GHoT Lightwalker Non-Overlapping Region Salvage V0",
+  "type":"object",
+  "required":["kind","version","authority","pixel_region_plan_id","recursive_branch_fork_id","recursive_branch_resolution_id","parent_region_coverage_id","winning_region_receipt_id","losing_region_receipt_id","losing_region_count","overlap_region_ids","overlap_region_count","reusable_region_ids","reusable_region_claims","reusable_region_count","root_region_coverage_credit_count","continuation_progress_credit_measure","continuation_authority","execution_authority","settlement_authority","laws","non_overlapping_region_salvage_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.non-overlapping-region-salvage"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-region-non-overlap-evidence-only"},
+    "pixel_region_plan_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "recursive_branch_fork_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "recursive_branch_resolution_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "parent_region_coverage_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "winning_region_receipt_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "losing_region_receipt_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "losing_region_count":{"type":"integer","minimum":1},
+    "overlap_region_ids":{"type":"array","uniqueItems":true,"items":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}},
+    "overlap_region_count":{"type":"integer","minimum":0},
+    "reusable_region_ids":{"type":"array","uniqueItems":true,"items":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}},
+    "reusable_region_claims":{"type":"array","items":{"type":"object"}},
+    "reusable_region_count":{"type":"integer","minimum":0},
+    "root_region_coverage_credit_count":{"const":0},
+    "continuation_progress_credit_measure":{"type":"object"},
+    "continuation_authority":{"const":"none"},
+    "execution_authority":{"const":"none"},
+    "settlement_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "non_overlapping_region_salvage_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}
