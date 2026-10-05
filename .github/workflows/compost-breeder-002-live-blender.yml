@@ -1,0 +1,68 @@
+name: Compost Breeder 002 live Blender
+
+on:
+  push:
+    branches:
+      - feat/compost-breeder-002-live-blender
+  pull_request:
+    branches:
+      - feat/compost-breeder-001
+
+jobs:
+  live-blender-crossing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout GHoT
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Blender donor runtime dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          python -m pip install --upgrade pip "Pillow>=9"
+
+      - name: Checkout exact Haunted Blender donor
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/the-haunted-blender
+          ref: b7af4553172a786edebf63c43468e176c2ffa184
+          path: _donors/haunted-blender
+
+      - name: Compile GHoT
+        run: python3 -m py_compile ghot/*.py
+
+      - name: Run live Blender Compost Breeder specimen
+        env:
+          BLENDER_GHOT_ADAPTER_MANIFEST: ${{ github.workspace }}/_donors/haunted-blender/integrations/ghot/adapter-manifest.json
+          HAUNTED_BLENDER_GHOT_OUTPUT_DIR: ${{ github.workspace }}/output/live-blender
+        run: |
+          mkdir -p output
+          python3 ghot/compost_breeder_live_blender_sim.py | tee output/compost-breeder-002-proof.json
+
+      - name: Verify physical preview witness
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          proof=json.loads(Path('output/compost-breeder-002-proof.json').read_text())
+          assert proof['status']=='ok'
+          roots=[p for p in Path('output/live-blender').iterdir() if p.is_dir()]
+          assert len(roots)==1
+          previews=roots[0]/'previews'
+          assert (previews/'six-up.mp4').is_file()
+          assert len(list(previews.glob('proposal-*.mp4')))==6
+          print(previews/'six-up.mp4')
+          PY
+
+      - name: Upload live cross-repo witness
+        uses: actions/upload-artifact@v4
+        with:
+          name: compost-breeder-002-live-blender
+          path: output
+          if-no-files-found: error
