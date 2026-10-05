@@ -1,0 +1,30 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-recursive-continuation-compact-proof.v0.json",
+  "title":"GHoT Lightwalker Recursive Continuation Compact Proof V0",
+  "type":"object",
+  "required":["kind","version","authority","recursive_view_id","continuation_lineage_id","root_run_id","root_checkpoint_id","root_source_work_measure","recursive_depth","tip_node_id","status","ancestry_count","ancestry_digest","resource_reservation_count","history_erased","execution_authority","settlement_authority","sufficient_for_new_resume","laws","compact_lineage_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.recursive-continuation-compact-proof"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-compact-lineage-proof-only"},
+    "recursive_view_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "continuation_lineage_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "root_run_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "root_checkpoint_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "root_source_work_measure":{"type":"object"},
+    "recursive_depth":{"type":"integer","minimum":2},
+    "tip_node_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "status":{"enum":["ACTIVE","COMPLETED"]},
+    "ancestry_count":{"type":"integer","minimum":2},
+    "ancestry_digest":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "resource_reservation_count":{"type":"integer","minimum":1},
+    "history_erased":{"const":false},
+    "execution_authority":{"const":"none"},
+    "settlement_authority":{"const":"none"},
+    "sufficient_for_new_resume":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "compact_lineage_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}

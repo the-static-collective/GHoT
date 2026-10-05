@@ -235,3 +235,6 @@ jobs:
 
       - name: Lightwalker Continuation DAG 062 simulation
         run: python3 ghot/lightwalker_continuation_dag_sim.py
+
+      - name: Lightwalker Recursive Continuation 063 simulation
+        run: python3 ghot/lightwalker_recursive_continuation_sim.py
