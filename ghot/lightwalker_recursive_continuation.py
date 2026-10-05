@@ -249,6 +249,12 @@ def verify_recursive_node(node: dict[str, Any]) -> bool:
             return False
         if node.get("settlement_authority") != "none":
             return False
+        expected_digest = content_address({
+            "continuation_lineage_id": node["continuation_lineage_id"],
+            "checkpoint_ancestry": ancestry,
+        })
+        if node.get("ancestry_digest") != expected_digest:
+            return False
         return _verify_signed(
             node,
             id_field="recursive_node_id",
@@ -794,10 +800,15 @@ class RecursiveContinuationStore:
             domain=HANDOFF_DOMAIN,
             byte_domain=HANDOFF_BYTES,
         )
-        self._write_exclusive(
-            self._handoff_path(checkpoint["recursive_checkpoint_id"]),
-            handoff,
-        )
+        try:
+            self._write_exclusive(
+                self._handoff_path(checkpoint["recursive_checkpoint_id"]),
+                handoff,
+            )
+        except FileExistsError as exc:
+            raise LightwalkerEconomyError(
+                "checkpoint already has an accepted child handoff"
+            ) from exc
         self._write_exclusive(
             self._event_path(parent["node_id"], handoff["recursive_handoff_id"]),
             handoff,
