@@ -565,6 +565,20 @@ def _validate_packet(packet: Any) -> dict[str, Any]:
     requested = crossing.get("requested_effect") or {}
     audience = crossing.get("audience_policy") or {}
     extensions = receipt.get("extensions") or {}
+    payload_refs = crossing.get("payload_refs") or []
+    input_ref = next(
+        (
+            item
+            for item in payload_refs
+            if isinstance(item, dict) and item.get("role") == "instrument-input"
+        ),
+        None,
+    )
+    if (
+        not isinstance(input_ref, dict)
+        or input_ref.get("address") != "sha256:" + str(packet.get("input_sha256") or "")
+    ):
+        raise ValueError("INVALID_PORTABLE_SEED_PACKET")
     if crossing.get("capability_ref") != packet.get("capability"):
         raise ValueError("INVALID_PORTABLE_SEED_PACKET")
     if requested.get("dispatch_id") != packet.get("dispatch_id"):
