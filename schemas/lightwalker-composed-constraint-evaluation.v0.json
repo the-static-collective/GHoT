@@ -1,0 +1,30 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-composed-constraint-evaluation.v0.json",
+  "title":"GHoT Lightwalker Composed Constraint Evaluation V0",
+  "type":"object",
+  "required":["kind","version","authority","promise_id","route_policy_id","intersection_id","source_slot_id","evaluation_cut","candidate_rows","eligible_remote_proof_ids","result","winner","score_semantics","source_policies_rewritten","override_authority","relaxation_authority","reservation_authority","policy_provenance","laws","evaluation_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.composed-constraint-evaluation"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-multi-policy-eligibility-only"},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "route_policy_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "intersection_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "source_slot_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "evaluation_cut":{"type":"integer","minimum":0},
+    "candidate_rows":{"type":"array","items":{"type":"object"}},
+    "eligible_remote_proof_ids":{"type":"array","items":{"type":"string"}},
+    "result":{"enum":["SATISFYING_ROUTES","NO_SATISFYING_ROUTE"]},
+    "winner":{"type":"null"},
+    "score_semantics":{"type":"null"},
+    "source_policies_rewritten":{"const":false},
+    "override_authority":{"const":"none"},
+    "relaxation_authority":{"const":"none"},
+    "reservation_authority":{"const":"none"},
+    "policy_provenance":{"type":"array","minItems":2,"items":{"type":"object"}},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "evaluation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}
