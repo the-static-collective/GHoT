@@ -1,0 +1,30 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-resolved-branch-progress.v0.json",
+  "title":"GHoT Lightwalker Resolved Branch Progress V0",
+  "type":"object",
+  "required":["kind","version","authority","recursive_branch_fork_id","recursive_branch_resolution_id","continuation_lineage_id","parent_checkpoint_id","winning_handoff_id","winning_child_node_id","winning_checkpoint_id","winning_stop_id","winning_finalization_id","credited_work_measure","authoritative_cumulative_work_measure","authoritative_progress_percent","continuation_authority","execution_authority","settlement_authority","laws","resolved_branch_progress_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.resolved-branch-progress"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-resolved-root-progress-evidence"},
+    "recursive_branch_fork_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "recursive_branch_resolution_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "continuation_lineage_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "parent_checkpoint_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "winning_handoff_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "winning_child_node_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "winning_checkpoint_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "winning_stop_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "winning_finalization_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "credited_work_measure":{"type":"object"},
+    "authoritative_cumulative_work_measure":{"type":"object"},
+    "authoritative_progress_percent":{"type":"integer","minimum":1,"maximum":99},
+    "continuation_authority":{"const":"none"},
+    "execution_authority":{"const":"none"},
+    "settlement_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "resolved_branch_progress_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}

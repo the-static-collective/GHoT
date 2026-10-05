@@ -1,0 +1,26 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-salvaged-artifact-attachment.v0.json",
+  "title":"GHoT Lightwalker Salvaged Artifact Attachment V0",
+  "type":"object",
+  "required":["kind","version","authority","recursive_branch_salvage_id","authoritative_completion_id","authoritative_result_ref","salvaged_artifact_ref","attachment_role","artifact_retained","merged_execution","root_progress_credit_measure","continuation_authority","execution_authority","settlement_authority","laws","salvaged_artifact_attachment_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.salvaged-artifact-attachment"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-auxiliary-artifact-linkage-only"},
+    "recursive_branch_salvage_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "authoritative_completion_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "authoritative_result_ref":{"type":"string","minLength":1},
+    "salvaged_artifact_ref":{"type":"string","minLength":1},
+    "attachment_role":{"const":"auxiliary-artifact"},
+    "artifact_retained":{"const":true},
+    "merged_execution":{"const":false},
+    "root_progress_credit_measure":{"type":"object"},
+    "continuation_authority":{"const":"none"},
+    "execution_authority":{"const":"none"},
+    "settlement_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "salvaged_artifact_attachment_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}

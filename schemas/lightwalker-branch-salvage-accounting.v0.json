@@ -1,0 +1,32 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-branch-salvage-accounting.v0.json",
+  "title":"GHoT Lightwalker Branch Salvage Accounting V0",
+  "type":"object",
+  "required":["kind","version","authority","continuation_lineage_id","parent_checkpoint_id","resolved_branch_progress_id","recursive_branch_salvage_id","terminal_completion_id","root_source_work_measure","pre_fork_cumulative_work_measure","winning_branch_credited_work_measure","terminal_credited_work_measure","losing_branch_salvaged_work_measure","losing_branch_root_credit_measure","authoritative_root_total","useful_work_observed_including_salvage","root_progress_double_counted","artifact_destroyed","execution_merged","settlement_authority","laws","branch_salvage_accounting_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.branch-salvage-accounting"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-branch-salvage-accounting-only"},
+    "continuation_lineage_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "parent_checkpoint_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "resolved_branch_progress_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "recursive_branch_salvage_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "terminal_completion_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "root_source_work_measure":{"type":"object"},
+    "pre_fork_cumulative_work_measure":{"type":"object"},
+    "winning_branch_credited_work_measure":{"type":"object"},
+    "terminal_credited_work_measure":{"type":"object"},
+    "losing_branch_salvaged_work_measure":{"type":"object"},
+    "losing_branch_root_credit_measure":{"type":"object"},
+    "authoritative_root_total":{"type":"object"},
+    "useful_work_observed_including_salvage":{"type":"object"},
+    "root_progress_double_counted":{"const":false},
+    "artifact_destroyed":{"const":false},
+    "execution_merged":{"const":false},
+    "settlement_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "branch_salvage_accounting_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}

@@ -1,0 +1,33 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-recursive-branch-salvage.v0.json",
+  "title":"GHoT Lightwalker Recursive Branch Salvage V0",
+  "type":"object",
+  "required":["kind","version","authority","recursive_branch_fork_id","recursive_branch_resolution_id","continuation_lineage_id","parent_checkpoint_id","losing_handoff_id","losing_child_node_id","losing_checkpoint_id","losing_stop_id","losing_reservation_id","losing_finalization_id","artifact_ref","salvaged_work_measure","root_progress_credit_measure","artifact_survives","continuation_authority","execution_authority","settlement_authority","history_deleted","laws","recursive_branch_salvage_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.recursive-branch-salvage"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-losing-branch-artifact-evidence-only"},
+    "recursive_branch_fork_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "recursive_branch_resolution_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "continuation_lineage_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "parent_checkpoint_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "losing_handoff_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "losing_child_node_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "losing_checkpoint_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "losing_stop_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "losing_reservation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "losing_finalization_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "artifact_ref":{"type":"string","minLength":1},
+    "salvaged_work_measure":{"type":"object"},
+    "root_progress_credit_measure":{"type":"object"},
+    "artifact_survives":{"const":true},
+    "continuation_authority":{"const":"none"},
+    "execution_authority":{"const":"none"},
+    "settlement_authority":{"const":"none"},
+    "history_deleted":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "recursive_branch_salvage_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}
