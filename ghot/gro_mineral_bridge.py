@@ -17,7 +17,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from ice_cube import build_work, mine_ice_cube
+from ice_cube import build_work, content_address as ice_content_address, dogram_receipt_for, mine_ice_cube
 from mineral_registry import (
     EXECUTABLE_CAPABILITIES,
     execute_mineral_capability,
@@ -60,6 +60,11 @@ def main() -> int:
     verify = sub.add_parser("verify-native")
     verify.add_argument("--result", type=Path, required=True)
     verify.add_argument("--artifact", type=Path, required=True)
+
+    verify_ice = sub.add_parser("verify-ice")
+    verify_ice.add_argument("--result", type=Path, required=True)
+    verify_ice.add_argument("--artifact", type=Path, required=True)
+    verify_ice.add_argument("--dogram-repo", type=Path, required=True)
 
     args = parser.parse_args()
 
@@ -136,6 +141,34 @@ def main() -> int:
         )
         print(json.dumps(verification))
         return 0 if verification.get("status") == "OK" else 1
+
+    if args.command == "verify-ice":
+        result = json.loads(args.result.read_text(encoding="utf-8"))
+        artifact = args.artifact.read_bytes()
+        if result.get("kind") != "ghot.ice-cube-result":
+            raise SystemExit("not an Ice Cube result")
+        if ice_content_address(artifact) != result.get("render_address"):
+            raise SystemExit("Ice Cube artifact address mismatch")
+        receipt = dogram_receipt_for(
+            args.dogram_repo,
+            result["specimen"],
+            artifact,
+        )
+        if receipt.get("status") != "OK":
+            print(json.dumps(receipt))
+            return 1
+        output = {
+            "kind": "ghot.gro-mineral-verification",
+            "version": "0",
+            "status": "OK",
+            "claim_scope": receipt["result"]["claim_scope"],
+            "verifier": "Dogram",
+            "work_address": result["work_address"],
+            "artifact_address": result["render_address"],
+            "receipt": receipt,
+        }
+        print(json.dumps(output))
+        return 0
 
     return 2
 
