@@ -275,6 +275,7 @@ class ResumedExecutionStore:
         old_checkpoint: dict[str, Any],
         old_pause: dict[str, Any],
         old_stop: dict[str, Any],
+        old_authorization: dict[str, Any],
         new_snapshot: dict[str, Any],
         new_proposal: dict[str, Any],
         new_authorization: dict[str, Any],
@@ -320,6 +321,12 @@ class ResumedExecutionStore:
         if old_stop.get("service_complete") is not False:
             raise LightwalkerEconomyError(
                 "completed execution does not require resume"
+            )
+        if old_authorization.get("authorization_id") != (
+            old_run["authorization_id"]
+        ):
+            raise LightwalkerEconomyError(
+                "old authorization does not match source run"
             )
         if not verify_reservation(
             new_snapshot,
@@ -368,6 +375,33 @@ class ResumedExecutionStore:
             raise LightwalkerEconomyError(
                 "completed checkpoint cannot be resumed"
             )
+        source_measure = old_authorization.get("authorized_measure")
+        new_measure = new_authorization.get("authorized_measure")
+        if not isinstance(source_measure, dict) or not isinstance(
+            new_measure, dict
+        ):
+            raise LightwalkerEconomyError(
+                "resume requires native authorization measures"
+            )
+        if source_measure.get("unit") != new_measure.get("unit"):
+            raise LightwalkerEconomyError(
+                "resume authority unit mismatch"
+            )
+        source_quantity = _nni(
+            source_measure.get("quantity"),
+            "source_authorized_quantity",
+        )
+        completed_numerator = source_quantity * prior
+        if completed_numerator % 100 != 0:
+            raise LightwalkerEconomyError(
+                "source measure cannot represent checkpoint progress exactly"
+            )
+        prior_quantity = completed_numerator // 100
+        remaining_quantity = source_quantity - prior_quantity
+        if int(new_measure.get("quantity", -1)) != remaining_quantity:
+            raise LightwalkerEconomyError(
+                "new reservation must equal exact remaining work measure"
+            )
 
         body = {
             "kind": RESUME_KIND,
@@ -383,6 +417,18 @@ class ResumedExecutionStore:
             ],
             "prior_progress_percent": prior,
             "remaining_work_percent": 100 - prior,
+            "source_work_measure": {
+                "unit": source_measure["unit"],
+                "quantity": source_quantity,
+            },
+            "prior_work_measure": {
+                "unit": source_measure["unit"],
+                "quantity": prior_quantity,
+            },
+            "remaining_work_measure": {
+                "unit": source_measure["unit"],
+                "quantity": remaining_quantity,
+            },
             "new_guild_id": new_reservation["guild_id"],
             "new_reservation_id": new_reservation["reservation_id"],
             "new_authorization_id": new_reservation[
@@ -433,6 +479,9 @@ class ResumedExecutionStore:
                 "status": "RUNNING",
                 "prior_progress_percent": prior,
                 "remaining_work_percent": 100 - prior,
+                "source_work_measure": body["source_work_measure"],
+                "prior_work_measure": body["prior_work_measure"],
+                "remaining_work_measure": body["remaining_work_measure"],
                 "new_work_progress_percent": 0,
                 "total_progress_percent": prior,
                 "resumed_checkpoint_count": 0,
@@ -648,6 +697,9 @@ class ResumedExecutionStore:
             "prior_progress_percent": prior,
             "remaining_work_percent": remaining,
             "new_work_counted_percent": remaining,
+            "source_work_measure": state["source_work_measure"],
+            "prior_work_measure": state["prior_work_measure"],
+            "new_work_counted_measure": state["remaining_work_measure"],
             "total_progress_percent": 100,
             "result_ref": result_ref,
             "execution_receipt_id": execution["execution_receipt_id"],
