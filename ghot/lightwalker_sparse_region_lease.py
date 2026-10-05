@@ -714,6 +714,15 @@ def verify_sparse_region_use(
             return False
         if use.get("node_particular") != lease["node_particular"]:
             return False
+        exact_fields = {
+            "exact_missing_region_set_id": missing_set[
+                "exact_missing_region_set_id"
+            ],
+            "pixel_region_plan_id": plan["pixel_region_plan_id"],
+            "work_address": plan["work_address"],
+        }
+        if any(use.get(key) != value for key, value in exact_fields.items()):
+            return False
         region_ids = use.get("consumed_region_ids")
         if not isinstance(region_ids, list) or not region_ids:
             return False
@@ -1132,6 +1141,30 @@ def verify_sparse_region_close(
             return False
         if close.get("status") != "CLOSED":
             return False
+        total_regions = int(lease["assigned_region_count"])
+        total_quantity = int(lease["assigned_work_measure"]["quantity"])
+        if total_regions <= 0 or total_quantity % total_regions:
+            return False
+        per_region = total_quantity // total_regions
+        consumed_measure = close.get("consumed_work_measure")
+        returned_measure = close.get("returned_work_measure")
+        if not isinstance(consumed_measure, dict) or not isinstance(
+            returned_measure, dict
+        ):
+            return False
+        unit = lease["assigned_work_measure"]["unit"]
+        if consumed_measure.get("unit") != unit:
+            return False
+        if returned_measure.get("unit") != unit:
+            return False
+        if int(consumed_measure.get("quantity", -1)) != (
+            per_region * len(consumed)
+        ):
+            return False
+        if int(returned_measure.get("quantity", -1)) != (
+            per_region * len(returned)
+        ):
+            return False
         if close.get("history_deleted") is not False:
             return False
         return _verify_signed(
@@ -1187,15 +1220,29 @@ def derive_sparse_region_execution_evidence(
             raise LightwalkerEconomyError("invalid sparse release in evidence")
         if not verify_sparse_region_close(missing_set, lease, close):
             raise LightwalkerEconomyError("invalid sparse close in evidence")
-        if use["sparse_region_use_id"] not in release["use_ids"]:
+        if release["use_ids"] != [use["sparse_region_use_id"]]:
             raise LightwalkerEconomyError(
-                "release does not retain sparse use history"
+                "v0 sparse evidence requires exact one-use lease history"
             )
-        if set(use["consumed_region_ids"]) - set(
-            close["consumed_region_ids"]
-        ):
+        if close.get("node_release_id") != release[
+            "sparse_region_release_id"
+        ]:
             raise LightwalkerEconomyError(
-                "close omits consumed sparse regions"
+                "sparse close/release linkage mismatch"
+            )
+        close_fields = {
+            "consumed_region_ids": release["consumed_region_ids"],
+            "returned_region_ids": release["returned_region_ids"],
+            "consumed_work_measure": release["consumed_work_measure"],
+            "returned_work_measure": release["returned_work_measure"],
+        }
+        if any(close.get(key) != value for key, value in close_fields.items()):
+            raise LightwalkerEconomyError(
+                "sparse close does not preserve exact release partition"
+            )
+        if close["consumed_region_ids"] != use["consumed_region_ids"]:
+            raise LightwalkerEconomyError(
+                "v0 sparse close contains unrepresented consumed regions"
             )
         if not verify_execution_receipt(
             bundle["snapshot"],
