@@ -208,3 +208,6 @@ jobs:
 
       - name: Lightwalker Constraint Routing 053 simulation
         run: python3 ghot/lightwalker_constraint_routing_sim.py
+
+      - name: Lightwalker Policy Composition 054 simulation
+        run: python3 ghot/lightwalker_policy_composition_sim.py
