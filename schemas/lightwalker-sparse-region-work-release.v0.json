@@ -14,7 +14,7 @@
     "returned_region_ids":{"type":"array","uniqueItems":true,"items":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}},
     "consumed_work_measure":{"type":"object"},
     "returned_work_measure":{"type":"object"},
-    "use_ids":{"type":"array","minItems":1,"uniqueItems":true,"items":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}},
+    "use_ids":{"type":"array","uniqueItems":true,"items":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}},
     "observed_cut":{"type":"integer","minimum":0},
     "status":{"const":"RELEASED"},
     "history_deleted":{"const":false},
