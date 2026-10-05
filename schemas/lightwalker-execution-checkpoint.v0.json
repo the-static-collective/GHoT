@@ -1,0 +1,31 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-execution-checkpoint.v0.json",
+  "title":"GHoT Lightwalker Execution Checkpoint V0",
+  "type":"object",
+  "required":["kind","version","authority","run_id","guild_id","reservation_id","steward_particular","executor_particular","checkpoint_index","previous_checkpoint_id","checkpoint_at_cut","progress_percent","partial_result_ref","continuation_gate_id","continuation_evidence_path","service_complete","settlement_authority","underlying_execution_attempted","laws","checkpoint_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.execution-checkpoint"},
+    "version":{"const":"0"},
+    "authority":{"const":"owner-local-continuation-checkpoint"},
+    "run_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "guild_id":{"type":"string","minLength":1},
+    "reservation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "steward_particular":{"type":"string","minLength":1},
+    "executor_particular":{"type":"string","minLength":1},
+    "checkpoint_index":{"type":"integer","minimum":1},
+    "previous_checkpoint_id":{"type":["string","null"]},
+    "checkpoint_at_cut":{"type":"integer","minimum":0},
+    "progress_percent":{"type":"integer","minimum":1,"maximum":100},
+    "partial_result_ref":{"type":"string","minLength":1},
+    "continuation_gate_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "continuation_evidence_path":{"type":"string","minLength":1},
+    "service_complete":{"const":false},
+    "settlement_authority":{"const":"none"},
+    "underlying_execution_attempted":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "checkpoint_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}

@@ -1,0 +1,30 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-execution-stop.v0.json",
+  "title":"GHoT Lightwalker Execution Stop V0",
+  "type":"object",
+  "required":["kind","version","authority","run_id","reservation_id","steward_particular","stopped_at_cut","reason","progress_percent","last_checkpoint_id","partial_result_ref","reservation_finalization_id","reservation_status","failure","service_complete","history_rewritten","settlement_authority","laws","stop_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.execution-stop"},
+    "version":{"const":"0"},
+    "authority":{"const":"owner-local-execution-stop"},
+    "run_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "reservation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "steward_particular":{"type":"string","minLength":1},
+    "stopped_at_cut":{"type":"integer","minimum":0},
+    "reason":{"type":"string","minLength":1},
+    "progress_percent":{"type":"integer","minimum":0,"maximum":100},
+    "last_checkpoint_id":{"type":["string","null"]},
+    "partial_result_ref":{"type":["string","null"]},
+    "reservation_finalization_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "reservation_status":{"const":"RELEASED"},
+    "failure":{"const":false},
+    "service_complete":{"const":false},
+    "history_rewritten":{"const":false},
+    "settlement_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "stop_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}
