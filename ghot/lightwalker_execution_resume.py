@@ -284,7 +284,10 @@ def verify_resumed_stop(
             resume["new_steward_particular"]
         ):
             return False
-        if stop.get("reservation_status") != "RELEASED":
+        if stop.get("reservation_status") not in {
+            "RELEASED",
+            "PARTIALLY_CONSUMED",
+        }:
             return False
         if stop.get("service_complete") is not False:
             return False
@@ -431,9 +434,12 @@ class ResumedExecutionStore:
             raise LightwalkerEconomyError(
                 "stop does not preserve source checkpoint"
             )
-        if old_stop.get("reservation_status") != "RELEASED":
+        if old_stop.get("reservation_status") not in {
+            "RELEASED",
+            "PARTIALLY_CONSUMED",
+        }:
             raise LightwalkerEconomyError(
-                "old reservation must be released before resume"
+                "old reservation must be terminal before resume"
             )
         if old_stop.get("service_complete") is not False:
             raise LightwalkerEconomyError(
@@ -797,14 +803,43 @@ class ResumedExecutionStore:
                 "resumed stop reservation mismatch"
             )
         cut = _nni(observed_cut, "observed_cut")
-        finalization = self.reservation_store.release(
-            snapshot,
-            proposal,
-            authorization,
-            reservation,
-            observed_cut=cut,
-            reason=_nonempty(reason, "reason"),
-        )
+        prior_progress = int(state["prior_progress_percent"])
+        total_progress = int(state["total_progress_percent"])
+        delta_progress = total_progress - prior_progress
+        if delta_progress < 0:
+            raise LightwalkerEconomyError(
+                "resumed progress regressed"
+            )
+        if delta_progress > 0:
+            source_measure = state["source_work_measure"]
+            numerator = int(source_measure["quantity"]) * delta_progress
+            if numerator % 100 != 0:
+                raise LightwalkerEconomyError(
+                    "resumed checkpoint progress cannot be represented exactly"
+                )
+            consumed_q = numerator // 100
+            finalization = self.reservation_store.partially_consume_and_release(
+                snapshot,
+                proposal,
+                authorization,
+                reservation,
+                consumed_quantity=consumed_q,
+                partial_evidence_ref=_nonempty(
+                    state["last_resumed_checkpoint_id"],
+                    "last_resumed_checkpoint_id",
+                ),
+                observed_cut=cut,
+                reason=_nonempty(reason, "reason"),
+            )
+        else:
+            finalization = self.reservation_store.release(
+                snapshot,
+                proposal,
+                authorization,
+                reservation,
+                observed_cut=cut,
+                reason=_nonempty(reason, "reason"),
+            )
         body = {
             "kind": RESUME_STOP_KIND,
             "version": RESUME_STOP_VERSION,
