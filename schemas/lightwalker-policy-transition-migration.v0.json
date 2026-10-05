@@ -1,0 +1,26 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-policy-transition-migration.v0.json",
+  "title":"GHoT Lightwalker Policy Transition Migration V0",
+  "type":"object",
+  "required":["kind","version","authority","transition_id","decision_id","current_policy_set_id","old_reservation_id","old_finalization_id","new_reservation_id","old_history_rewritten","new_reservation_is_continuation","ownership_transfer","reservation_authority","execution_authority","laws","migration_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.policy-transition-migration"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-migration-linkage-only"},
+    "transition_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "decision_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "current_policy_set_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "old_reservation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "old_finalization_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "new_reservation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "old_history_rewritten":{"const":false},
+    "new_reservation_is_continuation":{"const":false},
+    "ownership_transfer":{"const":false},
+    "reservation_authority":{"const":"none"},
+    "execution_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "migration_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}

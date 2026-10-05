@@ -214,3 +214,6 @@ jobs:
 
       - name: Lightwalker Policy Versioning 055 simulation
         run: python3 ghot/lightwalker_policy_versioning_sim.py
+
+      - name: Lightwalker Policy Transition 056 simulation
+        run: python3 ghot/lightwalker_policy_transition_sim.py
