@@ -81,6 +81,9 @@ jobs:
       - name: Instrument Rack portable seed simulation
         run: GHOT_HOME="$(mktemp -d)" python3 ghot/instrument_rack_sim.py
 
+      - name: Compost Breeder generation loop simulation
+        run: GHOT_HOME="$(mktemp -d)" python3 ghot/compost_breeder_sim.py
+
       - name: Field reseed receiver simulation
         run: GHOT_HOME="$(mktemp -d)" python3 ghot/field_reseed_receiver_sim.py
 
