@@ -1,0 +1,31 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-sparse-region-composed-completion.v0.json",
+  "title":"GHoT Lightwalker Sparse Region Composed Completion V0",
+  "type":"object",
+  "required":["kind","version","authority","pixel_region_plan_id","continuation_lineage_id","work_address","canonical_render_address","accepted_coverage_digest","missing_region_set_digest","pre_fork_region_count","winning_region_count","salvaged_region_count","sparse_executed_region_count","authoritative_region_coverage_count","root_region_double_counted","work_complete","sparse_assignment_authority_consumed","continuation_authority","settlement_authority","laws","sparse_region_composed_completion_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.sparse-region-composed-completion"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-sparse-region-completion"},
+    "pixel_region_plan_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "continuation_lineage_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "work_address":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "canonical_render_address":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "accepted_coverage_digest":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "missing_region_set_digest":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "pre_fork_region_count":{"type":"integer","minimum":0},
+    "winning_region_count":{"type":"integer","minimum":0},
+    "salvaged_region_count":{"type":"integer","minimum":0},
+    "sparse_executed_region_count":{"type":"integer","minimum":1},
+    "authoritative_region_coverage_count":{"type":"integer","minimum":1},
+    "root_region_double_counted":{"const":false},
+    "work_complete":{"const":true},
+    "sparse_assignment_authority_consumed":{"const":true},
+    "continuation_authority":{"const":"none"},
+    "settlement_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "sparse_region_composed_completion_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}
