@@ -226,3 +226,6 @@ jobs:
 
       - name: Lightwalker Long-Running Execution 059 simulation
         run: python3 ghot/lightwalker_long_running_execution_sim.py
+
+      - name: Lightwalker Execution Resume 060 simulation
+        run: python3 ghot/lightwalker_execution_resume_sim.py
