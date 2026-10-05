@@ -1,0 +1,27 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-constraint-policy-intersection.v0.json",
+  "title":"GHoT Lightwalker Constraint Policy Intersection V0",
+  "type":"object",
+  "required":["kind","version","authority","promise_id","route_policy_id","source_slot_id","policy_ids","policy_provenance","effective_summary","static_conflicts","status","source_policies_rewritten","override_authority","relaxation_authority","reservation_authority","laws","intersection_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.constraint-policy-intersection"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-policy-intersection-only"},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "route_policy_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "source_slot_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "policy_ids":{"type":"array","minItems":2,"items":{"type":"string"}},
+    "policy_provenance":{"type":"array","minItems":2,"items":{"type":"object"}},
+    "effective_summary":{"type":"object"},
+    "static_conflicts":{"type":"array","items":{"type":"string"}},
+    "status":{"enum":["COMPOSABLE","CONFLICT"]},
+    "source_policies_rewritten":{"const":false},
+    "override_authority":{"const":"none"},
+    "relaxation_authority":{"const":"none"},
+    "reservation_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "intersection_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}
