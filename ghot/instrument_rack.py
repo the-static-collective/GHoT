@@ -562,6 +562,39 @@ def _validate_packet(packet: Any) -> dict[str, Any]:
         raise ValueError("INVALID_PORTABLE_SEED_PACKET")
     if packet.get("dispatch_crossing_id") != crossing.get("crossing_id"):
         raise ValueError("INVALID_PORTABLE_SEED_PACKET")
+    requested = crossing.get("requested_effect") or {}
+    audience = crossing.get("audience_policy") or {}
+    extensions = receipt.get("extensions") or {}
+    if crossing.get("capability_ref") != packet.get("capability"):
+        raise ValueError("INVALID_PORTABLE_SEED_PACKET")
+    if requested.get("dispatch_id") != packet.get("dispatch_id"):
+        raise ValueError("INVALID_PORTABLE_SEED_PACKET")
+    if requested.get("card_id") != packet.get("source_card_id"):
+        raise ValueError("INVALID_PORTABLE_SEED_PACKET")
+    if requested.get("adapter_id") != packet.get("adapter_id"):
+        raise ValueError("INVALID_PORTABLE_SEED_PACKET")
+    if requested.get("capability") != packet.get("capability"):
+        raise ValueError("INVALID_PORTABLE_SEED_PACKET")
+    if audience.get("adapter_id") != packet.get("adapter_id"):
+        raise ValueError("INVALID_PORTABLE_SEED_PACKET")
+    if audience.get("capability") != packet.get("capability"):
+        raise ValueError("INVALID_PORTABLE_SEED_PACKET")
+    if audience.get("manifest_sha256") != packet.get("manifest_sha256"):
+        raise ValueError("INVALID_PORTABLE_SEED_PACKET")
+    if receipt.get("pre_state_ref") != packet.get("source_card_id"):
+        raise ValueError("INVALID_PORTABLE_SEED_PACKET")
+    if receipt.get("post_state_ref") != packet.get("ghot_receipt_id"):
+        raise ValueError("INVALID_PORTABLE_SEED_PACKET")
+    if extensions.get("card_id") != packet.get("source_card_id"):
+        raise ValueError("INVALID_PORTABLE_SEED_PACKET")
+    if extensions.get("adapter_id") != packet.get("adapter_id"):
+        raise ValueError("INVALID_PORTABLE_SEED_PACKET")
+    if extensions.get("capability") != packet.get("capability"):
+        raise ValueError("INVALID_PORTABLE_SEED_PACKET")
+    if extensions.get("ghot_receipt_id") != packet.get("ghot_receipt_id"):
+        raise ValueError("INVALID_PORTABLE_SEED_PACKET")
+    if extensions.get("output_sha256") != packet.get("donor_result_sha256"):
+        raise ValueError("INVALID_PORTABLE_SEED_PACKET")
     try:
         extracted = _inline_artifacts(donor_result)
     except ValueError as exc:
