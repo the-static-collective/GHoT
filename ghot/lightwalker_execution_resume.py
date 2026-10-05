@@ -49,6 +49,8 @@ RESUME_CHECKPOINT_KIND = "ghot.lightwalker.resumed-execution-checkpoint"
 RESUME_CHECKPOINT_VERSION = "0"
 RESUME_COMPLETION_KIND = "ghot.lightwalker.resumed-execution-completion"
 RESUME_COMPLETION_VERSION = "0"
+RESUME_STOP_KIND = "ghot.lightwalker.resumed-execution-stop"
+RESUME_STOP_VERSION = "0"
 
 RESUME_DOMAIN = "ghot.lightwalker-execution-resume-signature/v0"
 RESUME_CHECKPOINT_DOMAIN = (
@@ -57,10 +59,12 @@ RESUME_CHECKPOINT_DOMAIN = (
 RESUME_COMPLETION_DOMAIN = (
     "ghot.lightwalker-resumed-execution-completion-signature/v0"
 )
+RESUME_STOP_DOMAIN = "ghot.lightwalker-resumed-execution-stop-signature/v0"
 
 RESUME_BYTES = b"GHOT-LightwalkerExecutionResume-v0|"
 RESUME_CHECKPOINT_BYTES = b"GHOT-LightwalkerResumedExecutionCheckpoint-v0|"
 RESUME_COMPLETION_BYTES = b"GHOT-LightwalkerResumedExecutionCompletion-v0|"
+RESUME_STOP_BYTES = b"GHOT-LightwalkerResumedExecutionStop-v0|"
 
 
 def _nonempty(value: Any, name: str) -> str:
@@ -181,6 +185,122 @@ def verify_resume(
             particular_field="new_steward_particular",
             domain=RESUME_DOMAIN,
             byte_domain=RESUME_BYTES,
+        )
+    except Exception:
+        return False
+
+
+def verify_resumed_checkpoint(
+    resume: dict[str, Any],
+    checkpoint: dict[str, Any],
+) -> bool:
+    try:
+        if not verify_resume(resume):
+            return False
+        if checkpoint.get("kind") != RESUME_CHECKPOINT_KIND:
+            return False
+        if checkpoint.get("version") != RESUME_CHECKPOINT_VERSION:
+            return False
+        if checkpoint.get("authority") != "owner-local-resumed-checkpoint":
+            return False
+        if checkpoint.get("resume_id") != resume["resume_id"]:
+            return False
+        if checkpoint.get("old_run_id") != resume["old_run_id"]:
+            return False
+        if checkpoint.get("source_checkpoint_id") != (
+            resume["source_checkpoint_id"]
+        ):
+            return False
+        if checkpoint.get("source_partial_result_ref") != (
+            resume["source_partial_result_ref"]
+        ):
+            return False
+        if checkpoint.get("new_reservation_id") != (
+            resume["new_reservation_id"]
+        ):
+            return False
+        if checkpoint.get("new_steward_particular") != (
+            resume["new_steward_particular"]
+        ):
+            return False
+        if checkpoint.get("new_executor_particular") != (
+            resume["new_executor_particular"]
+        ):
+            return False
+        prior = int(resume["prior_progress_percent"])
+        total = int(checkpoint.get("total_progress_percent", -1))
+        new_work = int(checkpoint.get("new_work_progress_percent", -1))
+        if not (prior < total < 100):
+            return False
+        if new_work != total - prior:
+            return False
+        if checkpoint.get("prior_progress_percent") != prior:
+            return False
+        if checkpoint.get("service_complete") is not False:
+            return False
+        if checkpoint.get("settlement_authority") != "none":
+            return False
+        if checkpoint.get("prior_work_reexecuted") is not False:
+            return False
+        return _verify_signed(
+            checkpoint,
+            id_field="resumed_checkpoint_id",
+            particular_field="new_steward_particular",
+            domain=RESUME_CHECKPOINT_DOMAIN,
+            byte_domain=RESUME_CHECKPOINT_BYTES,
+        )
+    except Exception:
+        return False
+
+
+def verify_resumed_stop(
+    resume: dict[str, Any],
+    stop: dict[str, Any],
+) -> bool:
+    try:
+        if not verify_resume(resume):
+            return False
+        if stop.get("kind") != RESUME_STOP_KIND:
+            return False
+        if stop.get("version") != RESUME_STOP_VERSION:
+            return False
+        if stop.get("authority") != (
+            "owner-local-resumed-execution-stop"
+        ):
+            return False
+        if stop.get("resume_id") != resume["resume_id"]:
+            return False
+        if stop.get("old_run_id") != resume["old_run_id"]:
+            return False
+        if stop.get("source_checkpoint_id") != (
+            resume["source_checkpoint_id"]
+        ):
+            return False
+        if stop.get("new_reservation_id") != (
+            resume["new_reservation_id"]
+        ):
+            return False
+        if stop.get("new_steward_particular") != (
+            resume["new_steward_particular"]
+        ):
+            return False
+        if stop.get("reservation_status") not in {
+            "RELEASED",
+            "PARTIALLY_CONSUMED",
+        }:
+            return False
+        if stop.get("service_complete") is not False:
+            return False
+        if stop.get("history_rewritten") is not False:
+            return False
+        if stop.get("settlement_authority") != "none":
+            return False
+        return _verify_signed(
+            stop,
+            id_field="resumed_stop_id",
+            particular_field="new_steward_particular",
+            domain=RESUME_STOP_DOMAIN,
+            byte_domain=RESUME_STOP_BYTES,
         )
     except Exception:
         return False
@@ -314,9 +434,12 @@ class ResumedExecutionStore:
             raise LightwalkerEconomyError(
                 "stop does not preserve source checkpoint"
             )
-        if old_stop.get("reservation_status") != "RELEASED":
+        if old_stop.get("reservation_status") not in {
+            "RELEASED",
+            "PARTIALLY_CONSUMED",
+        }:
             raise LightwalkerEconomyError(
-                "old reservation must be released before resume"
+                "old reservation must be terminal before resume"
             )
         if old_stop.get("service_complete") is not False:
             raise LightwalkerEconomyError(
@@ -653,6 +776,135 @@ class ResumedExecutionStore:
         )
         return checkpoint
 
+    def stop(
+        self,
+        resume: dict[str, Any],
+        snapshot: dict[str, Any],
+        proposal: dict[str, Any],
+        authorization: dict[str, Any],
+        reservation: dict[str, Any],
+        *,
+        observed_cut: int,
+        reason: str,
+    ) -> dict[str, Any]:
+        if not verify_resume(resume):
+            raise LightwalkerEconomyError(
+                "invalid resume record"
+            )
+        state = self.state(resume["resume_id"])
+        if state["status"] != "RUNNING":
+            raise LightwalkerEconomyError(
+                "only running resumed execution may stop"
+            )
+        if reservation["reservation_id"] != resume[
+            "new_reservation_id"
+        ]:
+            raise LightwalkerEconomyError(
+                "resumed stop reservation mismatch"
+            )
+        cut = _nni(observed_cut, "observed_cut")
+        prior_progress = int(state["prior_progress_percent"])
+        total_progress = int(state["total_progress_percent"])
+        delta_progress = total_progress - prior_progress
+        if delta_progress < 0:
+            raise LightwalkerEconomyError(
+                "resumed progress regressed"
+            )
+        if delta_progress > 0:
+            source_measure = state["source_work_measure"]
+            numerator = int(source_measure["quantity"]) * delta_progress
+            if numerator % 100 != 0:
+                raise LightwalkerEconomyError(
+                    "resumed checkpoint progress cannot be represented exactly"
+                )
+            consumed_q = numerator // 100
+            finalization = self.reservation_store.partially_consume_and_release(
+                snapshot,
+                proposal,
+                authorization,
+                reservation,
+                consumed_quantity=consumed_q,
+                partial_evidence_ref=_nonempty(
+                    state["last_resumed_checkpoint_id"],
+                    "last_resumed_checkpoint_id",
+                ),
+                observed_cut=cut,
+                reason=_nonempty(reason, "reason"),
+            )
+        else:
+            finalization = self.reservation_store.release(
+                snapshot,
+                proposal,
+                authorization,
+                reservation,
+                observed_cut=cut,
+                reason=_nonempty(reason, "reason"),
+            )
+        body = {
+            "kind": RESUME_STOP_KIND,
+            "version": RESUME_STOP_VERSION,
+            "authority": "owner-local-resumed-execution-stop",
+            "resume_id": resume["resume_id"],
+            "old_run_id": resume["old_run_id"],
+            "source_checkpoint_id": resume["source_checkpoint_id"],
+            "new_reservation_id": reservation["reservation_id"],
+            "new_steward_particular": self.steward.particular(),
+            "stopped_at_cut": cut,
+            "reason": reason,
+            "prior_progress_percent": state[
+                "prior_progress_percent"
+            ],
+            "total_progress_percent": state[
+                "total_progress_percent"
+            ],
+            "last_resumed_checkpoint_id": state[
+                "last_resumed_checkpoint_id"
+            ],
+            "partial_result_ref": state.get(
+                "partial_result_ref",
+                resume["source_partial_result_ref"],
+            ),
+            "reservation_finalization_id": finalization[
+                "finalization_id"
+            ],
+            "reservation_status": finalization["status"],
+            "service_complete": False,
+            "history_rewritten": False,
+            "settlement_authority": "none",
+            "laws": [
+                "STOP != HISTORY REWRITE",
+                "PARTIAL RESULT != SETTLEMENT",
+                "CONTINUATION LINEAGE != RESOURCE LINEAGE",
+            ],
+        }
+        stop = _signed(
+            body,
+            id_field="resumed_stop_id",
+            signer=self.steward,
+            domain=RESUME_STOP_DOMAIN,
+            byte_domain=RESUME_STOP_BYTES,
+        )
+        self._write_exclusive(
+            self._event_path(
+                resume["resume_id"],
+                stop["resumed_stop_id"],
+            ),
+            stop,
+        )
+        self._write_state(
+            resume["resume_id"],
+            {
+                **state,
+                "status": "STOPPED",
+                "stopped_at_cut": cut,
+                "resumed_stop_id": stop["resumed_stop_id"],
+                "reservation_finalization_id": finalization[
+                    "finalization_id"
+                ],
+            },
+        )
+        return stop
+
     def complete(
         self,
         resume: dict[str, Any],
@@ -810,4 +1062,6 @@ class ResumedExecutionStore:
 __all__ = [
     "ResumedExecutionStore",
     "verify_resume",
+    "verify_resumed_checkpoint",
+    "verify_resumed_stop",
 ]

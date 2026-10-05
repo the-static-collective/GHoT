@@ -566,14 +566,42 @@ class LongRunningExecutionStore:
                 "execution is not stoppable"
             )
         cut = _nni(observed_cut, "observed_cut")
-        finalization = self.reservation_store.release(
-            snapshot,
-            proposal,
-            authorization,
-            reservation,
-            observed_cut=cut,
-            reason=_nonempty(reason, "reason"),
-        )
+        progress = int(state["progress_percent"])
+        reserved_measure = authorization["authorized_measure"]
+        reserved_q = int(reserved_measure["quantity"])
+        if progress > 0:
+            numerator = reserved_q * progress
+            if numerator % 100 != 0:
+                raise LightwalkerEconomyError(
+                    "checkpoint progress cannot be represented in reserved measure"
+                )
+            consumed_q = numerator // 100
+            if consumed_q >= reserved_q:
+                raise LightwalkerEconomyError(
+                    "partial stop cannot represent full completion"
+                )
+            finalization = self.reservation_store.partially_consume_and_release(
+                snapshot,
+                proposal,
+                authorization,
+                reservation,
+                consumed_quantity=consumed_q,
+                partial_evidence_ref=_nonempty(
+                    state["last_checkpoint_id"],
+                    "last_checkpoint_id",
+                ),
+                observed_cut=cut,
+                reason=_nonempty(reason, "reason"),
+            )
+        else:
+            finalization = self.reservation_store.release(
+                snapshot,
+                proposal,
+                authorization,
+                reservation,
+                observed_cut=cut,
+                reason=_nonempty(reason, "reason"),
+            )
         body = {
             "kind": STOP_KIND,
             "version": STOP_VERSION,
