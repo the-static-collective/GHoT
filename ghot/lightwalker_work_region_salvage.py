@@ -659,12 +659,34 @@ def derive_non_overlapping_region_salvage(
 
 
 def make_salvaged_region_admission(
+    work: dict[str, Any],
     plan: dict[str, Any],
-    nonoverlap: dict[str, Any],
+    parent_node: dict[str, Any],
+    parent_checkpoint: dict[str, Any],
+    parent_coverage: dict[str, Any],
+    fork: dict[str, Any],
     resolution: dict[str, Any],
+    winning_bundle: dict[str, Any],
+    losing_bundle: dict[str, Any],
+    nonoverlap: dict[str, Any],
     *,
     parent_steward: IdentityKey,
 ) -> dict[str, Any]:
+    expected_nonoverlap = derive_non_overlapping_region_salvage(
+        work,
+        plan,
+        parent_node,
+        parent_checkpoint,
+        parent_coverage,
+        fork,
+        resolution,
+        winning_bundle,
+        losing_bundle,
+    )
+    if nonoverlap != expected_nonoverlap:
+        raise LightwalkerEconomyError(
+            "salvage admission requires exact proven non-overlap set"
+        )
     if parent_steward.particular() != resolution[
         "parent_steward_particular"
     ]:
@@ -723,12 +745,32 @@ def make_salvaged_region_admission(
 
 
 def verify_salvaged_region_admission(
+    work: dict[str, Any],
     plan: dict[str, Any],
-    nonoverlap: dict[str, Any],
+    parent_node: dict[str, Any],
+    parent_checkpoint: dict[str, Any],
+    parent_coverage: dict[str, Any],
+    fork: dict[str, Any],
     resolution: dict[str, Any],
+    winning_bundle: dict[str, Any],
+    losing_bundle: dict[str, Any],
+    nonoverlap: dict[str, Any],
     admission: dict[str, Any],
 ) -> bool:
     try:
+        expected_nonoverlap = derive_non_overlapping_region_salvage(
+            work,
+            plan,
+            parent_node,
+            parent_checkpoint,
+            parent_coverage,
+            fork,
+            resolution,
+            winning_bundle,
+            losing_bundle,
+        )
+        if nonoverlap != expected_nonoverlap:
+            return False
         if admission.get("kind") != ADMISSION_KIND:
             return False
         if admission.get("version") != ADMISSION_VERSION:
@@ -962,9 +1004,16 @@ def derive_region_composed_completion(
     if nonoverlap != expected_nonoverlap:
         raise LightwalkerEconomyError("non-overlap evidence mismatch")
     if not verify_salvaged_region_admission(
+        work,
         plan,
-        nonoverlap,
+        parent_node,
+        parent_checkpoint,
+        parent_coverage,
+        fork,
         resolution,
+        winning_bundle,
+        losing_bundle,
+        nonoverlap,
         admission,
     ):
         raise LightwalkerEconomyError("invalid salvage admission")
