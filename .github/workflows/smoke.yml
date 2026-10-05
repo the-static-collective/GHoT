@@ -141,3 +141,6 @@ jobs:
 
       - name: Mineral Field 001 simulation
         run: python3 ghot/mineral_registry_sim.py
+
+      - name: GrO Mineral bridge simulation
+        run: python3 ghot/gro_mineral_bridge_sim.py
