@@ -1195,18 +1195,40 @@ def derive_sparse_region_execution_evidence(
 def derive_sparse_region_composed_completion(
     work: dict[str, Any],
     plan: dict[str, Any],
+    parent_node: dict[str, Any],
+    parent_checkpoint: dict[str, Any],
     parent_coverage: dict[str, Any],
-    winning_receipt: dict[str, Any],
+    fork: dict[str, Any],
+    resolution: dict[str, Any],
+    winning_bundle: dict[str, Any],
+    losing_bundle: dict[str, Any],
+    nonoverlap: dict[str, Any],
     admission: dict[str, Any],
     missing_set: dict[str, Any],
-    sparse_execution: dict[str, Any],
+    sparse_bundles: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    if sparse_execution.get("kind") != EXECUTION_KIND:
-        raise LightwalkerEconomyError("invalid sparse execution evidence")
-    if sparse_execution.get("exact_missing_region_set_id") != missing_set[
-        "exact_missing_region_set_id"
-    ]:
-        raise LightwalkerEconomyError("sparse execution missing-set mismatch")
+    if not verify_exact_missing_region_set(
+        work,
+        plan,
+        parent_node,
+        parent_checkpoint,
+        parent_coverage,
+        fork,
+        resolution,
+        winning_bundle,
+        losing_bundle,
+        nonoverlap,
+        admission,
+        missing_set,
+    ):
+        raise LightwalkerEconomyError("invalid exact missing region set")
+    sparse_execution = derive_sparse_region_execution_evidence(
+        work,
+        plan,
+        missing_set,
+        sparse_bundles,
+    )
+    winning_receipt = winning_bundle["receipt"]
     groups = [
         parent_coverage["region_claims"],
         winning_receipt["region_claims"],
