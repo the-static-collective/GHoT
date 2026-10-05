@@ -715,7 +715,7 @@ def main() -> int:
         assert stop["settlement_authority"] == "none"
         assert stop["progress_percent"] == 40
         assert stop["partial_result_ref"] == "partial:059-f-40"
-        assert stop["reservation_status"] == "RELEASED"
+        assert stop["reservation_status"] == "PARTIALLY_CONSUMED"
         assert reservation_store.capacity_state(
             treasury_f,
             entry_f["entry_id"],
