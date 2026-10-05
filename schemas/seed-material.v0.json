@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ghot.seed-material/v0",
+  "title": "GHoT Seed Material v0",
+  "type": "object",
+  "required": [
+    "schema",
+    "material_id",
+    "source_packet_id",
+    "source_card_id",
+    "adapter_id",
+    "capability",
+    "donor_result_sha256",
+    "artifacts",
+    "admission_source",
+    "status",
+    "semantic_effect"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ghot.seed-material/v0"
+    },
+    "material_id": {
+      "type": "string",
+      "pattern": "^seed-material-v0:[a-f0-9]{64}$"
+    },
+    "source_packet_id": {
+      "type": "string"
+    },
+    "source_card_id": {
+      "type": "string"
+    },
+    "adapter_id": {
+      "type": "string"
+    },
+    "capability": {
+      "type": "string"
+    },
+    "donor_result_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "admission_source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "const": "ADMITTED_NOT_EXECUTED"
+    },
+    "semantic_effect": {
+      "const": "local-material-only"
+    },
+    "admitted_at": {
+      "type": "string"
+    },
+    "laws": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}
