@@ -11,6 +11,8 @@ import tempfile
 from pathlib import Path
 
 from instrument_rack import (
+    _digest,
+    _packet_core,
     admit_seed_packet,
     build_instrument_rack,
     dispatch_instrument_card,
@@ -121,6 +123,16 @@ def main() -> int:
             try:
                 admit_seed_packet(tampered, admission_source="simulation-human")
                 raise AssertionError("tampered packet must refuse")
+            except ValueError as exc:
+                assert "INVALID_PORTABLE_SEED_PACKET" in str(exc)
+            assert counter.read_text() == "1"
+
+            relabeled = copy.deepcopy(packet)
+            relabeled["capability"] = "creative.simulation.other"
+            relabeled["packet_id"] = "portable-seed-v0:" + _digest(_packet_core(relabeled))
+            try:
+                admit_seed_packet(relabeled, admission_source="simulation-human")
+                raise AssertionError("re-labeled packet must refuse signed-binding mismatch")
             except ValueError as exc:
                 assert "INVALID_PORTABLE_SEED_PACKET" in str(exc)
             assert counter.read_text() == "1"
