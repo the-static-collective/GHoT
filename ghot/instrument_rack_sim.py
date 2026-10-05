@@ -137,6 +137,16 @@ def main() -> int:
                 assert "INVALID_PORTABLE_SEED_PACKET" in str(exc)
             assert counter.read_text() == "1"
 
+            input_relabeled = copy.deepcopy(packet)
+            input_relabeled["input_sha256"] = "0" * 64
+            input_relabeled["packet_id"] = "portable-seed-v0:" + _digest(_packet_core(input_relabeled))
+            try:
+                admit_seed_packet(input_relabeled, admission_source="simulation-human")
+                raise AssertionError("re-labeled input digest must refuse signed-binding mismatch")
+            except ValueError as exc:
+                assert "INVALID_PORTABLE_SEED_PACKET" in str(exc)
+            assert counter.read_text() == "1"
+
             material = admit_seed_packet(
                 packet,
                 admission_source="simulation-human",
