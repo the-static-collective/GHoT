@@ -539,6 +539,96 @@ class RecursiveContinuationStore:
         self._write_exclusive(self._state_path(parent["node_id"]), state)
         return dict(state)
 
+    def register_stopped_replica(
+        self,
+        node: dict[str, Any],
+        checkpoint: dict[str, Any],
+        stop: dict[str, Any],
+        reservation: dict[str, Any],
+        finalization: dict[str, Any],
+    ) -> dict[str, Any]:
+        parent = _normalize_node(node)
+        if self.steward.particular() != parent["steward_particular"]:
+            raise LightwalkerEconomyError(
+                "replica registrar is not parent node owner"
+            )
+        if not verify_recursive_stop(
+            node,
+            checkpoint,
+            reservation,
+            finalization,
+            stop,
+        ):
+            raise LightwalkerEconomyError(
+                "replica requires verified terminal parent evidence"
+            )
+        state = {
+            "node_id": parent["node_id"],
+            "node_kind": parent["node_kind"],
+            "status": "STOPPED",
+            "hop_index": parent["hop_index"],
+            "prior_progress_percent": parent["prior_progress_percent"],
+            "total_progress_percent": checkpoint["total_progress_percent"],
+            "checkpoint_ancestry": parent["checkpoint_ancestry"],
+            "source_work_measure": parent["source_work_measure"],
+            "prior_work_measure": parent["prior_work_measure"],
+            "remaining_work_measure": parent["remaining_work_measure"],
+            "reservation_id": parent["reservation_id"],
+            "last_checkpoint_id": checkpoint["recursive_checkpoint_id"],
+            "recursive_stop_id": stop["recursive_stop_id"],
+            "reservation_finalization_id": finalization["finalization_id"],
+            "replicated_terminal_evidence": True,
+            "execution_authority": "none",
+        }
+        self._write_exclusive(self._state_path(parent["node_id"]), state)
+        return dict(state)
+
+    def close_unstarted(
+        self,
+        node: dict[str, Any],
+        snapshot: dict[str, Any],
+        proposal: dict[str, Any],
+        authorization: dict[str, Any],
+        reservation: dict[str, Any],
+        *,
+        observed_cut: int,
+        reason: str,
+    ) -> dict[str, Any]:
+        parent = _normalize_node(node)
+        state = self.state(node)
+        if state["status"] != "RUNNING":
+            raise LightwalkerEconomyError(
+                "only a live recursive leaf may close unstarted"
+            )
+        if state.get("last_checkpoint_id") is not None:
+            raise LightwalkerEconomyError(
+                "started recursive leaf requires checkpointed stop"
+            )
+        if reservation["reservation_id"] != parent["reservation_id"]:
+            raise LightwalkerEconomyError(
+                "unstarted close reservation mismatch"
+            )
+        finalization = self.reservation_store.release(
+            snapshot,
+            proposal,
+            authorization,
+            reservation,
+            observed_cut=_nni(observed_cut, "observed_cut"),
+            reason=_nonempty(reason, "reason"),
+        )
+        self._write_state(
+            parent["node_id"],
+            {
+                **state,
+                "status": "CLOSED_UNSTARTED",
+                "reservation_finalization_id": finalization[
+                    "finalization_id"
+                ],
+                "closed_unstarted_at_cut": observed_cut,
+            },
+        )
+        return finalization
+
     def checkpoint(
         self,
         node: dict[str, Any],

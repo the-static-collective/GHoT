@@ -1,0 +1,22 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-recursive-branch-supersession.v0.json",
+  "title":"GHoT Lightwalker Recursive Branch Supersession V0",
+  "type":"object",
+  "required":["kind","version","authority","recursive_branch_resolution_id","child_node_id","reservation_id","reservation_finalization_id","reservation_status","history_deleted","execution_authority","laws","recursive_branch_supersession_id"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.recursive-branch-supersession"},
+    "version":{"const":"0"},
+    "authority":{"const":"derived-recursive-branch-supersession-linkage"},
+    "recursive_branch_resolution_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "child_node_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "reservation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "reservation_finalization_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "reservation_status":{"const":"RELEASED"},
+    "history_deleted":{"const":false},
+    "execution_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "recursive_branch_supersession_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties":false
+}
