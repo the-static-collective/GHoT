@@ -866,11 +866,19 @@ def claim_bound_resume(
         raise LightwalkerEconomyError(
             "resume claim gate does not permit continuation"
         )
-    if claim_decision.get("resume_claim_id") != claim[
-        "resume_claim_id"
-    ]:
+    if not verify_claim_decision(
+        old_run,
+        old_checkpoint,
+        resume_kwargs["old_stop"],
+        claim,
+        claim_decision,
+    ):
         raise LightwalkerEconomyError(
-            "claim decision does not match resume claim"
+            "claim decision does not verify"
+        )
+    if claim_decision.get("status") != "ACTIVE":
+        raise LightwalkerEconomyError(
+            "claim decision is not ACTIVE"
         )
     if claim.get("candidate_reservation_id") != resume_kwargs[
         "new_reservation"
