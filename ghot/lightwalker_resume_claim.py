@@ -177,7 +177,7 @@ def make_resume_claim(
         raise LightwalkerEconomyError(
             "resume claim stop does not preserve checkpoint"
         )
-    if old_stop.get("reservation_status") != "RELEASED":
+    if old_stop.get("reservation_status") not in {"RELEASED", "PARTIALLY_CONSUMED"}:
         raise LightwalkerEconomyError(
             "resume claim requires released source reservation"
         )
@@ -271,7 +271,7 @@ def verify_resume_claim(
             old_run, old_checkpoint
         ):
             return False
-        if old_stop.get("reservation_status") != "RELEASED":
+        if old_stop.get("reservation_status") not in {"RELEASED", "PARTIALLY_CONSUMED"}:
             return False
         if not verify_reservation(
             new_snapshot,
