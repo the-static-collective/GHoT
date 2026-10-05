@@ -55,7 +55,7 @@ FINALIZATION_DOMAIN = "ghot.lightwalker-guild-resource-reservation-finalization-
 RESERVATION_BYTES = b"GHOT-LightwalkerGuildResourceReservation-v0|"
 FINALIZATION_BYTES = b"GHOT-LightwalkerGuildResourceReservationFinalization-v0|"
 
-FINAL_STATUSES = {"CONSUMED", "RELEASED"}
+FINAL_STATUSES = {"CONSUMED", "RELEASED", "PARTIALLY_CONSUMED"}
 
 
 def _nonempty(value: Any, name: str) -> str:
@@ -214,6 +214,31 @@ def verify_finalization(
             if finalization.get("consumed_measure") is not None:
                 return False
             if finalization.get("released_measure") != reservation["reserved_measure"]:
+                return False
+            if finalization.get("partial_evidence_ref") is not None:
+                return False
+        if finalization.get("status") == "PARTIALLY_CONSUMED":
+            consumed = finalization.get("consumed_measure")
+            released = finalization.get("released_measure")
+            if not isinstance(consumed, dict) or not isinstance(released, dict):
+                return False
+            reserved = reservation["reserved_measure"]
+            if consumed.get("unit") != reserved["unit"]:
+                return False
+            if released.get("unit") != reserved["unit"]:
+                return False
+            consumed_q = int(consumed.get("quantity", -1))
+            released_q = int(released.get("quantity", -1))
+            reserved_q = int(reserved["quantity"])
+            if consumed_q <= 0 or released_q <= 0:
+                return False
+            if consumed_q + released_q != reserved_q:
+                return False
+            if not isinstance(finalization.get("partial_evidence_ref"), str):
+                return False
+            if not finalization["partial_evidence_ref"]:
+                return False
+            if finalization.get("execution_receipt_id") is not None:
                 return False
         return _verify_signed(
             finalization,
@@ -442,6 +467,7 @@ class GuildReservationStore:
             "reason": _nonempty(reason, "reason"),
             "observed_cut": cut,
             "execution_receipt_id": execution_receipt_id,
+            "partial_evidence_ref": None,
             "consumed_measure": (
                 reservation["reserved_measure"]
                 if status == "CONSUMED"
@@ -496,6 +522,83 @@ class GuildReservationStore:
                 reason=reason,
                 observed_cut=observed_cut,
             )
+
+    def partially_consume_and_release(
+        self,
+        snapshot: dict[str, Any],
+        proposal: dict[str, Any],
+        authorization: dict[str, Any],
+        reservation: dict[str, Any],
+        *,
+        consumed_quantity: int,
+        partial_evidence_ref: str,
+        observed_cut: int,
+        reason: str,
+    ) -> dict[str, Any]:
+        if not verify_reservation(
+            snapshot, proposal, authorization, reservation
+        ):
+            raise LightwalkerEconomyError("invalid reservation")
+        if self.steward.particular() != reservation["steward_particular"]:
+            raise LightwalkerEconomyError(
+                "local steward does not own reservation"
+            )
+        consumed_q = _nonnegative_int(
+            consumed_quantity, "consumed_quantity"
+        )
+        reserved = reservation["reserved_measure"]
+        reserved_q = int(reserved["quantity"])
+        if consumed_q <= 0 or consumed_q >= reserved_q:
+            raise LightwalkerEconomyError(
+                "partial consumption must be > 0 and < reserved quantity"
+            )
+        evidence_ref = _nonempty(
+            partial_evidence_ref, "partial_evidence_ref"
+        )
+        cut = _nonnegative_int(observed_cut, "observed_cut")
+        with self._locked():
+            if self._load_finalization(reservation["reservation_id"]) is not None:
+                raise LightwalkerEconomyError("reservation already finalized")
+            body = {
+                "kind": FINALIZATION_KIND,
+                "version": FINALIZATION_VERSION,
+                "reservation_id": reservation["reservation_id"],
+                "authorization_id": reservation["authorization_id"],
+                "snapshot_id": reservation["snapshot_id"],
+                "resource_entry_id": reservation["resource_entry_id"],
+                "steward_particular": self.steward.particular(),
+                "status": "PARTIALLY_CONSUMED",
+                "reason": _nonempty(reason, "reason"),
+                "observed_cut": cut,
+                "execution_receipt_id": None,
+                "partial_evidence_ref": evidence_ref,
+                "consumed_measure": {
+                    "unit": reserved["unit"],
+                    "quantity": consumed_q,
+                },
+                "released_measure": {
+                    "unit": reserved["unit"],
+                    "quantity": reserved_q - consumed_q,
+                },
+                "laws": [
+                    "RESERVATION != CONSUMPTION",
+                    "PARTIAL CONSUMPTION != FULL CONSUMPTION",
+                    "PARTIAL CONSUMPTION + RELEASE = RESERVED MEASURE",
+                    "FINALIZATION DOES NOT REWRITE RESERVATION",
+                ],
+            }
+            value = _signed(
+                body,
+                id_field="finalization_id",
+                signer=self.steward,
+                domain=FINALIZATION_DOMAIN,
+                byte_domain=FINALIZATION_BYTES,
+            )
+            self._write_exclusive(
+                self._finalization_path(reservation["reservation_id"]),
+                value,
+            )
+            return value
 
     def release_expired(
         self,
