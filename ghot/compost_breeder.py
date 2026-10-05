@@ -28,6 +28,10 @@ BLENDER_ECOLOGY_SCHEMA = "haunted-blender/dream-ecology/v1"
 BLENDER_SIXUP_SCHEMA = "haunted-blender/dream-sixup-preview/v1"
 BLENDER_DESCENDANT_SCHEMA = "haunted-blender/dream-descendant/v1"
 
+BREED_CAPABILITY = "creative.blender.dreambreed.sixup"
+KEEP_CAPABILITY = "creative.blender.dreambreed.keep"
+GENERATION2_CAPABILITY = "creative.toaster.history-render-generation2"
+
 DONOR_REFS = {
     "toaster_history_compost": {
         "repo": "the-static-collective/the-haunted-toaster",
@@ -97,6 +101,13 @@ def _history_ref(capsule: Any) -> dict[str, Any]:
     parents = capsule.get("parents") or []
     if not isinstance(parents, list):
         raise ValueError("INVALID_TOASTER_HISTORY_CAPSULE")
+    parent_hashes = []
+    for item in parents:
+        if not isinstance(item, dict):
+            raise ValueError("INVALID_TOASTER_HISTORY_PARENT")
+        parent_hashes.append(
+            _sha(item.get("capsuleHash"), "INVALID_TOASTER_HISTORY_PARENT")
+        )
     return {
         "schema": TOASTER_HISTORY_SCHEMA,
         "capsuleHash": _sha(capsule.get("capsuleHash"), "INVALID_TOASTER_HISTORY_HASH"),
@@ -104,11 +115,7 @@ def _history_ref(capsule: Any) -> dict[str, Any]:
         "renderedMediaSha256": _sha(
             rendered.get("sha256"), "INVALID_TOASTER_RENDERED_MEDIA_HASH"
         ),
-        "parentCapsuleHashes": sorted(
-            _sha(item.get("capsuleHash"), "INVALID_TOASTER_HISTORY_PARENT")
-            for item in parents
-            if isinstance(item, dict)
-        ),
+        "parentCapsuleHashes": sorted(parent_hashes),
         "authority": "provenance-only",
     }
 
@@ -229,13 +236,23 @@ def prepare_breed_request(
 def open_session(
     *,
     parent_history_capsule: dict[str, Any],
+    relation_id: str,
     breeder_dispatch_result: dict[str, Any],
 ) -> dict[str, Any]:
     parent = _history_ref(parent_history_capsule)
+    relation = _require_id(relation_id, "RELATION_ID_REQUIRED")
     packet = _packet_from_dispatch(breeder_dispatch_result)
+    if packet.get("capability") != BREED_CAPABILITY:
+        raise ValueError("BREED_RESULT_CAPABILITY_MISMATCH")
     ecology = _find_schema(packet.get("donor_result"), BLENDER_ECOLOGY_SCHEMA)
     sixup = _find_schema(packet.get("donor_result"), BLENDER_SIXUP_SCHEMA)
     ecology = _validate_ecology(ecology)
+    if ecology.get("commonCheckpointId") != parent["capsuleHash"]:
+        raise ValueError("BREED_RESULT_PARENT_HISTORY_MISMATCH")
+    if ecology.get("relationId") != relation:
+        raise ValueError("BREED_RESULT_RELATION_MISMATCH")
+    if ecology.get("generation") != parent["generation"] + 1:
+        raise ValueError("BREED_RESULT_GENERATION_MISMATCH")
     sixup = _validate_sixup(sixup, ecology)
     core = {
         "schema": SESSION_SCHEMA,
@@ -309,6 +326,8 @@ def accept_keep_result(
     if selected not in {p["id"] for p in session["ecologyEvidence"]["proposals"]}:
         raise ValueError("KEEP_PROPOSAL_NOT_IN_ECOLOGY")
     packet = _packet_from_dispatch(keep_dispatch_result)
+    if packet.get("capability") != KEEP_CAPABILITY:
+        raise ValueError("KEEP_RESULT_CAPABILITY_MISMATCH")
     descendant = _find_schema(packet.get("donor_result"), BLENDER_DESCENDANT_SCHEMA)
     ecology = _find_schema(packet.get("donor_result"), BLENDER_ECOLOGY_SCHEMA)
     if not isinstance(descendant, dict) or not isinstance(ecology, dict):
@@ -415,6 +434,8 @@ def accept_generation2_result(
     if session.get("status") != "READY_FOR_GENERATION2_REQUEST":
         raise ValueError("SESSION_NOT_READY_FOR_GENERATION2")
     packet = _packet_from_dispatch(generation2_dispatch_result)
+    if packet.get("capability") != GENERATION2_CAPABILITY:
+        raise ValueError("GENERATION2_RESULT_CAPABILITY_MISMATCH")
     capsule = _find_schema(packet.get("donor_result"), TOASTER_HISTORY_SCHEMA)
     if not isinstance(capsule, dict):
         raise ValueError("GENERATION2_RESULT_MISSING_HISTORY_CAPSULE")
@@ -472,7 +493,10 @@ def accept_generation2_result(
 
 
 __all__ = [
+    "BREED_CAPABILITY",
     "DONOR_REFS",
+    "GENERATION2_CAPABILITY",
+    "KEEP_CAPABILITY",
     "SESSION_SCHEMA",
     "GENERATION2_WITNESS_SCHEMA",
     "accept_generation2_result",
