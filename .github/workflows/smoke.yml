@@ -220,3 +220,6 @@ jobs:
 
       - name: Lightwalker Transition Composition 057 simulation
         run: python3 ghot/lightwalker_transition_composition_sim.py
+
+      - name: Lightwalker Transition Execution Gate 058 simulation
+        run: python3 ghot/lightwalker_transition_execution_gate_sim.py
