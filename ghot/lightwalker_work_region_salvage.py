@@ -279,6 +279,12 @@ def make_region_coverage_attestation(
 ) -> dict[str, Any]:
     if not verify_pixel_region_plan(work, plan):
         raise LightwalkerEconomyError("invalid pixel region plan")
+    if plan["continuation_lineage_id"] != parent_node[
+        "continuation_lineage_id"
+    ]:
+        raise LightwalkerEconomyError(
+            "region plan belongs to another continuation lineage"
+        )
     if not verify_recursive_checkpoint(parent_node, parent_checkpoint):
         raise LightwalkerEconomyError(
             "coverage attestation requires valid recursive checkpoint"
@@ -338,6 +344,10 @@ def verify_region_coverage_attestation(
         if not verify_pixel_region_plan(work, plan):
             return False
         if not verify_recursive_checkpoint(parent_node, parent_checkpoint):
+            return False
+        if plan["continuation_lineage_id"] != parent_node[
+            "continuation_lineage_id"
+        ]:
             return False
         if attestation.get("kind") != COVERAGE_KIND:
             return False
@@ -400,6 +410,12 @@ def make_branch_region_work_receipt(
 ) -> dict[str, Any]:
     if not verify_pixel_region_plan(work, plan):
         raise LightwalkerEconomyError("invalid pixel region plan")
+    if plan["continuation_lineage_id"] != child_node[
+        "continuation_lineage_id"
+    ]:
+        raise LightwalkerEconomyError(
+            "region plan belongs to another continuation lineage"
+        )
     if not verify_recursive_checkpoint(child_node, checkpoint):
         raise LightwalkerEconomyError("invalid branch checkpoint")
     if not verify_recursive_stop(
@@ -473,6 +489,10 @@ def verify_branch_region_work_receipt(
     receipt: dict[str, Any],
 ) -> bool:
     try:
+        if plan["continuation_lineage_id"] != child_node[
+            "continuation_lineage_id"
+        ]:
+            return False
         if not verify_recursive_checkpoint(child_node, checkpoint):
             return False
         if not verify_recursive_stop(
@@ -937,6 +957,40 @@ def verify_region_execution_evidence(
         return False
 
 
+def _verify_terminal_bundle(
+    work: dict[str, Any],
+    plan: dict[str, Any],
+    bundle: dict[str, Any],
+) -> bool:
+    try:
+        required = {
+            "claim_set",
+            "snapshot",
+            "proposal",
+            "authorization",
+            "reservation",
+            "execution",
+            "finalization",
+            "evidence",
+        }
+        if set(bundle) != required:
+            return False
+        return verify_region_execution_evidence(
+            work,
+            plan,
+            bundle["claim_set"],
+            bundle["snapshot"],
+            bundle["proposal"],
+            bundle["authorization"],
+            bundle["reservation"],
+            bundle["execution"],
+            bundle["finalization"],
+            bundle["evidence"],
+        )
+    except Exception:
+        return False
+
+
 def missing_region_ids(
     plan: dict[str, Any],
     parent_coverage: dict[str, Any],
@@ -974,7 +1028,7 @@ def derive_region_composed_completion(
     losing_bundle: dict[str, Any],
     nonoverlap: dict[str, Any],
     admission: dict[str, Any],
-    terminal_evidence: dict[str, Any],
+    terminal_bundle: dict[str, Any],
 ) -> dict[str, Any]:
     if not verify_region_coverage_attestation(
         work, plan, parent_node, parent_checkpoint, parent_coverage
@@ -1020,16 +1074,11 @@ def derive_region_composed_completion(
         admission,
     ):
         raise LightwalkerEconomyError("invalid salvage admission")
-    if terminal_evidence.get("kind") != TERMINAL_KIND:
-        raise LightwalkerEconomyError("invalid terminal region evidence")
-    if terminal_evidence.get("pixel_region_plan_id") != plan[
-        "pixel_region_plan_id"
-    ]:
-        raise LightwalkerEconomyError("terminal evidence plan mismatch")
-    if not _verify_claims(
-        work, plan, terminal_evidence["region_claims"]
-    ):
-        raise LightwalkerEconomyError("terminal region claims invalid")
+    if not _verify_terminal_bundle(work, plan, terminal_bundle):
+        raise LightwalkerEconomyError(
+            "invalid terminal region execution bundle"
+        )
+    terminal_evidence = terminal_bundle["evidence"]
 
     credited_groups = [
         parent_coverage["region_claims"],
