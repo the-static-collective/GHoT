@@ -23,6 +23,12 @@ from typing import Any
 
 from executor_pantry import derive_offers, execute_adapter, pantry_report, probe_executors
 from ice_cube import ICE_CUBE_CAPABILITY, capability_offer, execute_capability
+from mineral_registry import (
+    EXECUTABLE_CAPABILITIES as MINERAL_EXECUTABLE_CAPABILITIES,
+    REGISTRY_CAPABILITY as MINERAL_REGISTRY_CAPABILITY,
+    capability_offers as mineral_capability_offers,
+    execute_mineral_capability,
+)
 from power_field import apply_power_policy, probe_power
 from relatte_identity import ALGORITHM, IdentityKey
 
@@ -78,7 +84,7 @@ def _base_offers(executors: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "system.power",
         ]
     ]
-    offers = builtins + derive_offers(executors)
+    offers = builtins + derive_offers(executors) + mineral_capability_offers()
     ice_cube = capability_offer()
     if ice_cube is not None:
         offers.append(ice_cube)
@@ -217,6 +223,15 @@ def execute(
             output = current_body["power"]
         elif capability == ICE_CUBE_CAPABILITY:
             output = execute_capability(payload, worker_root=ROOT)
+        elif (
+            capability == MINERAL_REGISTRY_CAPABILITY
+            or capability in MINERAL_EXECUTABLE_CAPABILITIES
+        ):
+            output = execute_mineral_capability(
+                capability,
+                payload,
+                worker_root=ROOT,
+            )
         else:
             output = execute_adapter(capability, payload)
     except Exception as exc:
