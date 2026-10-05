@@ -1,0 +1,29 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-policy-transition.v0.json",
+  "title":"GHoT Lightwalker Policy Transition V0",
+  "type":"object",
+  "required":["kind","version","authority","issuer_particular","lineage_id","previous_policy_version_id","current_policy_version_id","current_effective_from_cut","mode","grace_until_cut","declared_at_cut","policy_content_changed","resource_owner_authority","reservation_authority","execution_authority","release_authority","laws","transition_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.policy-transition"},
+    "version":{"const":"0"},
+    "authority":{"const":"policy-temporal-semantics-only"},
+    "issuer_particular":{"type":"string","minLength":1},
+    "lineage_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "previous_policy_version_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "current_policy_version_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "current_effective_from_cut":{"type":"integer","minimum":0},
+    "mode":{"enum":["IMMEDIATE_REVALIDATION","GRACE_UNTIL_CUT","FINISH_IN_FLIGHT_ONLY","NEW_WORK_ONLY","MIGRATE_BEFORE_EXECUTION"]},
+    "grace_until_cut":{"type":["integer","null"],"minimum":0},
+    "declared_at_cut":{"type":"integer","minimum":0},
+    "policy_content_changed":{"const":false},
+    "resource_owner_authority":{"const":"none"},
+    "reservation_authority":{"const":"none"},
+    "execution_authority":{"const":"none"},
+    "release_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "transition_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}
