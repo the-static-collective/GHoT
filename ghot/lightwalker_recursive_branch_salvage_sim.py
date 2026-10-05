@@ -1040,6 +1040,7 @@ def main() -> int:
 
         attachment = attach_salvaged_artifact(
             salvage,
+            node_r,
             completion_r,
         )
         assert attachment["artifact_retained"] is True
@@ -1050,6 +1051,7 @@ def main() -> int:
             parent_checkpoint=checkpoint_l,
             resolved_progress=winning_progress,
             salvage=salvage,
+            terminal_node=node_r,
             terminal_completion=completion_r,
         )
         assert accounting["authoritative_root_total"]["quantity"] == 100
