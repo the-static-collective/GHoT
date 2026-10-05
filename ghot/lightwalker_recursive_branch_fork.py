@@ -425,6 +425,40 @@ def recursive_branch_gate(
     }
 
 
+def branch_guarded_complete(
+    store: RecursiveContinuationStore,
+    *,
+    parent_node: dict[str, Any],
+    parent_checkpoint: dict[str, Any],
+    parent_stop: dict[str, Any],
+    parent_reservation: dict[str, Any],
+    parent_finalization: dict[str, Any],
+    branches: list[dict[str, Any]],
+    child_node: dict[str, Any],
+    resolution: dict[str, Any] | None = None,
+    complete_kwargs: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    gate = recursive_branch_gate(
+        parent_node,
+        parent_checkpoint,
+        parent_stop,
+        parent_reservation,
+        parent_finalization,
+        branches,
+        child_node,
+        resolution=resolution,
+    )
+    if gate["status"] not in {"ELIGIBLE_LOCAL", "ELIGIBLE_RESOLVED"}:
+        raise LightwalkerEconomyError(
+            "recursive branch gate does not permit completion"
+        )
+    if complete_kwargs.get("node") is not child_node:
+        raise LightwalkerEconomyError(
+            "guarded completion must use exact reconciled child"
+        )
+    return store.complete(**complete_kwargs)
+
+
 def close_superseded_child(
     store: RecursiveContinuationStore,
     child_node: dict[str, Any],
@@ -470,6 +504,7 @@ def close_superseded_child(
 
 
 __all__ = [
+    "branch_guarded_complete",
     "close_superseded_child",
     "make_recursive_branch_resolution",
     "reconcile_recursive_branches",
