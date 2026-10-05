@@ -350,6 +350,7 @@ def branch_guarded_handoff(
 
 def attach_salvaged_artifact(
     salvage: dict[str, Any],
+    authoritative_node: dict[str, Any],
     authoritative_completion: dict[str, Any],
 ) -> dict[str, Any]:
     if salvage.get("kind") != SALVAGE_KIND:
@@ -365,34 +366,12 @@ def attach_salvaged_artifact(
             "salvage with root progress credit cannot attach"
         )
     if not verify_recursive_completion(
-        {
-            # verify_recursive_completion needs the full terminal node,
-            # so completion is validated by its own signed producer before
-            # this derived attachment is made. The attachment remains
-            # authority-free and binds only immutable ids/refs.
-        },
+        authoritative_node,
         authoritative_completion,
     ):
-        # The normal verifier cannot reconstruct the node from completion
-        # alone. Require the signed completion shape and fixed semantics here.
-        if authoritative_completion.get("kind") != (
-            "ghot.lightwalker.recursive-continuation-completion"
-        ):
-            raise LightwalkerEconomyError(
-                "invalid authoritative recursive completion"
-            )
-        if authoritative_completion.get("service_complete") is not True:
-            raise LightwalkerEconomyError(
-                "authoritative completion is incomplete"
-            )
-        if authoritative_completion.get("full_ancestry_proven") is not True:
-            raise LightwalkerEconomyError(
-                "authoritative completion lacks ancestry proof"
-            )
-        if authoritative_completion.get("settlement_authority") != "none":
-            raise LightwalkerEconomyError(
-                "unexpected settlement authority"
-            )
+        raise LightwalkerEconomyError(
+            "invalid authoritative recursive completion"
+        )
     body = {
         "kind": ATTACHMENT_KIND,
         "version": ATTACHMENT_VERSION,
@@ -433,14 +412,16 @@ def derive_salvage_accounting(
     parent_checkpoint: dict[str, Any],
     resolved_progress: dict[str, Any],
     salvage: dict[str, Any],
+    terminal_node: dict[str, Any],
     terminal_completion: dict[str, Any],
 ) -> dict[str, Any]:
     if resolved_progress.get("kind") != PROGRESS_KIND:
         raise LightwalkerEconomyError("invalid resolved branch progress")
     if salvage.get("kind") != SALVAGE_KIND:
         raise LightwalkerEconomyError("invalid salvage artifact")
-    if terminal_completion.get("kind") != (
-        "ghot.lightwalker.recursive-continuation-completion"
+    if not verify_recursive_completion(
+        terminal_node,
+        terminal_completion,
     ):
         raise LightwalkerEconomyError("invalid terminal completion")
     source = terminal_completion["source_work_measure"]
