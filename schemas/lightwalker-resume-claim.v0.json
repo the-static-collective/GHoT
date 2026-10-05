@@ -1,0 +1,32 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-resume-claim.v0.json",
+  "title":"GHoT Lightwalker Resume Claim V0",
+  "type":"object",
+  "required":["kind","version","authority","source_run_id","source_reservation_id","source_checkpoint_id","source_stop_id","source_progress_percent","source_partial_result_ref","source_steward_particular","claimant_particular","candidate_guild_id","candidate_reservation_id","candidate_authorization_id","candidate_measure","claimed_at_cut","execution_authority","ownership_transfer","source_history_rewritten","laws","resume_claim_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.resume-claim"},
+    "version":{"const":"0"},
+    "authority":{"const":"candidate-resume-claim-only"},
+    "source_run_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "source_reservation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "source_checkpoint_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "source_stop_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "source_progress_percent":{"type":"integer","minimum":1,"maximum":99},
+    "source_partial_result_ref":{"type":"string","minLength":1},
+    "source_steward_particular":{"type":"string","minLength":1},
+    "claimant_particular":{"type":"string","minLength":1},
+    "candidate_guild_id":{"type":"string","minLength":1},
+    "candidate_reservation_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "candidate_authorization_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "candidate_measure":{"type":"object"},
+    "claimed_at_cut":{"type":"integer","minimum":0},
+    "execution_authority":{"const":"none"},
+    "ownership_transfer":{"const":false},
+    "source_history_rewritten":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "resume_claim_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}
