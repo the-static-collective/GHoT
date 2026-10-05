@@ -183,8 +183,13 @@ def make_continuation_handoff(
         raise LightwalkerEconomyError("invalid parent resumed stop")
     if not verify_finalization(parent_reservation, parent_finalization):
         raise LightwalkerEconomyError("invalid parent reservation finalization")
-    if parent_finalization.get("status") != "RELEASED":
-        raise LightwalkerEconomyError("parent reservation must be released")
+    if parent_finalization.get("status") not in {
+        "RELEASED",
+        "PARTIALLY_CONSUMED",
+    }:
+        raise LightwalkerEconomyError(
+            "parent reservation must be terminal before handoff"
+        )
     if parent_stop.get("reservation_finalization_id") != (
         parent_finalization["finalization_id"]
     ):
