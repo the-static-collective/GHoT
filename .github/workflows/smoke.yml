@@ -138,3 +138,6 @@ jobs:
 
       - name: Sparse Ice Field 001 simulation
         run: python3 ghot/sparse_ice_field_sim.py --dogram-repo _dogram_ice
+
+      - name: Mineral Field 001 simulation
+        run: python3 ghot/mineral_registry_sim.py
