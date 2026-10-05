@@ -47,6 +47,8 @@ POLICY_SET_KIND = "ghot.lightwalker.active-policy-set"
 POLICY_SET_VERSION = "0"
 REVALIDATION_KIND = "ghot.lightwalker.policy-revalidation"
 REVALIDATION_VERSION = "0"
+ROUTE_BINDING_KIND = "ghot.lightwalker.versioned-policy-route-binding"
+ROUTE_BINDING_VERSION = "0"
 
 VERSION_DOMAIN = "ghot.lightwalker-constraint-policy-version-signature/v0"
 VERSION_BYTES = b"GHOT-LightwalkerConstraintPolicyVersion-v0|"
@@ -457,6 +459,46 @@ def active_policy_fragments(
     return result
 
 
+def bind_route_to_policy_set(
+    policy_set: dict[str, Any],
+    *,
+    route_binding_id: str,
+    reservation_id: str,
+    admission_response_id: str,
+) -> dict[str, Any]:
+    body = {
+        "kind": ROUTE_BINDING_KIND,
+        "version": ROUTE_BINDING_VERSION,
+        "authority": "derived-policy-version-route-linkage",
+        "policy_set_id": policy_set["policy_set_id"],
+        "promise_id": policy_set["promise_id"],
+        "source_slot_id": policy_set["source_slot_id"],
+        "route_binding_id": _nonempty(
+            route_binding_id, "route_binding_id"
+        ),
+        "reservation_id": _nonempty(
+            reservation_id, "reservation_id"
+        ),
+        "admission_response_id": _nonempty(
+            admission_response_id, "admission_response_id"
+        ),
+        "active_policy_version_ids": sorted(
+            row["policy_version_id"]
+            for row in policy_set["active_versions"]
+        ),
+        "bound_at_cut": policy_set["observed_cut"],
+        "retroactive_rewrite": False,
+        "authority_carry_forward": False,
+        "reservation_authority": "none",
+        "laws": [
+            "POLICY VERSION != POLICY IDENTITY",
+            "RESERVATION UNDER V1 != AUTOMATIC AUTHORITY UNDER V2",
+            "REVALIDATION != HISTORY ERASURE",
+        ],
+    }
+    return {**body, "versioned_binding_id": content_address(body)}
+
+
 def derive_revalidation(
     promise: dict[str, Any],
     route_policy: dict[str, Any],
@@ -678,6 +720,7 @@ def execute_reserved_with_revalidation(
 
 __all__ = [
     "active_policy_fragments",
+    "bind_route_to_policy_set",
     "derive_active_policy_set",
     "derive_revalidation",
     "execute_reserved_with_revalidation",
