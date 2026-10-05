@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ghot.instrument-card/v0",
+  "title": "GHoT Instrument Card v0",
+  "type": "object",
+  "required": [
+    "schema",
+    "card_id",
+    "adapter_id",
+    "capability",
+    "manifest_sha256",
+    "protocol",
+    "available",
+    "limits",
+    "status",
+    "semantic_effect"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ghot.instrument-card/v0"
+    },
+    "card_id": {
+      "type": "string",
+      "pattern": "^instrument-card-v0:[a-f0-9]{64}$"
+    },
+    "adapter_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capability": {
+      "type": "string",
+      "minLength": 1
+    },
+    "manifest_path": {
+      "type": "string"
+    },
+    "manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "protocol": {
+      "const": "stdin-json/stdout-json-v0"
+    },
+    "available": {
+      "type": "boolean"
+    },
+    "limits": {
+      "type": "object"
+    },
+    "status": {
+      "const": "PROPOSAL_ONLY"
+    },
+    "semantic_effect": {
+      "const": "none"
+    },
+    "laws": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}
