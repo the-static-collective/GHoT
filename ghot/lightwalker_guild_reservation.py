@@ -313,6 +313,14 @@ class GuildReservationStore:
             raise LightwalkerEconomyError("invalid reservation file")
         return value
 
+    def finalization(
+        self,
+        reservation_id: str,
+    ) -> dict[str, Any] | None:
+        with self._locked():
+            value = self._load_finalization(reservation_id)
+            return None if value is None else dict(value)
+
     def _active_reservations(
         self,
         snapshot_id: str,
