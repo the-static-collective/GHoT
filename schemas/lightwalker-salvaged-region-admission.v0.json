@@ -1,0 +1,26 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-salvaged-region-admission.v0.json",
+  "title":"GHoT Lightwalker Salvaged Region Admission V0",
+  "type":"object",
+  "required":["kind","version","authority","pixel_region_plan_id","recursive_branch_resolution_id","non_overlapping_region_salvage_id","parent_steward_particular","admitted_region_ids","admitted_region_claims","root_region_coverage_credit_count","continuation_progress_credit_measure","execution_authority","settlement_authority","laws","salvaged_region_admission_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.salvaged-region-admission"},
+    "version":{"const":"0"},
+    "authority":{"const":"parent-owner-local-region-composition-admission"},
+    "pixel_region_plan_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "recursive_branch_resolution_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "non_overlapping_region_salvage_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "parent_steward_particular":{"type":"string","minLength":1},
+    "admitted_region_ids":{"type":"array","uniqueItems":true,"items":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"}},
+    "admitted_region_claims":{"type":"array","items":{"type":"object"}},
+    "root_region_coverage_credit_count":{"type":"integer","minimum":0},
+    "continuation_progress_credit_measure":{"type":"object"},
+    "execution_authority":{"const":"none"},
+    "settlement_authority":{"const":"none"},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "salvaged_region_admission_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}
