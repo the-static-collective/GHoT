@@ -271,6 +271,15 @@ def verify_continuation_handoff(
             return False
         if not verify_finalization(parent_reservation, parent_finalization):
             return False
+        if parent_finalization.get("status") not in {
+            "RELEASED",
+            "PARTIALLY_CONSUMED",
+        }:
+            return False
+        if parent_stop.get("reservation_finalization_id") != (
+            parent_finalization["finalization_id"]
+        ):
+            return False
         source = _root_measure(parent_resume)
         progress = int(parent_checkpoint["total_progress_percent"])
         cumulative = _measure_at_progress(source, progress)
@@ -630,6 +639,24 @@ def verify_continuation_node(node: dict[str, Any]) -> bool:
             return False
         if node.get("ancestor_work_reexecuted") is not False:
             return False
+        source = node.get("source_work_measure")
+        prior = node.get("prior_work_measure")
+        remaining = node.get("remaining_work_measure")
+        if not all(isinstance(x, dict) for x in (source, prior, remaining)):
+            return False
+        unit = source.get("unit")
+        if prior.get("unit") != unit or remaining.get("unit") != unit:
+            return False
+        if int(prior.get("quantity", -1)) + int(
+            remaining.get("quantity", -1)
+        ) != int(source.get("quantity", -1)):
+            return False
+        expected_prior = _measure_at_progress(
+            source,
+            int(node.get("prior_progress_percent", -1)),
+        )
+        if prior != expected_prior:
+            return False
         return _verify_signed(
             node,
             id_field="continuation_node_id",
@@ -666,6 +693,21 @@ def verify_continuation_completion(
             return False
         if completion.get("settlement_authority") != "none":
             return False
+        source = completion.get("source_work_measure")
+        ancestor = completion.get("ancestor_work_measure")
+        new = completion.get("new_work_measure")
+        total = completion.get("total_work_measure")
+        if not all(isinstance(x, dict) for x in (source, ancestor, new, total)):
+            return False
+        if total != source:
+            return False
+        unit = source.get("unit")
+        if ancestor.get("unit") != unit or new.get("unit") != unit:
+            return False
+        if int(ancestor.get("quantity", -1)) + int(
+            new.get("quantity", -1)
+        ) != int(source.get("quantity", -1)):
+            return False
         return _verify_signed(
             completion,
             id_field="continuation_completion_id",
@@ -698,6 +740,20 @@ def derive_continuation_dag(
         raise LightwalkerEconomyError("parent resume root run mismatch")
     if parent_resume["source_checkpoint_id"] != root_checkpoint["checkpoint_id"]:
         raise LightwalkerEconomyError("parent resume root checkpoint mismatch")
+    if handoff.get("kind") != HANDOFF_KIND:
+        raise LightwalkerEconomyError("invalid handoff kind in DAG")
+    if handoff.get("version") != HANDOFF_VERSION:
+        raise LightwalkerEconomyError("invalid handoff version in DAG")
+    if handoff.get("authority") != "owner-local-continuation-handoff":
+        raise LightwalkerEconomyError("invalid handoff authority in DAG")
+    if not _verify_signed(
+        handoff,
+        id_field="continuation_handoff_id",
+        particular_field="parent_steward_particular",
+        domain=HANDOFF_DOMAIN,
+        byte_domain=HANDOFF_BYTES,
+    ):
+        raise LightwalkerEconomyError("invalid signed handoff in DAG")
     if handoff["parent_resume_id"] != parent_resume["resume_id"]:
         raise LightwalkerEconomyError("handoff parent resume mismatch")
     if handoff["parent_checkpoint_id"] != parent_checkpoint["resumed_checkpoint_id"]:
