@@ -1251,8 +1251,62 @@ def derive_recursive_lineage(
     return {**body, "recursive_view_id": content_address(body)}
 
 
+def verify_recursive_view(view: dict[str, Any]) -> bool:
+    try:
+        if view.get("kind") != VIEW_KIND or view.get("version") != VIEW_VERSION:
+            return False
+        if view.get("authority") != "derived-recursive-continuation-observation":
+            return False
+        reservations = view.get("resource_reservation_ids")
+        ancestry = view.get("checkpoint_ancestry")
+        live = view.get("live_leaf_ids")
+        if not isinstance(reservations, list) or not isinstance(ancestry, list):
+            return False
+        if not isinstance(live, list):
+            return False
+        if len(set(reservations)) != len(reservations):
+            return False
+        if view.get("resource_reservations_distinct") is not True:
+            return False
+        if view.get("recursive_depth") != len(ancestry):
+            return False
+        if view.get("live_leaf_count") != len(live):
+            return False
+        if len(live) > 1:
+            return False
+        status = view.get("status")
+        if status == "ACTIVE":
+            if len(live) != 1 or view.get("terminal_leaf_id") is not None:
+                return False
+        elif status == "COMPLETED":
+            if live or not isinstance(view.get("terminal_leaf_id"), str):
+                return False
+        else:
+            return False
+        expected_digest = content_address({
+            "continuation_lineage_id": view["continuation_lineage_id"],
+            "checkpoint_ancestry": ancestry,
+        })
+        if view.get("ancestry_digest") != expected_digest:
+            return False
+        if view.get("global_consensus") is not False:
+            return False
+        if view.get("execution_authority") != "none":
+            return False
+        if view.get("history_collapsed") is not False:
+            return False
+        body = {
+            key: value
+            for key, value in view.items()
+            if key != "recursive_view_id"
+        }
+        return content_address(body) == view.get("recursive_view_id")
+    except Exception:
+        return False
+
+
 def compact_recursive_lineage(view: dict[str, Any]) -> dict[str, Any]:
-    if view.get("kind") != VIEW_KIND or view.get("version") != VIEW_VERSION:
+    if not verify_recursive_view(view):
         raise LightwalkerEconomyError("invalid recursive lineage view")
     body = {
         "kind": COMPACT_KIND,
@@ -1282,13 +1336,28 @@ def compact_recursive_lineage(view: dict[str, Any]) -> dict[str, Any]:
     return {**body, "compact_lineage_id": content_address(body)}
 
 
+def verify_compact_recursive_lineage(
+    view: dict[str, Any],
+    compact: dict[str, Any],
+) -> bool:
+    try:
+        if not verify_recursive_view(view):
+            return False
+        expected = compact_recursive_lineage(view)
+        return compact == expected
+    except Exception:
+        return False
+
+
 __all__ = [
     "RecursiveContinuationStore",
     "compact_recursive_lineage",
     "derive_recursive_lineage",
+    "verify_compact_recursive_lineage",
     "verify_recursive_checkpoint",
     "verify_recursive_completion",
     "verify_recursive_handoff",
     "verify_recursive_node",
     "verify_recursive_stop",
+    "verify_recursive_view",
 ]
