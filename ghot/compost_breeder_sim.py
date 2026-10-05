@@ -290,12 +290,25 @@ print(json.dumps(result,sort_keys=True,separators=(',',':')))
 
             session = open_session(
                 parent_history_capsule=parent,
+                relation_id="relation:history-compost:gen1",
                 breeder_dispatch_result=breed_result,
             )
             assert session["status"] == "AWAITING_HUMAN_KEEP"
             assert len(session["ecologyEvidence"]["proposals"]) == 6
             assert len(session["sixupEvidence"]["previews"]) == 6
             assert session["parentHistoryRef"]["capsuleHash"] == parent["capsuleHash"]
+
+            wrong_relation_session = None
+            try:
+                wrong_relation_session = open_session(
+                    parent_history_capsule=parent,
+                    relation_id="relation:wrong",
+                    breeder_dispatch_result=breed_result,
+                )
+                raise AssertionError("wrong relation must not open the breeder session")
+            except ValueError as exc:
+                assert "BREED_RESULT_RELATION_MISMATCH" in str(exc)
+            assert wrong_relation_session is None
 
             selected = session["ecologyEvidence"]["proposals"][3]["id"]
             keep_request = prepare_keep_request(session, proposal_id=selected)
@@ -400,6 +413,7 @@ print(json.dumps(result,sort_keys=True,separators=(',',':')))
             pre_seed_session = accept_keep_result(
                 open_session(
                     parent_history_capsule=parent,
+                    relation_id="relation:history-compost:gen1",
                     breeder_dispatch_result=breed_result,
                 ),
                 selected_proposal_id=selected,
