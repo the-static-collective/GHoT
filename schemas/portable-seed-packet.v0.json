@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ghot.portable-seed-packet/v0",
+  "title": "GHoT Portable Seed Packet v0",
+  "type": "object",
+  "required": [
+    "schema",
+    "packet_id",
+    "source_card_id",
+    "dispatch_id",
+    "dispatch_crossing_id",
+    "adapter_id",
+    "capability",
+    "manifest_sha256",
+    "input_sha256",
+    "donor_result_sha256",
+    "artifacts",
+    "donor_result",
+    "dispatch_crossing",
+    "dispatch_receipt",
+    "status",
+    "semantic_effect"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ghot.portable-seed-packet/v0"
+    },
+    "packet_id": {
+      "type": "string",
+      "pattern": "^portable-seed-v0:[a-f0-9]{64}$"
+    },
+    "source_card_id": {
+      "type": "string"
+    },
+    "dispatch_id": {
+      "type": "string"
+    },
+    "dispatch_crossing_id": {
+      "type": "string"
+    },
+    "adapter_id": {
+      "type": "string"
+    },
+    "capability": {
+      "type": "string"
+    },
+    "manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "input_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "donor_result_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "ghot_receipt_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "donor_result": {},
+    "dispatch_crossing": {
+      "type": "object"
+    },
+    "dispatch_receipt": {
+      "type": "object"
+    },
+    "status": {
+      "const": "PORTABLE_NOT_ADMITTED"
+    },
+    "semantic_effect": {
+      "const": "none"
+    },
+    "laws": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}
