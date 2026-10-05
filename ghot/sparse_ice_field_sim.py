@@ -419,14 +419,10 @@ def main() -> int:
             item for item in field.wants()
             if item["relation"] == "lucas-next"
         )
+        # The child inherits the seed render geometry, so its exact work
+        # address remains the Ice Field WANT's address.
         work = copy.deepcopy(want["work"])
-        # Freeze a small but nontrivial child for the integration proof.
-        work["render"]["width"] = 6
-        work["render"]["height"] = 6
-        work["render"]["max_halley_iter"] = 8
-        work["render"]["challenge_count"] = 8
-        want["work"] = work
-        want["work_address"] = work_address(work)
+        assert work_address(work) == want["work_address"]
 
         artifact_owner = IdentityKey.load_or_create(base / "keys" / "artifact-owner.pem")
         guild = IdentityKey.load_or_create(base / "keys" / "commons-guild.pem")
@@ -450,7 +446,7 @@ def main() -> int:
         service_entry = make_treasury_entry(
             category="capability",
             position="available",
-            subject_ref=f"ghot-capability:{FAMILY}",
+            subject_ref="ghot-capability:ghot.ice-cube/v0",
             source_ref="field-commons:sparse-service",
             evidence_refs=[offer["offer_id"]],
             native_measure={"unit": "ice-cube-job", "quantity": 1},
