@@ -1,0 +1,31 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://the-static-collective.github.io/GHoT/schemas/lightwalker-constraint-policy-version.v0.json",
+  "title":"GHoT Lightwalker Constraint Policy Version V0",
+  "type":"object",
+  "required":["kind","version","authority","issuer_particular","issuer_role","policy_name","promise_id","route_policy_id","source_slot_id","lineage_id","version_number","fragment_policy_id","previous_version_id","effective_from_cut","declared_at_cut","retroactive_rewrite","history_rewrite","automatic_authority_carry_forward","laws","policy_version_id","signing"],
+  "properties":{
+    "kind":{"const":"ghot.lightwalker.constraint-policy-version"},
+    "version":{"const":"0"},
+    "authority":{"const":"issuer-policy-version-declaration-only"},
+    "issuer_particular":{"type":"string","minLength":1},
+    "issuer_role":{"type":"string","minLength":1},
+    "policy_name":{"type":"string","minLength":1},
+    "promise_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "route_policy_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "source_slot_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "lineage_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "version_number":{"type":"integer","minimum":1},
+    "fragment_policy_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "previous_version_id":{"type":["string","null"]},
+    "effective_from_cut":{"type":"integer","minimum":0},
+    "declared_at_cut":{"type":"integer","minimum":0},
+    "retroactive_rewrite":{"const":false},
+    "history_rewrite":{"const":false},
+    "automatic_authority_carry_forward":{"const":false},
+    "laws":{"type":"array","items":{"type":"string"}},
+    "policy_version_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+    "signing":{"type":"object"}
+  },
+  "additionalProperties":false
+}
