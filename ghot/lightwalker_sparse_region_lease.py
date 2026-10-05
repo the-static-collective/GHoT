@@ -230,6 +230,9 @@ def derive_exact_missing_region_set(
         "salvaged_region_admission_id": admission[
             "salvaged_region_admission_id"
         ],
+        "assignment_owner_particular": resolution[
+            "parent_steward_particular"
+        ],
         "accepted_region_count": len(accepted),
         "accepted_region_ids": accepted,
         "accepted_coverage_digest": content_address({
@@ -261,6 +264,62 @@ def derive_exact_missing_region_set(
     }
 
 
+def _verify_missing_set_intrinsic(
+    missing_set: dict[str, Any],
+) -> bool:
+    try:
+        if missing_set.get("kind") != MISSING_KIND:
+            return False
+        if missing_set.get("version") != MISSING_VERSION:
+            return False
+        if missing_set.get("authority") != (
+            "derived-exact-missing-work-observation"
+        ):
+            return False
+        if not isinstance(
+            missing_set.get("assignment_owner_particular"), str
+        ):
+            return False
+        accepted = missing_set.get("accepted_region_ids")
+        missing = missing_set.get("missing_region_ids")
+        if not isinstance(accepted, list) or not isinstance(missing, list):
+            return False
+        if len(accepted) != len(set(accepted)):
+            return False
+        if len(missing) != len(set(missing)):
+            return False
+        if set(accepted) & set(missing):
+            return False
+        if missing_set.get("accepted_region_count") != len(accepted):
+            return False
+        if missing_set.get("missing_region_count") != len(missing):
+            return False
+        if missing_set.get("accepted_coverage_digest") != content_address({
+            "pixel_region_plan_id": missing_set["pixel_region_plan_id"],
+            "accepted_region_ids": accepted,
+        }):
+            return False
+        if missing_set.get("missing_region_set_digest") != content_address({
+            "pixel_region_plan_id": missing_set["pixel_region_plan_id"],
+            "missing_region_ids": missing,
+        }):
+            return False
+        if missing_set.get("assignment_authority") != "none":
+            return False
+        if missing_set.get("execution_authority") != "none":
+            return False
+        body = {
+            key: value
+            for key, value in missing_set.items()
+            if key != "exact_missing_region_set_id"
+        }
+        return content_address(body) == missing_set.get(
+            "exact_missing_region_set_id"
+        )
+    except Exception:
+        return False
+
+
 def verify_exact_missing_region_set(
     work: dict[str, Any],
     plan: dict[str, Any],
@@ -289,7 +348,7 @@ def verify_exact_missing_region_set(
             nonoverlap,
             admission,
         )
-        return missing_set == expected
+        return _verify_missing_set_intrinsic(missing_set) and missing_set == expected
     except Exception:
         return False
 
@@ -299,6 +358,8 @@ def verify_sparse_region_lease(
     lease: dict[str, Any],
 ) -> bool:
     try:
+        if not _verify_missing_set_intrinsic(missing_set):
+            return False
         if lease.get("kind") != LEASE_KIND:
             return False
         if lease.get("version") != LEASE_VERSION:
@@ -317,6 +378,10 @@ def verify_sparse_region_lease(
             return False
         if lease.get("accepted_coverage_digest") != missing_set[
             "accepted_coverage_digest"
+        ]:
+            return False
+        if lease.get("assigner_particular") != missing_set[
+            "assignment_owner_particular"
         ]:
             return False
         if lease.get("missing_region_set_digest") != missing_set[
@@ -457,6 +522,14 @@ class SparseRegionLeaseIssuer:
         issued_at_cut: int,
         expires_after_cut: int,
     ) -> dict[str, Any]:
+        if not _verify_missing_set_intrinsic(missing_set):
+            raise LightwalkerEconomyError("invalid exact missing region set")
+        if self.assigner.particular() != missing_set[
+            "assignment_owner_particular"
+        ]:
+            raise LightwalkerEconomyError(
+                "assigner is not owner of exact missing region set"
+            )
         if pixel_region_plan_id != missing_set["pixel_region_plan_id"]:
             raise LightwalkerEconomyError("region plan mismatch")
         ordered_missing = list(missing_set["missing_region_ids"])
@@ -664,6 +737,17 @@ def verify_sparse_region_use(
         ]:
             return False
         if use.get("region_count") != len(region_ids):
+            return False
+        measure = use.get("consumed_work_measure")
+        if not isinstance(measure, dict):
+            return False
+        per_region = (
+            int(lease["assigned_work_measure"]["quantity"])
+            // int(lease["assigned_region_count"])
+        )
+        if measure.get("unit") != lease["assigned_work_measure"]["unit"]:
+            return False
+        if int(measure.get("quantity", -1)) != per_region * len(region_ids):
             return False
         if use.get("result_ref") != expected_claim_set[
             "region_claim_set_id"
@@ -986,9 +1070,18 @@ def verify_sparse_region_release(
             return False
         if cq.get("unit") != unit or rq.get("unit") != unit:
             return False
-        if int(cq["quantity"]) + int(rq["quantity"]) != int(
-            lease["assigned_work_measure"]["quantity"]
-        ):
+        total_regions = int(lease["assigned_region_count"])
+        total_quantity = int(lease["assigned_work_measure"]["quantity"])
+        if total_regions <= 0 or total_quantity % total_regions:
+            return False
+        per_region = total_quantity // total_regions
+        if int(cq["quantity"]) != per_region * len(consumed):
+            return False
+        if int(rq["quantity"]) != per_region * len(returned):
+            return False
+        if int(cq["quantity"]) + int(rq["quantity"]) != total_quantity:
+            return False
+        if release.get("history_deleted") is not False:
             return False
         return _verify_signed(
             release,
@@ -1120,11 +1213,41 @@ def derive_sparse_region_execution_evidence(
             raise LightwalkerEconomyError(
                 "invalid local capacity finalization in sparse evidence"
             )
-        if bundle["execution"]["execution_receipt_id"] != use[
-            "capacity_execution_receipt_id"
+        exact_links = {
+            "capacity_proposal_id": bundle["proposal"]["proposal_id"],
+            "capacity_authorization_id": bundle["authorization"][
+                "authorization_id"
+            ],
+            "capacity_reservation_id": bundle["reservation"]["reservation_id"],
+            "capacity_execution_receipt_id": bundle["execution"][
+                "execution_receipt_id"
+            ],
+            "capacity_finalization_id": bundle["finalization"][
+                "finalization_id"
+            ],
+            "consumed_work_measure": bundle["execution"][
+                "consumed_measure"
+            ],
+        }
+        if any(use.get(key) != value for key, value in exact_links.items()):
+            raise LightwalkerEconomyError(
+                "sparse use/capacity evidence mismatch"
+            )
+        if bundle["proposal"].get("purpose_ref") != lease[
+            "sparse_region_lease_id"
         ]:
             raise LightwalkerEconomyError(
-                "sparse use/capacity execution mismatch"
+                "capacity proposal not bound to sparse lease"
+            )
+        if bundle["execution"].get("result_ref") != use[
+            "region_claim_set_id"
+        ]:
+            raise LightwalkerEconomyError(
+                "capacity result not bound to sparse region claim set"
+            )
+        if bundle["finalization"].get("status") != "CONSUMED":
+            raise LightwalkerEconomyError(
+                "sparse capacity finalization not consumed"
             )
         for claim in use["region_claims"]:
             region_id = claim["region_id"]
