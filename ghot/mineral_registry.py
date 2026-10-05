@@ -394,10 +394,18 @@ def execute_mineral_capability(
         raise ValueError("mineral payload must be an object")
 
     artifact, spec, encoding = _native_compute(capability, payload)
+    request = json.loads(json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ))
     work = {
         "kind": "ghot.mineral-work",
         "version": "0",
         "capability": capability,
+        "request": request,
         "spec": spec,
     }
     work_address = content_address(work)
@@ -406,6 +414,7 @@ def execute_mineral_capability(
         "kind": "ghot.mineral-result",
         "version": "0",
         "capability": capability,
+        "work": work,
         "work_address": work_address,
         "artifact_address": artifact_address,
         "artifact_encoding": encoding,
@@ -440,6 +449,93 @@ def execute_mineral_capability(
     return result
 
 
+def verify_native_mineral_result(
+    result: dict[str, Any],
+    artifact_bytes: bytes,
+) -> dict[str, Any]:
+    """Exact-recompute verifier for native deterministic minerals."""
+    try:
+        if result.get("kind") != "ghot.mineral-result":
+            raise ValueError("not a mineral result")
+        if result.get("version") != "0":
+            raise ValueError("unsupported mineral result version")
+
+        capability = str(result.get("capability") or "")
+        if capability not in EXECUTABLE_CAPABILITIES:
+            raise ValueError("result capability is not native deterministic")
+
+        work = result.get("work")
+        if not isinstance(work, dict):
+            raise ValueError("result does not carry canonical work")
+        if work.get("kind") != "ghot.mineral-work" or work.get("version") != "0":
+            raise ValueError("invalid mineral work object")
+        if work.get("capability") != capability:
+            raise ValueError("work capability mismatch")
+        if content_address(work) != result.get("work_address"):
+            raise ValueError("work address mismatch")
+
+        request = work.get("request")
+        if not isinstance(request, dict):
+            raise ValueError("work request missing")
+        expected_artifact, expected_spec, expected_encoding = _native_compute(
+            capability,
+            request,
+        )
+        actual_address = content_address(artifact_bytes)
+        if actual_address != result.get("artifact_address"):
+            raise ValueError("artifact address mismatch")
+        if expected_artifact != artifact_bytes:
+            raise ValueError("exact recomputation mismatch")
+        if expected_spec != work.get("spec"):
+            raise ValueError("normalized work spec mismatch")
+        if expected_encoding != result.get("artifact_encoding"):
+            raise ValueError("artifact encoding mismatch")
+
+        expected_contract = next(
+            item["verification_contract"]
+            for item in MINERAL_REGISTRY
+            if item["capability"] == capability
+        )
+        if result.get("verification_contract") != expected_contract:
+            raise ValueError("verification contract mismatch")
+
+        body = {
+            "kind": "ghot.mineral-native-verification",
+            "version": "0",
+            "status": "OK",
+            "claim_scope": "deterministic-exact-recompute/v0",
+            "capability": capability,
+            "work_address": result["work_address"],
+            "artifact_address": actual_address,
+            "verification_contract": expected_contract,
+            "laws": [
+                "EXACT RECOMPUTE != UNIVERSAL VALUE",
+                "DETERMINISM != OWNERSHIP",
+                "VERIFICATION != ADMISSION",
+            ],
+        }
+        return {
+            **body,
+            "receipt_id": content_address(body),
+        }
+    except Exception as exc:
+        body = {
+            "kind": "ghot.mineral-native-verification",
+            "version": "0",
+            "status": "REFUSED",
+            "claim_scope": "deterministic-exact-recompute/v0",
+            "error": f"{type(exc).__name__}: {exc}",
+            "laws": [
+                "EXACT RECOMPUTE != UNIVERSAL VALUE",
+                "VERIFICATION != ADMISSION",
+            ],
+        }
+        return {
+            **body,
+            "receipt_id": content_address(body),
+        }
+
+
 __all__ = [
     "EXECUTABLE_CAPABILITIES",
     "FRACTAL_CAPABILITY",
@@ -450,5 +546,6 @@ __all__ = [
     "REGISTRY_CAPABILITY",
     "capability_offers",
     "execute_mineral_capability",
+    "verify_native_mineral_result",
     "registry",
 ]
