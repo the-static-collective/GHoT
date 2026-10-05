@@ -382,7 +382,7 @@ def main() -> int:
             observed_cut=7,
             reason="RELEASE_FOR_RESUME_CLAIM",
         )
-        assert stop_f["reservation_status"] == "RELEASED"
+        assert stop_f["reservation_status"] == "PARTIALLY_CONSUMED"
 
         # E and G both independently possess valid exact-remaining authority.
         candidates = {}
