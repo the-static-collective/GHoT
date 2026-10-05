@@ -271,6 +271,7 @@ def _verify_claims(
 def make_region_coverage_attestation(
     work: dict[str, Any],
     plan: dict[str, Any],
+    parent_node: dict[str, Any],
     parent_checkpoint: dict[str, Any],
     *,
     region_ids: list[str],
@@ -278,11 +279,9 @@ def make_region_coverage_attestation(
 ) -> dict[str, Any]:
     if not verify_pixel_region_plan(work, plan):
         raise LightwalkerEconomyError("invalid pixel region plan")
-    if parent_checkpoint.get("kind") != (
-        "ghot.lightwalker.recursive-continuation-checkpoint"
-    ):
+    if not verify_recursive_checkpoint(parent_node, parent_checkpoint):
         raise LightwalkerEconomyError(
-            "coverage attestation requires recursive checkpoint"
+            "coverage attestation requires valid recursive checkpoint"
         )
     if signer.particular() != parent_checkpoint["steward_particular"]:
         raise LightwalkerEconomyError(
@@ -331,11 +330,14 @@ def make_region_coverage_attestation(
 def verify_region_coverage_attestation(
     work: dict[str, Any],
     plan: dict[str, Any],
+    parent_node: dict[str, Any],
     parent_checkpoint: dict[str, Any],
     attestation: dict[str, Any],
 ) -> bool:
     try:
         if not verify_pixel_region_plan(work, plan):
+            return False
+        if not verify_recursive_checkpoint(parent_node, parent_checkpoint):
             return False
         if attestation.get("kind") != COVERAGE_KIND:
             return False
@@ -570,6 +572,7 @@ def derive_non_overlapping_region_salvage(
     if not verify_region_coverage_attestation(
         work,
         plan,
+        parent_node,
         parent_checkpoint,
         parent_coverage,
     ):
@@ -974,7 +977,7 @@ def derive_region_composed_completion(
     terminal_evidence: dict[str, Any],
 ) -> dict[str, Any]:
     if not verify_region_coverage_attestation(
-        work, plan, parent_checkpoint, parent_coverage
+        work, plan, parent_node, parent_checkpoint, parent_coverage
     ):
         raise LightwalkerEconomyError("invalid parent coverage")
     if not verify_recursive_branch_resolution(
