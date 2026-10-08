@@ -119,8 +119,14 @@ def execute(argv: list[str]) -> dict:
 
 def main() -> int:
     try:
-        parser_message = execute(sys.argv[1:])
+        # Refuse occupied output paths *before* any potentially physical action.
+        # An exclusive open in output() repeats this gate against races.
+        if "--out" not in sys.argv:
+            raise ValueError("PRIVATE_OUTPUT_PATH_REQUIRED")
         path = sys.argv[sys.argv.index("--out") + 1]
+        if os.path.lexists(path):
+            raise ValueError("OUTPUT_ALREADY_EXISTS_NO_HARDWARE_ACTION")
+        parser_message = execute(sys.argv[1:])
         output(path, parser_message)
         print(json.dumps({"status": "WRITTEN_PRIVATELY", "path": str(Path(path).resolve()),
                           "transmission": "NONE", "automatic_next_capture": False}))
