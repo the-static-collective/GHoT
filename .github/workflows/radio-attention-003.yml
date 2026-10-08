@@ -1,0 +1,41 @@
+name: Radio Attention 003 — two-device gated listening field
+on:
+  push:
+    branches:
+      - experiment/radio-attention-003
+  pull_request:
+    paths:
+      - "ghot/radio_attention*.py"
+      - "docs/RADIO-ATTENTION-003.md"
+      - ".github/workflows/radio-attention-003.yml"
+jobs:
+  two-receiver:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout GHoT
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install existing GHoT dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
+      - name: Compile both new modules
+        run: python3 -m py_compile ghot/radio_attention.py ghot/radio_attention_sim.py ghot/radio_attention_operator.py
+      - name: Hostile signed GHoT survey and focus with FAKE driver
+        run: python3 ghot/radio_attention_sim.py
+      - name: Checkout pinned native Autodisco v20
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/The-AutodiscoV.20.-question-marks-
+          ref: 1e06cee07061116eb31afbcdc60b34971ee5b130
+          path: external/autodisco-v20
+          persist-credentials: false
+      - name: Native Autodisco two-first-listen packet preparation
+        env:
+          AUTODISCO_LOOK_TWICE_SCRIPT: ${{ github.workspace }}/external/autodisco-v20/scripts/look-twice.mjs
+        run: python3 ghot/radio_attention_sim.py
