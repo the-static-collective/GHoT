@@ -266,7 +266,6 @@ def verify_package(common_inputs: list, policy: dict, log_root: dict,
                                    package["log_entries"], package["checkpoints"]]
     if len(view) != 21:
         raise InvalidWorld("required full 008 public ancestry absent")
-    check_roster(view, roster, common_inputs[0]["_unused"] if False else _ROOT_NOT_USED) if False else None
     verified, checkpoint = check_view(view, now=now)
     verify_observations(package["observations"], roster, site)
     latest = package["observations"][-1]
