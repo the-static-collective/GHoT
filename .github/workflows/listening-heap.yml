@@ -1,0 +1,41 @@
+name: Listening Heap 001 (simulated RX + native Autodisco contract)
+on:
+  push:
+    branches:
+      - experiment/listening-heap-001
+  pull_request:
+    paths:
+      - "ghot/listening_heap*.py"
+      - "docs/LISTENING-HEAP-001.md"
+      - ".github/workflows/listening-heap.yml"
+jobs:
+  listening-heap:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout GHoT
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install existing GHoT runtime requirements
+        run: |
+          python3 -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
+      - name: Compile experiment
+        run: python3 -m py_compile ghot/listening_heap.py ghot/listening_heap_mock_rx.py ghot/listening_heap_sim.py
+      - name: Exercise GHoT signed Instrument Rack using simulated radio
+        run: python3 ghot/listening_heap_sim.py
+      - name: Checkout fixed Autodisco v20 producer commit
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/The-AutodiscoV.20.-question-marks-
+          ref: 1e06cee07061116eb31afbcdc60b34971ee5b130
+          path: external/autodisco-v20
+          persist-credentials: false
+      - name: Verify actual native LOOK-TWICE preparation
+        env:
+          AUTODISCO_LOOK_TWICE_SCRIPT: ${{ github.workspace }}/external/autodisco-v20/scripts/look-twice.mjs
+        run: python3 ghot/listening_heap_sim.py
