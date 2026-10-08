@@ -1,0 +1,42 @@
+{
+  "schema": "ghot.unheard-choir-blindspot-field/v0",
+  "cut_id": "unheard-choir-sim-cut-001",
+  "source_world_digest": "d74b5e755e20b710aa5778c1a35c622ca93c9a75ba049d6f697cb020feeadd75",
+  "exploration_budget": 2,
+  "observed_signal_count": 11,
+  "apertures": [
+    {
+      "aperture_id": "radio-far-edge",
+      "group": "radio",
+      "instrument_id": "rx-fixture-far-edge",
+      "inspection_cost": 3,
+      "expected_gain_proxy": 11,
+      "available": true,
+      "owner_epoch": 1,
+      "review_class": "ordinary",
+      "coverage_status": "DECLARED_UNOBSERVED"
+    },
+    {
+      "aperture_id": "community-queue",
+      "group": "community",
+      "instrument_id": "inbox-fixture-readonly",
+      "inspection_cost": 1,
+      "expected_gain_proxy": 7,
+      "available": true,
+      "owner_epoch": 4,
+      "review_class": "owner-reviewed",
+      "coverage_status": "DECLARED_UNOBSERVED"
+    },
+    {
+      "aperture_id": "material-backlog",
+      "group": "material",
+      "instrument_id": "inventory-fixture-readonly",
+      "inspection_cost": 2,
+      "expected_gain_proxy": 5,
+      "available": true,
+      "owner_epoch": 2,
+      "review_class": "ordinary",
+      "coverage_status": "DECLARED_UNOBSERVED"
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+name: Unheard Choir 002
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-002
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_blindspot.py'
+      - 'ghot/unheard_choir.py'
+      - 'fixtures/unheard-choir-002/**'
+      - 'tests/test_unheard_choir_blindspot.py'
+      - 'tests/test_unheard_choir.py'
+      - 'docs/UNHEARD-CHOIR-002.md'
+      - '.github/workflows/unheard-choir-002.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  blindspot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inherited 001 tests
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+      - name: Blind-spot hostile tests
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+      - name: Explicit fixture-only probe smoke
+        run: |
+          python3 ghot/unheard_choir_blindspot.py plan \
+            --world fixtures/unheard-choir-002/observed-world.json \
+            --field fixtures/unheard-choir-002/field.json > /tmp/choir002-plan.json
+          PROPOSAL_ID=$(python3 -c 'import json; print(json.load(open("/tmp/choir002-plan.json"))["proposal_digest"])')
+          python3 ghot/unheard_choir_blindspot.py simulate \
+            --world fixtures/unheard-choir-002/observed-world.json \
+            --field fixtures/unheard-choir-002/field.json \
+            --plan /tmp/choir002-plan.json \
+            --oracle fixtures/unheard-choir-002/hidden-oracle.json \
+            --approve-proposal "$PROPOSAL_ID" \
+            --approve-aperture community-queue > /tmp/choir002-receipt.json
+          python3 ghot/unheard_choir_blindspot.py verify \
+            --world fixtures/unheard-choir-002/observed-world.json \
+            --field fixtures/unheard-choir-002/field.json \
+            --plan /tmp/choir002-plan.json \
+            --oracle fixtures/unheard-choir-002/hidden-oracle.json \
+            --approve-proposal "$PROPOSAL_ID" \
+            --approve-aperture community-queue \
+            --receipt /tmp/choir002-receipt.json > /tmp/choir002-verified.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/choir002-plan.json'))
+          r=json.load(open('/tmp/choir002-receipt.json'))
+          v=json.load(open('/tmp/choir002-verified.json'))
+          assert p['selected']['aperture_id'] == 'community-queue'
+          assert p['oracle_read'] is False
+          assert p['simulated_measurement_performed'] is False
+          assert r['simulation_outcome'] == 'SIMULATED_OBSERVATION'
+          assert len(r['source_attention_before']['witness']) == 11
+          assert len(r['source_attention_after']['witness']) == 12
+          assert 'quiet-neighbor' in r['source_attention_after']['selection_order']
+          assert r['effects'] == [] and r['external_execution'] is False
+          assert v == {'verified': True}
+          print('UNHEARD CHOIR 002 exact-source cold replay passed')
+          PY

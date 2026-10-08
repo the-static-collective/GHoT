@@ -1,0 +1,18 @@
+{
+  "schema": "ghot.unheard-choir-hidden-fixture/v0",
+  "cut_id": "unheard-choir-sim-cut-001",
+  "aperture_id": "community-queue",
+  "instrument_id": "inbox-fixture-readonly",
+  "owner_epoch": 4,
+  "measurement_kind": "SIMULATED_OBSERVATION",
+  "signal": {
+    "signal_id": "quiet-neighbor",
+    "kind": "human_need",
+    "cue": "unmet_need",
+    "salience": 0,
+    "attention_cost": 1,
+    "source_ref": "simulated:quiet-neighbor",
+    "consent_to_review": true,
+    "evidence_status": "SIMULATED_OBSERVED"
+  }
+}
