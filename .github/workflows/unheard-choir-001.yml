@@ -1,0 +1,41 @@
+name: Unheard Choir 001
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-001
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir.py'
+      - 'fixtures/unheard-choir-001/**'
+      - 'tests/test_unheard_choir.py'
+      - 'docs/UNHEARD-CHOIR-001.md'
+      - '.github/workflows/unheard-choir-001.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bounded-attention:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unit and hostile cases
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+      - name: Source-only counterfactual
+        run: python3 ghot/unheard_choir.py compare --fixture fixtures/unheard-choir-001/world.json > /tmp/choir-comparison.json
+      - name: Check fixed-world contrasts
+        run: |
+          python3 - <<'PY'
+          import json
+          c=json.load(open('/tmp/choir-comparison.json', encoding='utf-8'))
+          assert len(c['initial_loudest']['witness']) == 11
+          assert len(c['after_loudest']['witness']) == 12
+          assert 'quiet-neighbor' not in c['after_loudest']['selection_order']
+          assert 'quiet-neighbor' in c['after_protected']['selection_order']
+          assert c['after_protected']['authority'] == 'NONE'
+          assert c['after_protected']['effects'] == []
+          print('UNHEARD CHOIR simulated comparison verified')
+          PY
