@@ -12,6 +12,8 @@ import copy
 import hashlib
 import json
 import os
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -21,6 +23,7 @@ from radio_ear import (
 )
 from radio_ear_bridge import (
     execute_selected_capture, make_proposal, native_autodisco_request, prepare_autodisco,
+    _hash as hash_summary,
 )
 
 COUNT = 0
@@ -191,6 +194,49 @@ def main() -> None:
             modified = copy.deepcopy(result)
             modified["portable_packet"]["donor_result"]["result"]["iq_sha256"] = "0" * 64
             no(native_autodisco_request, modified)
+
+            # Signed dispatch metadata cannot be replaced while pretending the
+            # displayed SVG came from the same execution.
+            modified = copy.deepcopy(result)
+            modified["summary"]["crossing_id"] = "forged-crossing"
+            modified["summary"]["summary_id"] = (
+                "radio-ear-summary-v0:" + hash_summary({
+                    k: v for k, v in modified["summary"].items() if k != "summary_id"
+                })
+            )
+            no(native_autodisco_request, modified)
+
+            # Operator CLI is an actual two-action process boundary. Planning
+            # never captures; a saved exact plan and explicit confirmation are
+            # necessary for the second invocation.
+            request_file = home / "operator-request.json"
+            saved_plan = home / "saved-plan.json"
+            request_file.write_text(json.dumps(request), encoding="utf-8")
+            operator_cli = Path(__file__).with_name("radio_ear_operator.py")
+            base_cmd = [
+                sys.executable, str(operator_cli),
+                "plan", "--request-file", str(request_file),
+            ]
+            planned = subprocess.run(base_cmd, text=True, capture_output=True)
+            yes(planned.returncode == 0, "operator planning subprocess works")
+            saved_plan.write_text(planned.stdout, encoding="utf-8")
+            confirmed_cmd = [
+                sys.executable, str(operator_cli), "capture",
+                "--request-file", str(request_file),
+                "--plan-file", str(saved_plan),
+                "--operator-label", "human-operator-test",
+            ]
+            denied = subprocess.run(confirmed_cmd, text=True, capture_output=True)
+            yes(denied.returncode != 0, "missing explicit operator confirmation blocks hardware")
+            approved = subprocess.run(
+                confirmed_cmd + ["--confirm-rx-only"], text=True, capture_output=True
+            )
+            yes(approved.returncode == 0, "independent CLI capture crosses native GHoT")
+            cli_result = json.loads(approved.stdout) if approved.returncode == 0 else {}
+            yes(cli_result.get("schema") == "ghot.radio-ear-capture-output/v0",
+                "operator receives bound observation summary")
+            yes(cli_result.get("summary", {}).get("physical_signal_verified") is False,
+                "CLI preserves unverified physical-origin claim")
 
             autodisco = "exact-native-input-prepared-only"
             script = os.environ.get("AUTODISCO_LOOK_TWICE_SCRIPT")
