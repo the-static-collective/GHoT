@@ -116,7 +116,7 @@ def attest(manifest, challenge, entry, parents, signer):
     body = {"schema": N, "scope": "SIMULATED_UPSTREAM_ASSERTION_ONLY",
             "manifest_digest": digest(manifest), "challenge_digest": digest(challenge),
             "node_id": entry["node_id"], "epoch": entry["epoch"],
-            "parents": parents, "asserted_fixture_complete": True}
+            "parents": list(parents), "asserted_fixture_complete": True}
     return {**body, "signature": signer.sign(ND + jcs_bytes(body))}
 
 
