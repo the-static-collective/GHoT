@@ -280,7 +280,7 @@ def simulate(world: dict, field: dict, claims: dict, registry: dict,
     after = {s["signal_id"] for s in parent_receipt["source_attention_after"]["witness"]}
     newly_seen = sorted(after - before)
     output = {
-        "schema": RECEIPT,
+        "schema": RECEIPT_SCHEMA,
         "proposal_digest": proposal["proposal_digest"],
         "selected_aperture": selected["aperture_id"],
         "field_digest": digest(field), "world_digest": digest(world),
