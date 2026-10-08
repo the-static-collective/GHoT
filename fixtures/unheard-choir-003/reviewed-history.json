@@ -1,0 +1,41 @@
+{
+  "schema": "ghot.unheard-choir-reviewed-history-fixture/v0",
+  "cut_id": "unheard-choir-sim-cut-001",
+  "trials": [
+    {
+      "trial_id": "historical-community-observation",
+      "aperture_id": "community-queue",
+      "oracle": {
+        "schema": "ghot.unheard-choir-hidden-fixture/v0",
+        "cut_id": "unheard-choir-sim-cut-001",
+        "aperture_id": "community-queue",
+        "instrument_id": "inbox-fixture-readonly",
+        "owner_epoch": 4,
+        "measurement_kind": "SIMULATED_OBSERVATION",
+        "signal": {
+          "signal_id": "prior-neighbor",
+          "kind": "human_need",
+          "cue": "unmet_need",
+          "salience": 0,
+          "attention_cost": 1,
+          "source_ref": "simulated:prior-neighbor",
+          "consent_to_review": true,
+          "evidence_status": "SIMULATED_OBSERVED"
+        }
+      }
+    },
+    {
+      "trial_id": "historical-material-empty",
+      "aperture_id": "material-backlog",
+      "oracle": {
+        "schema": "ghot.unheard-choir-hidden-fixture/v0",
+        "cut_id": "unheard-choir-sim-cut-001",
+        "aperture_id": "material-backlog",
+        "instrument_id": "inventory-fixture-readonly",
+        "owner_epoch": 2,
+        "measurement_kind": "SIMULATED_EMPTY_WINDOW",
+        "signal": null
+      }
+    }
+  ]
+}
