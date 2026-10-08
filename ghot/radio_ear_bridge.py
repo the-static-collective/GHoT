@@ -149,6 +149,20 @@ def native_autodisco_request(capture_and_summary: Any) -> dict[str, Any]:
     core = {k: v for k, v in summary.items() if k != "summary_id"}
     if summary.get("summary_id") != "radio-ear-summary-v0:" + _hash(core):
         raise ValueError("RADIO_EAR_SUMMARY_ID_MISMATCH")
+    sel = summary.get("selection")
+    if (
+        summary.get("crossing_id") != packet.get("dispatch_crossing_id")
+        or summary.get("dispatch_id") != packet.get("dispatch_id")
+        or summary.get("backend_sha256") is None
+        or packet.get("capability") != CAPABILITY
+        or not isinstance(sel, dict)
+        or set(sel) != {"kind", "approved", "proposal_id", "card_id"}
+        or sel.get("kind") != "operator-explicit-radio-rx/v0"
+        or sel.get("approved") is not True
+        or sel.get("proposal_id") != summary.get("proposal_id")
+        or sel.get("card_id") != packet.get("source_card_id")
+    ):
+        raise ValueError("RADIO_EAR_SIGNED_DISPATCH_BINDING_MISMATCH")
     donor = packet["donor_result"]["result"]
     capture = verify_capture(donor)
     if (
