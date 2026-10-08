@@ -194,7 +194,7 @@ class LyingWitnessTest(unittest.TestCase):
     def test_cross_world_parent_change_refused(self):
         c, s = self.encounter()
         parent = copy.deepcopy(self.parent)
-        parent["source_observed_count"] += 1
+        parent["world_digest"] = "0" * 64
         parent["proposal_digest"] = digest({k: v for k, v in parent.items() if k != "proposal_digest"})
         with self.assertRaises(InvalidWorld):
             assess(parent, self.roster, c, s, now=1001)
