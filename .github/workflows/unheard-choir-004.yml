@@ -1,0 +1,47 @@
+name: Unheard Choir 004
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-004
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_lying_witness.py'
+      - 'tests/test_unheard_choir_lying_witness.py'
+      - 'docs/UNHEARD-CHOIR-004.md'
+      - '.github/workflows/unheard-choir-004.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lying-witness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - name: OpenSSL available
+        run: openssl version
+      - name: Inherited Choir tests (001–003)
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+      - name: Cryptographic hostile witness matrix
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_lying_witness.py' -v
+      - name: Ephemeral keys, genuine signed contradiction and replay deny
+        run: |
+          python3 ghot/unheard_choir_lying_witness.py demo > /tmp/choir004-evidence.json
+          python3 - <<'PY'
+          import json
+          data=json.load(open('/tmp/choir004-evidence.json'))
+          assert data['p256_signatures_cryptographically_valid'] == 4
+          assert data['source_stated'] == 'PRESENT'
+          assert data['observers_stated'] == ['EMPTY', 'EMPTY']
+          assert data['disposition'] == 'HOLD_AUTHENTIC_BUT_CONTRADICTED_SOURCE'
+          assert data['local_replay_blocked'] is True
+          assert data['signature_proves_truth'] is False
+          assert data['external_execution'] is False
+          print('UNHEARD CHOIR 004 P-256 signed-but-contradicted claim held')
+          PY
