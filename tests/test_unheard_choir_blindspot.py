@@ -253,7 +253,7 @@ class BlindSpotTest(unittest.TestCase):
         self.assertIsNone(p["selected"])
         self.assertEqual(p["hold_reason"], "HOLD_ALL_INSTRUMENTS_WITHDRAWN")
         with self.assertRaises(InvalidWorld):
-            execute(w, f, proposal=p)
+            execute(w, f, proposal=p, approve=False)
 
     def test_zero_proxy_holds(self):
         w, f, _ = fixtures()
