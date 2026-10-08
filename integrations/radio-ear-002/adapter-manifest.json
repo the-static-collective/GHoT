@@ -1,0 +1,27 @@
+{
+  "schema": "ghot.external-adapter-manifest/v0",
+  "adapter_id": "radio-ear-rtl-sdr-rx-only",
+  "capabilities": [
+    {
+      "capability": "radio.rx.rtlsdr.capture",
+      "protocol": "stdin-json/stdout-json-v0",
+      "command": "python3",
+      "args": [
+        "../../ghot/radio_ear.py"
+      ],
+      "timeout_seconds": 18,
+      "limits": {
+        "network": false,
+        "transmit": false,
+        "receive_only": true,
+        "simulation_only": false,
+        "backend": "rtl_sdr",
+        "min_complex_samples": 4096,
+        "max_complex_samples": 65536,
+        "sample_format": "rtl-u8-iq-interleaved",
+        "calibrated": false,
+        "physical_origin_verified": false
+      }
+    }
+  ]
+}

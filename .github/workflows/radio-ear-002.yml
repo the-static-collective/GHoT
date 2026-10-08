@@ -1,0 +1,44 @@
+name: Radio Ear 002 — bounded receive-only SDR evidence
+on:
+  push:
+    branches:
+      - experiment/radio-ear-002
+  pull_request:
+    paths:
+      - "ghot/radio_ear*.py"
+      - "integrations/radio-ear-002/**"
+      - "docs/RADIO-EAR-002.md"
+      - ".github/workflows/radio-ear-002.yml"
+jobs:
+  radio-ear:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout GHoT
+        uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install GHoT existing runtime requirements
+        run: |
+          python3 -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
+      - name: Static validation
+        run: |
+          python3 -m py_compile ghot/radio_ear.py ghot/radio_ear_bridge.py ghot/radio_ear_sim.py ghot/radio_ear_operator.py
+          python3 -m json.tool integrations/radio-ear-002/adapter-manifest.json >/dev/null
+      - name: Execute real GHoT signed path with fake RTL-SDR driver
+        run: python3 ghot/radio_ear_sim.py
+      - name: Checkout fixed native Autodisco v20 commit
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/The-AutodiscoV.20.-question-marks-
+          ref: 1e06cee07061116eb31afbcdc60b34971ee5b130
+          path: external/autodisco-v20
+          persist-credentials: false
+      - name: Native LOOK-TWICE preparation
+        env:
+          AUTODISCO_LOOK_TWICE_SCRIPT: ${{ github.workspace }}/external/autodisco-v20/scripts/look-twice.mjs
+        run: python3 ghot/radio_ear_sim.py
