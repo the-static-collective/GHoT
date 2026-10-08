@@ -1,0 +1,51 @@
+name: Unheard Choir 006
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-006
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_counterfeit.py'
+      - 'tests/test_unheard_choir_counterfeit.py'
+      - 'docs/UNHEARD-CHOIR-006.md'
+      - '.github/workflows/unheard-choir-006.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  counterfeit-instrument:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check OpenSSL
+        run: openssl version
+      - name: Inherited 001–005 suites
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_lying_witness.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_collusion.py' -v
+      - name: 006 compromised private key, dual modalities, signed custody
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_counterfeit.py' -v
+      - name: Cold demo using ephemeral private keys
+        run: |
+          python3 ghot/unheard_choir_counterfeit.py demo > /tmp/choir006-result.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/choir006-result.json'))
+          assert x['simulated_primary_compromised_key_used'] is True
+          assert x['signed_claimants'] == 'PRESENT'
+          assert x['primary_sensor'] == 'PRESENT'
+          assert x['secondary_sensor'] == 'EMPTY'
+          assert x['decision'] == 'HOLD_COUNTERFEIT_OR_CALIBRATION_CONFLICT_UNRESOLVED'
+          assert x['cold_replay_verified'] is True
+          assert x['real_world_truth_proven'] is False
+          assert x['independent_custody_proven'] is False
+          assert x['external_execution'] is False
+          print('UNHEARD CHOIR 006 — compromised primary key, conflicting modality, signed custody, HOLD verified')
+          PY
