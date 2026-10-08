@@ -1,0 +1,57 @@
+name: Unheard Choir 010
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-010
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_gossip.py'
+      - 'tests/test_unheard_choir_gossip.py'
+      - 'docs/UNHEARD-CHOIR-010.md'
+      - '.github/workflows/unheard-choir-010.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unseen-fork:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Crypto and sqlite providers
+        run: |
+          openssl version
+          python3 -c 'import sqlite3; print("SQLite",sqlite3.sqlite_version)'
+      - name: Inherited 001–009 adversarial suites
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_lying_witness.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_collusion.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_counterfeit.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_hidden_cause.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_missing_node.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_timestamp.py' -v
+      - name: 010 split-view local receipt and hostile gossip matrix
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_gossip.py' -v
+      - name: Two separately durable stores then cross-site gossip demo
+        run: |
+          python3 ghot/unheard_choir_gossip.py demo > /tmp/choir010.json
+          python3 - <<'PY'
+          import json
+          r=json.load(open('/tmp/choir010.json'))
+          assert r['isolated_west_009'] == 'REVIEW_WITNESSED_LOG_ORDER_NOT_ADMITTED'
+          assert r['isolated_east_009'] == 'REVIEW_WITNESSED_LOG_ORDER_NOT_ADMITTED'
+          assert r['before_gossip'] == 'HOLD_NO_PEER_GOSSIP_EVIDENCE'
+          assert r['after_gossip'] == 'HOLD_GOSSIP_REVEALS_UNSEEN_FORK'
+          assert r['both_checkpoint_signatures_authentic'] is True
+          assert r['same_size'] and r['different_heads']
+          assert r['local_west_record_retained'] and r['local_east_record_retained']
+          assert r['cold_replay_verified'] is True
+          assert r['native_execution'] is False
+          print('UNHEARD CHOIR 010: two isolated valid logs; signed SQLite observations; gossip exposes unseen fork and HOLD')
+          PY
