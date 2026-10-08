@@ -1,0 +1,53 @@
+name: Unheard Choir 009
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-009
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_timestamp.py'
+      - 'tests/test_unheard_choir_timestamp.py'
+      - 'docs/UNHEARD-CHOIR-009.md'
+      - '.github/workflows/unheard-choir-009.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  timestamp-that-lied:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Crypto provider
+        run: openssl version
+      - name: Inherited Choir 001–008
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_lying_witness.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_collusion.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_counterfeit.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_hidden_cause.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_missing_node.py' -v
+      - name: 009 signed chronology and equivocation adversarial tests
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_timestamp.py' -v
+      - name: Ephemeral six-publication chronology cold demo
+        run: |
+          python3 ghot/unheard_choir_timestamp.py demo > /tmp/choir009.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/choir009.json'))
+          assert x['008_decision'] == 'HOLD_EXTERNAL_AUDIT_CONTRADICTS_OWNER_GRAPH'
+          assert x['009_decision'] == 'HOLD_SIGNED_PUBLICATION_ORDER_CLAIM_CONTRADICTED'
+          assert x['disputed_publication_claims'] == 2
+          assert x['witnessed_log_size'] == 6
+          assert x['forked_checkpoint_sizes'] == []
+          assert x['cold_replay_verified'] is True
+          assert x['physically_proven_capture_time'] is False
+          assert x['external_execution'] is False
+          print('UNHEARD CHOIR 009: co-witnessed append log contradicts within-log prior-publication claim; HOLD')
+          PY
