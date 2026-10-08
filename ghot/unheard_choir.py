@@ -76,7 +76,7 @@ def validate(world: Any) -> dict[str, Any]:
             raise InvalidWorld("invalid or duplicate signal_id")
         seen.add(sid)
         kind = signal["kind"]
-        if kind not in KINDS or signal["cue"] != EXPECTED_CUE[kind]:
+        if type(kind) is not str or kind not in KINDS or type(signal["cue"]) is not str or signal["cue"] != EXPECTED_CUE[kind]:
             raise InvalidWorld("kind/cue mismatch")
         _integer(signal["salience"], 0, 11, "salience")
         _integer(signal["attention_cost"], 1, 11, "attention_cost")
