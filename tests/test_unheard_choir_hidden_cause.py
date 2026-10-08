@@ -18,7 +18,7 @@ from unheard_choir_lying_witness import ROLES, make_challenge, roster_for, sign_
 from unheard_choir_collusion import make_anchor, signed_precommit, signed_measurement  # noqa: E402
 from unheard_choir_counterfeit import make_pinset, sign_custody, sign_secondary  # noqa: E402
 from unheard_choir_hidden_cause import (  # noqa: E402
-    assess, attest, demo, dependency_trace, distinct, signed_manifest,
+    assess, attest, demo, ancestors, distinct, signed_manifest,
     verify_manifest, verify_attestations, verify_replay,
 )
 
