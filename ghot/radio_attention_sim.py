@@ -9,6 +9,9 @@ import copy
 import hashlib
 import json
 import os
+import stat
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -229,6 +232,69 @@ def run() -> None:
                 ok(len(pair["packets"])==2 and pair["packets"][0]["packet_id"] !=
                    pair["packets"][1]["packet_id"],"two first-encounter packets")
                 status="native-look-twice-packets-verified"
+
+            # Real separate-process operator workflow: no silent sweep/focus.
+            cli=Path(__file__).with_name("radio_attention_operator.py")
+            spec_file=root/"operator-spec.json"
+            spec_file.write_text(json.dumps(spec),encoding="utf-8")
+            survey_plan_file=root/"operator-survey-plan.json"
+            survey_file=root/"operator-survey.json"
+            focus_plan_file=root/"operator-focus-plan.json"
+            focus_file=root/"operator-focus.json"
+            comparison_file=root/"operator-comparison.json"
+            runner=[sys.executable,str(cli)]
+            def cmd(*arguments):
+                return subprocess.run(runner+list(arguments),text=True,capture_output=True)
+            before=count_calls(log)
+            result=cmd("plan-survey","--spec-file",str(spec_file),"--out",str(survey_plan_file))
+            ok(result.returncode==0 and survey_plan_file.exists(),
+               "owner operator writes survey plan")
+            ok(count_calls(log)==before,"operator planning doesn't use hardware")
+            ok(stat.S_IMODE(survey_plan_file.stat().st_mode)==0o600,
+               "sensitive local files have private mode")
+            sweep_args=("run-survey","--spec-file",str(spec_file),
+                        "--plan-file",str(survey_plan_file),"--out",str(survey_file),
+                        "--operator","cli-operator")
+            denied=cmd(*sweep_args)
+            ok(denied.returncode!=0 and not survey_file.exists(),
+               "operator must explicitly confirm survey")
+            result=cmd(*sweep_args,"--approve-receive-only")
+            ok(result.returncode==0 and survey_file.exists(),
+               "operator explicitly executes bounded survey")
+            ok(count_calls(log)==before+3,"survey performs only three captures")
+            denied=cmd(*sweep_args,"--approve-receive-only")
+            ok(denied.returncode!=0 and count_calls(log)==before+3,
+               "occupied output preflight refuses any new capture")
+            result=cmd("plan-focus","--survey-file",str(survey_file),
+                       "--out",str(focus_plan_file))
+            ok(result.returncode==0 and focus_plan_file.exists(),
+               "owner can inspect independent focus plan")
+            focus_args=("run-focus","--survey-file",str(survey_file),
+                        "--plan-file",str(focus_plan_file),"--out",str(focus_file),
+                        "--operator","cli-operator")
+            denied=cmd(*focus_args)
+            ok(denied.returncode!=0 and not focus_file.exists(),
+               "focus requires separate explicit approval")
+            result=cmd(*focus_args,"--approve-receive-only")
+            ok(result.returncode==0 and focus_file.exists(),"owner explicitly runs focus")
+            ok(count_calls(log)==before+4,"focus runs on one other receiver index")
+            result=cmd("compare","--survey-file",str(survey_file),
+                       "--focus-file",str(focus_file),"--out",str(comparison_file))
+            ok(result.returncode==0 and comparison_file.exists(),
+               "comparison produces durable cold-readable result")
+            compared=json.loads(comparison_file.read_text())
+            ok(compared["next_proposal"]["status"]=="PROPOSAL_ONLY",
+               "CLI comparison doesn't dispatch next target")
+            ok(count_calls(log)==before+4,"comparison has zero RF consequences")
+            if script:
+                pair_file=root/"operator-autodisco.json"
+                result=cmd("prepare-autodisco","--survey-file",str(survey_file),
+                           "--focus-file",str(focus_file),
+                           "--autodisco-script",script,"--out",str(pair_file))
+                ok(result.returncode==0 and pair_file.exists(),
+                   "operator CLI calls actual native v20 prepare")
+                ok(json.loads(pair_file.read_text())["status"]=="FIRST_LISTEN_PACKETS_ONLY",
+                   "operator output does not invent AI responses")
 
             print(json.dumps({
                 "status":"PASS",
