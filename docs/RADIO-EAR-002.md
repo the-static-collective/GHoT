@@ -87,6 +87,40 @@ No new CLI automatically authorizes a capture. The integration entrypoints
 are make_proposal(), execute_selected_capture(), native_autodisco_request()
 and prepare_autodisco(), all called by an explicitly configured host.
 
+
+## Operator commands (real receiver when connected)
+
+Install a compatible rtl_sdr command-line receiver utility and ensure the
+actual receive-only SDR is accessible to the operator. The tool never uses a
+radio transmitter and never auto-selects a frequency.
+
+    export GHOT_ADAPTER_MANIFESTS="$PWD/integrations/radio-ear-002/adapter-manifest.json"
+
+Create an explicit request JSON file from the minimal request above (for
+example /tmp/rx-request.json). The first command only prints the bounded
+proposal and never captures:
+
+    python3 ghot/radio_ear_operator.py plan \
+      --request-file /tmp/rx-request.json > /tmp/rx-plan.json
+
+The second, independent operator action is required to execute that exact
+plan. It will refuse if the manifest/card/request has changed:
+
+    python3 ghot/radio_ear_operator.py capture \
+      --request-file /tmp/rx-request.json \
+      --plan-file /tmp/rx-plan.json \
+      --confirm-rx-only \
+      --operator-label local-operator > /tmp/rx-summary.json
+
+The summary contains no inline raw IQ, but the underlying GHoT dispatch state
+persists the signed portable packet and the bounded sample bytes under the
+operator-controlled GHOT_HOME. Protect the device, signal contents, and local
+files in accordance with your reception permissions and privacy requirements.
+No third-party publication or external delivery is performed.
+
+Optionally add --autodisco-script pointing to a local v20 scripts/look-twice.mjs.
+That invokes only the native prepare action; it does not run the listener model.
+
 ## Measurement limits
 
 A successful process proves only that the configured host command emitted
