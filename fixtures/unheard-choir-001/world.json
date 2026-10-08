@@ -1,0 +1,128 @@
+{
+  "schema": "ghot.unheard-choir-world/v0",
+  "cut_id": "unheard-choir-sim-cut-001",
+  "attention_units": 4,
+  "injected_signal_id": "quiet-neighbor",
+  "signals": [
+    {
+      "signal_id": "repeater-east",
+      "kind": "radio",
+      "cue": "repetition",
+      "salience": 11,
+      "attention_cost": 2,
+      "source_ref": "simulated:repeater-east",
+      "consent_to_review": false,
+      "evidence_status": "SIMULATED_OBSERVED"
+    },
+    {
+      "signal_id": "repeater-west",
+      "kind": "radio",
+      "cue": "repetition",
+      "salience": 10,
+      "attention_cost": 1,
+      "source_ref": "simulated:repeater-west",
+      "consent_to_review": false,
+      "evidence_status": "SIMULATED_OBSERVED"
+    },
+    {
+      "signal_id": "unusual-harmonic",
+      "kind": "radio",
+      "cue": "repetition",
+      "salience": 9,
+      "attention_cost": 1,
+      "source_ref": "simulated:unusual-harmonic",
+      "consent_to_review": false,
+      "evidence_status": "SIMULATED_OBSERVED"
+    },
+    {
+      "signal_id": "cpu-spike",
+      "kind": "system",
+      "cue": "anomaly",
+      "salience": 8,
+      "attention_cost": 1,
+      "source_ref": "simulated:cpu-spike",
+      "consent_to_review": false,
+      "evidence_status": "SIMULATED_OBSERVED"
+    },
+    {
+      "signal_id": "disk-flap",
+      "kind": "system",
+      "cue": "anomaly",
+      "salience": 7,
+      "attention_cost": 1,
+      "source_ref": "simulated:disk-flap",
+      "consent_to_review": false,
+      "evidence_status": "SIMULATED_OBSERVED"
+    },
+    {
+      "signal_id": "idle-generator",
+      "kind": "material",
+      "cue": "available",
+      "salience": 6,
+      "attention_cost": 1,
+      "source_ref": "simulated:idle-generator",
+      "consent_to_review": false,
+      "evidence_status": "SIMULATED_OBSERVED"
+    },
+    {
+      "signal_id": "unclaimed-firewood",
+      "kind": "material",
+      "cue": "available",
+      "salience": 5,
+      "attention_cost": 1,
+      "source_ref": "simulated:unclaimed-firewood",
+      "consent_to_review": false,
+      "evidence_status": "SIMULATED_OBSERVED"
+    },
+    {
+      "signal_id": "unknown-relation",
+      "kind": "research",
+      "cue": "unanswered",
+      "salience": 4,
+      "attention_cost": 1,
+      "source_ref": "simulated:unknown-relation",
+      "consent_to_review": false,
+      "evidence_status": "SIMULATED_OBSERVED"
+    },
+    {
+      "signal_id": "missing-evidence",
+      "kind": "research",
+      "cue": "unanswered",
+      "salience": 3,
+      "attention_cost": 1,
+      "source_ref": "simulated:missing-evidence",
+      "consent_to_review": false,
+      "evidence_status": "SIMULATED_OBSERVED"
+    },
+    {
+      "signal_id": "recurring-failure",
+      "kind": "system",
+      "cue": "anomaly",
+      "salience": 2,
+      "attention_cost": 1,
+      "source_ref": "simulated:recurring-failure",
+      "consent_to_review": false,
+      "evidence_status": "SIMULATED_OBSERVED"
+    },
+    {
+      "signal_id": "false-positive",
+      "kind": "research",
+      "cue": "unanswered",
+      "salience": 1,
+      "attention_cost": 1,
+      "source_ref": "simulated:false-positive",
+      "consent_to_review": false,
+      "evidence_status": "SIMULATED_OBSERVED"
+    },
+    {
+      "signal_id": "quiet-neighbor",
+      "kind": "human_need",
+      "cue": "unmet_need",
+      "salience": 0,
+      "attention_cost": 1,
+      "source_ref": "simulated:quiet-neighbor",
+      "consent_to_review": true,
+      "evidence_status": "SIMULATED_OBSERVED"
+    }
+  ]
+}
