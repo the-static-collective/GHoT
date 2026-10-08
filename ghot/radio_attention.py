@@ -281,7 +281,7 @@ def verify_focus(survey: Any, focus: Any) -> dict:
         f.get("survey_id") != s["survey_id"]
         or f.get("physical_independence_verified") is not False
         or f.get("status") != "SECOND_DEVICE_INDEX_CAPTURE_UNCALIBRATED"
-        or f.get("frequency_hz") not in s["spec"]["frequencies_hz"]
+        or f.get("frequency_hz") != rank_survey(s)[0]["frequency_hz"]
         or f.get("plan_id") is None
     ):
         raise ValueError("RADIO_ATTENTION_FOCUS_BINDING_FAILED")
