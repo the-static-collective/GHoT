@@ -1,0 +1,48 @@
+name: Unheard Choir 005
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-005
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_collusion.py'
+      - 'tests/test_unheard_choir_collusion.py'
+      - 'docs/UNHEARD-CHOIR-005.md'
+      - '.github/workflows/unheard-choir-005.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  colluding-observers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check OpenSSL
+        run: openssl version
+      - name: Inherited 001–004 hostile suites
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_lying_witness.py' -v
+      - name: Colluding observers and distinct sample source
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_collusion.py' -v
+      - name: Six real signed objects and cold replay
+        run: |
+          python3 ghot/unheard_choir_collusion.py demo > /tmp/choir005-result.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/choir005-result.json'))
+          assert x['signed_cryptographic_objects'] == 6
+          assert x['claimants_say'] == 'PRESENT'
+          assert x['synthetic_samples_compute'] == 'EMPTY'
+          assert x['disposition'] == 'HOLD_COLLUDING_CLAIMS_CONFLICT_WITH_SIMULATED_MEASUREMENT'
+          assert x['cold_replay_verified'] is True
+          assert x['new_source_real_world_truth_proven'] is False
+          assert x['native_action_executed'] is False
+          print('UNHEARD CHOIR 005 — signed colluding consensus held against independently recalculated simulated samples')
+          PY
