@@ -1,0 +1,54 @@
+{
+  "schema": "ghot.unheard-choir-untrusted-catalog/v0",
+  "cut_id": "unheard-choir-sim-cut-001",
+  "claims": [
+    {
+      "claim_id": "vendor-phantom-emergency",
+      "aperture_id": "phantom-emergency",
+      "instrument_id": "all-seeing-eye",
+      "claimed_owner_epoch": 1,
+      "advertised_gain": 1000000,
+      "claim_status": "UNVERIFIED_VENDOR_ASSERTION"
+    },
+    {
+      "claim_id": "vendor-private-cabinet",
+      "aperture_id": "private-cabinet",
+      "instrument_id": "inbox-private-fixture",
+      "claimed_owner_epoch": 8,
+      "advertised_gain": 999999,
+      "claim_status": "UNVERIFIED_VENDOR_ASSERTION"
+    },
+    {
+      "claim_id": "vendor-community-queue",
+      "aperture_id": "community-queue",
+      "instrument_id": "inbox-fixture-readonly",
+      "claimed_owner_epoch": 4,
+      "advertised_gain": 8,
+      "claim_status": "UNVERIFIED_VENDOR_ASSERTION"
+    },
+    {
+      "claim_id": "vendor-radio-edge",
+      "aperture_id": "radio-far-edge",
+      "instrument_id": "rx-fixture-far-edge",
+      "claimed_owner_epoch": 1,
+      "advertised_gain": 900000,
+      "claim_status": "UNVERIFIED_VENDOR_ASSERTION"
+    },
+    {
+      "claim_id": "vendor-material-backlog",
+      "aperture_id": "material-backlog",
+      "instrument_id": "inventory-fixture-readonly",
+      "claimed_owner_epoch": 2,
+      "advertised_gain": 500000,
+      "claim_status": "UNVERIFIED_VENDOR_ASSERTION"
+    },
+    {
+      "claim_id": "vendor-vintage-instrument",
+      "aperture_id": "lost-registry-entry",
+      "instrument_id": "outdated-thing",
+      "claimed_owner_epoch": 0,
+      "advertised_gain": 850000,
+      "claim_status": "UNVERIFIED_VENDOR_ASSERTION"
+    }
+  ]
+}
