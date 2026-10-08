@@ -1,0 +1,42 @@
+{
+  "schema": "ghot.unheard-choir-owner-registry-fixture/v0",
+  "cut_id": "unheard-choir-sim-cut-001",
+  "source_world_digest": "d74b5e755e20b710aa5778c1a35c622ca93c9a75ba049d6f697cb020feeadd75",
+  "source_field_digest": "9b54e1933a5403abc219e35230514bed86e524b733f9caa2c1c063110640b76f",
+  "accepted_history_digest": "3a9f97dbb71115ecb123615cae8b416590d7f5eaa7df74a7bfa5c966249182a9",
+  "scope": "SIMULATION_ONLY_NO_EXTERNAL_AUTHORITY",
+  "entries": [
+    {
+      "aperture_id": "radio-far-edge",
+      "instrument_id": "rx-fixture-far-edge",
+      "owner_epoch": 1,
+      "owner_allows_proposal": true,
+      "review_class": "ordinary",
+      "privacy_scope": "DECLARED_FIXTURE_ONLY"
+    },
+    {
+      "aperture_id": "community-queue",
+      "instrument_id": "inbox-fixture-readonly",
+      "owner_epoch": 4,
+      "owner_allows_proposal": true,
+      "review_class": "owner-reviewed",
+      "privacy_scope": "DECLARED_FIXTURE_ONLY"
+    },
+    {
+      "aperture_id": "material-backlog",
+      "instrument_id": "inventory-fixture-readonly",
+      "owner_epoch": 2,
+      "owner_allows_proposal": true,
+      "review_class": "ordinary",
+      "privacy_scope": "DECLARED_FIXTURE_ONLY"
+    },
+    {
+      "aperture_id": "private-cabinet",
+      "instrument_id": "inbox-private-fixture",
+      "owner_epoch": 8,
+      "owner_allows_proposal": false,
+      "review_class": "owner-reviewed",
+      "privacy_scope": "DECLARED_FIXTURE_ONLY"
+    }
+  ]
+}

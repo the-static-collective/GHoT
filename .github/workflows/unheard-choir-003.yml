@@ -1,0 +1,75 @@
+name: Unheard Choir 003
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-003
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_false_aperture.py'
+      - 'ghot/unheard_choir_blindspot.py'
+      - 'ghot/unheard_choir.py'
+      - 'fixtures/unheard-choir-003/**'
+      - 'tests/test_unheard_choir_false_aperture.py'
+      - 'docs/UNHEARD-CHOIR-003.md'
+      - '.github/workflows/unheard-choir-003.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  false-aperture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inherited 001 and 002 tests
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+      - name: False-aperture adversarial tests
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+      - name: Cold process test of false aperture, approved fixture, and replay
+        run: |
+          python3 ghot/unheard_choir_false_aperture.py plan \
+            --world fixtures/unheard-choir-002/observed-world.json \
+            --field fixtures/unheard-choir-003/field.json \
+            --claims fixtures/unheard-choir-003/untrusted-catalog.json \
+            --registry fixtures/unheard-choir-003/owner-registry.json \
+            --history fixtures/unheard-choir-003/reviewed-history.json > /tmp/choir003-plan.json
+          PROPOSAL_ID=$(python3 -c 'import json; print(json.load(open("/tmp/choir003-plan.json"))["proposal_digest"])')
+          python3 ghot/unheard_choir_false_aperture.py simulate \
+            --world fixtures/unheard-choir-002/observed-world.json \
+            --field fixtures/unheard-choir-003/field.json \
+            --claims fixtures/unheard-choir-003/untrusted-catalog.json \
+            --registry fixtures/unheard-choir-003/owner-registry.json \
+            --history fixtures/unheard-choir-003/reviewed-history.json \
+            --plan /tmp/choir003-plan.json \
+            --oracle fixtures/unheard-choir-002/hidden-oracle.json \
+            --approve-proposal "$PROPOSAL_ID" \
+            --approve-aperture community-queue > /tmp/choir003-receipt.json
+          python3 ghot/unheard_choir_false_aperture.py verify \
+            --world fixtures/unheard-choir-002/observed-world.json \
+            --field fixtures/unheard-choir-003/field.json \
+            --claims fixtures/unheard-choir-003/untrusted-catalog.json \
+            --registry fixtures/unheard-choir-003/owner-registry.json \
+            --history fixtures/unheard-choir-003/reviewed-history.json \
+            --plan /tmp/choir003-plan.json \
+            --oracle fixtures/unheard-choir-002/hidden-oracle.json \
+            --receipt /tmp/choir003-receipt.json \
+            --approve-proposal "$PROPOSAL_ID" \
+            --approve-aperture community-queue > /tmp/choir003-verify.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/choir003-plan.json'))
+          r=json.load(open('/tmp/choir003-receipt.json'))
+          v=json.load(open('/tmp/choir003-verify.json'))
+          assert p['selected']['aperture_id'] == 'community-queue'
+          assert p['future_oracle_read'] is False
+          assert p['vendor_gain_used_for_selection'] is False
+          assert r['measured_novel_simulated_source_ids'] == ['quiet-neighbor']
+          assert r['effects'] == [] and not r['external_execution']
+          assert v == {'verified': True}
+          print('UNHEARD CHOIR 003 cold replay and hostile catalog selection verified')
+          PY
