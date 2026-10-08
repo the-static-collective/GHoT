@@ -221,6 +221,32 @@ class BlindSpotTest(unittest.TestCase):
             with self.subTest(mutation=mutation), self.assertRaises(InvalidWorld):
                 execute(w, f, x)
 
+    def test_instrument_group_cannot_launder_foreign_signal_kind(self):
+        w, f, o = fixtures()
+        x = copy.deepcopy(o)
+        x["signal"]["kind"] = "radio"
+        x["signal"]["cue"] = "repetition"
+        x["signal"]["consent_to_review"] = False
+        with self.assertRaisesRegex(InvalidWorld, "instrument group"):
+            execute(w, f, x)
+
+    def test_cli_denies_without_reading_hidden_fixture(self):
+        w, f, o = fixtures()
+        p = propose(w, f)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "plan.json"
+            path.write_text(json.dumps(p), encoding="utf-8")
+            command = [
+                sys.executable, str(ROOT / "ghot" / "unheard_choir_blindspot.py"),
+                "simulate", "--world", str(F / "observed-world.json"),
+                "--field", str(F / "field.json"), "--plan", str(path),
+                "--oracle", str(Path(tmp) / "does-not-exist.json"),
+            ]
+            proc = subprocess.run(command, capture_output=True, text=True)
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("approval missing", proc.stderr)
+            self.assertNotIn("does-not-exist.json':", proc.stderr)
+
     def test_repeated_signal_identity_refused(self):
         w, f, o = fixtures()
         o["signal"]["signal_id"] = "repeater-east"
