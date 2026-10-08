@@ -234,7 +234,8 @@ class LyingWitnessTest(unittest.TestCase):
 
     def test_replay_refused_even_if_signed_statements_changed(self):
         c, s = self.encounter()
-        _, s2 = self.encounter("PRESENT", "PRESENT", "PRESENT")
+        s2 = [sign_statement(c, role, "PRESENT", self.keys[role]) for role in
+              ("source", "observer-east", "observer-west")]
         with tempfile.TemporaryDirectory() as d:
             path = Path(d) / "state.sqlite"
             record_once(path, self.parent, self.roster, c, s, now=1001)
