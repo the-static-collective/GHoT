@@ -230,7 +230,7 @@ def simulate(
         else:
             status, after, published_signal = "SIMULATED_OBSERVATION", attend(child, "protected"), signal
     result = {
-        "schema": RECEIPT,
+        "schema": RECEIPT_SCHEMA,
         "source_cut_id": world["cut_id"], "source_world_digest": digest(world),
         "field_digest": digest(field), "proposal_digest": proposal["proposal_digest"],
         "approved_aperture": selected["aperture_id"], "instrument_id": selected["instrument_id"],
