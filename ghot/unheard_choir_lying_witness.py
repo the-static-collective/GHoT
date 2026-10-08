@@ -69,6 +69,10 @@ def check_roster(parent: dict, roster: Any) -> None:
                    "actors", "scope"}, "roster")
     if roster["schema"] != ROSTER_SCHEMA or roster["scope"] != "LOCAL_SIMULATION_ONLY":
         raise InvalidWorld("roster cannot grant physical or native capability")
+    if type(parent) is not dict or parent.get("schema") != "ghot.unheard-choir-false-aperture-plan/v0":
+        raise InvalidWorld("a 003 proposal is required")
+    if parent.get("proposal_digest") != digest({k: v for k, v in parent.items() if k != "proposal_digest"}):
+        raise InvalidWorld("parent proposal integrity mismatch")
     if roster["parent_proposal_digest"] != parent["proposal_digest"]:
         raise InvalidWorld("roster does not bind current 003 proposal")
     exact(roster["actors"], set(ROLES), "pinned actors")
@@ -120,6 +124,7 @@ def check_challenge(parent: dict, roster: dict, challenge: Any, now: int) -> Non
         raise InvalidWorld("invalid challenge nonce")
     integer(challenge["issued_at"], 1, 10**12, "challenge issued_at")
     integer(challenge["expires_at"], 1, 10**12, "challenge expires_at")
+    integer(challenge["owner_epoch"], 0, 999999, "challenge owner epoch")
     if (challenge["expires_at"] - challenge["issued_at"] < 1
         or challenge["expires_at"] - challenge["issued_at"] > MAX_TTL
         or not challenge["issued_at"] <= now <= challenge["expires_at"]):
@@ -210,30 +215,24 @@ def assess(parent: dict, roster: dict, challenge: dict,
         "physical_independence_proven": False,
         "owner_identity_independently_proven": False,
         "external_execution": False, "authority": "NONE",
-        "native_relattes_signed_receipt": False, "effects": [],
+        "native_relatte_signed_receipt": False, "effects": [],
         "note": "Signature authenticates only attributed fictional assertion, not physical truth",
     }
     report["assessment_digest"] = digest(report)
     return report
 
 
-def record_once(dbpath: Path, assessment: dict) -> dict:
+def record_once(dbpath: Path, parent: dict, roster: dict, challenge: dict,
+                statements: list, *, now: int) -> dict:
     """Durable owner-local *review occurrence*, not GHoT dispatch or reLATTE admission.
 
     Unique challenge digest enforces one successful local recording. A fresh
     owner challenge is required for a new attempt. Repeated read-only assess
     remains available for historical reconstruction.
     """
-    exact(assessment, {"schema", "parent_proposal_digest", "roster_digest",
-                       "challenge_digest", "witnesses", "source_signed",
-                       "independent_observer_keys", "disposition", "source_claim_proven_true",
-                       "physical_independence_proven", "owner_identity_independently_proven",
-                       "external_execution", "authority", "native_relattes_signed_receipt",
-                       "effects", "note", "assessment_digest"}, "assessment")
-    if assessment["schema"] != REVIEW_SCHEMA or assessment["assessment_digest"] != digest(
-        {k: v for k, v in assessment.items() if k != "assessment_digest"}
-    ):
-        raise InvalidWorld("invalid assessment digest")
+    # Never trust a caller-supplied report or a rehashed forged assessment.
+    # Reverify owner challenge, pinned keys, exact statements and freshness first.
+    assessment = assess(parent, roster, challenge, statements, now=now)
     if assessment["authority"] != "NONE" or assessment["effects"] != [] or assessment["external_execution"]:
         raise InvalidWorld("cannot record effectful or authoritative statement")
     with sqlite3.connect(str(dbpath), timeout=3) as conn:
@@ -284,10 +283,10 @@ def demo() -> dict:
                   (("source", "PRESENT", source), ("observer-east", "EMPTY", east),
                    ("observer-west", "EMPTY", west))]
         report = assess(parent, roster, ch, signed, now=1001)
-        record = record_once(directory / "review.sqlite", report)
+        record = record_once(directory / "review.sqlite", parent, roster, ch, signed, now=1001)
         replay_refused = False
         try:
-            record_once(directory / "review.sqlite", report)
+            record_once(directory / "review.sqlite", parent, roster, ch, signed, now=1001)
         except InvalidWorld:
             replay_refused = True
         return {
@@ -325,7 +324,7 @@ def main() -> int:
             if args.command == "record":
                 if args.db is None:
                     parser.error("record requires --db")
-                result = record_once(args.db, report)
+                result = record_once(args.db, load(args.parent), load(args.roster), load(args.challenge), load(args.statements), now=args.now)
             else:
                 result = report
     except (InvalidWorld, ValueError, OSError, TypeError, sqlite3.Error) as exc:
