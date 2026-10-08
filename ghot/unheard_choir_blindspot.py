@@ -216,6 +216,15 @@ def simulate(
             "signals": world["signals"] + [signal],
         }
         validate_world(child)
+        aperture_group = next(a["group"] for a in field["apertures"]
+                              if a["aperture_id"] == selected["aperture_id"])
+        allowed_kinds = {
+            "community": {"human_need"},
+            "radio": {"radio"},
+            "material": {"material"},
+        }
+        if signal["kind"] not in allowed_kinds[aperture_group]:
+            raise InvalidWorld("source kind does not match selected instrument group")
         if signal["kind"] == "human_need" and not signal["consent_to_review"]:
             status, after, published_signal = "HELD_UNREVIEWED_DECLARED_CONSENT", attend(world, "protected"), None
         else:
@@ -283,6 +292,9 @@ def main() -> int:
             if args.plan is None or args.oracle is None:
                 parser.error("simulate/verify require --plan and --oracle")
             proposal = _read(args.plan)
+            # CLI approval gate runs *before* reading the fixture file.
+            _approval_check(world, field, proposal,
+                            args.approve_proposal, args.approve_aperture)
             if args.command == "simulate":
                 output = simulate(world, field, proposal, _read(args.oracle),
                                   approve_proposal=args.approve_proposal,
