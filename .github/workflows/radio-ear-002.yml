@@ -27,7 +27,7 @@ jobs:
           if [ -f requirements.txt ]; then python3 -m pip install -r requirements.txt; fi
       - name: Static validation
         run: |
-          python3 -m py_compile ghot/radio_ear.py ghot/radio_ear_bridge.py ghot/radio_ear_sim.py
+          python3 -m py_compile ghot/radio_ear.py ghot/radio_ear_bridge.py ghot/radio_ear_sim.py ghot/radio_ear_operator.py
           python3 -m json.tool integrations/radio-ear-002/adapter-manifest.json >/dev/null
       - name: Execute real GHoT signed path with fake RTL-SDR driver
         run: python3 ghot/radio_ear_sim.py
