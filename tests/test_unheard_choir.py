@@ -149,6 +149,13 @@ class ChoirTest(unittest.TestCase):
             with self.subTest(key=key, value=value), self.assertRaises(InvalidWorld):
                 validate(world)
 
+    def test_unhashable_source_classification_fails_closed(self):
+        for field, bad in (("kind", ["human_need"]), ("cue", {"unmet_need": True})):
+            world = fresh()
+            world["signals"][-1][field] = bad
+            with self.subTest(field=field), self.assertRaises(InvalidWorld):
+                validate(world)
+
     def test_claimed_real_observation_fails_closed(self):
         world = fresh()
         world["signals"][0]["evidence_status"] = "PHYSICAL_RF_CONFIRMED"
