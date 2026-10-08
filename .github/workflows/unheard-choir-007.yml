@@ -1,0 +1,50 @@
+name: Unheard Choir 007
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-007
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_hidden_cause.py'
+      - 'tests/test_unheard_choir_hidden_cause.py'
+      - 'docs/UNHEARD-CHOIR-007.md'
+      - '.github/workflows/unheard-choir-007.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hidden-common-cause:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: OpenSSL version
+        run: openssl version
+      - name: Reverify six inherited Choir generations
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_lying_witness.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_collusion.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_counterfeit.py' -v
+      - name: Hidden common-cause hostile DAG tests
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_hidden_cause.py' -v
+      - name: Cold key-discarded signed graph demo
+        run: |
+          python3 ghot/unheard_choir_hidden_cause.py demo > /tmp/choir007.json
+          python3 - <<'PY'
+          import json
+          x = json.load(open('/tmp/choir007.json'))
+          assert x['006_decision'] == 'REVIEW_DECLARED_DISTINCT_MODALITIES_CONCORDANT_NOT_ADMITTED'
+          assert x['007_decision'] == 'HOLD_ATTESTED_HIDDEN_COMMON_CAUSE'
+          assert x['common_upstream_nodes'] == ['fixture-common']
+          assert x['signed_graph_complete_for_fixture'] is True
+          assert x['cold_replay_verified'] is True
+          assert x['physical_truth_proven'] is False
+          assert x['external_execution'] is False
+          print('UNHEARD CHOIR 007 — signed remote shared dependency forces HOLD')
+          PY
