@@ -1,0 +1,51 @@
+name: Unheard Choir 008
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-008
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_missing_node.py'
+      - 'tests/test_unheard_choir_missing_node.py'
+      - 'docs/UNHEARD-CHOIR-008.md'
+      - '.github/workflows/unheard-choir-008.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  missing-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cryptographic provider
+        run: openssl version
+      - name: Inherited 001–007 suites
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_lying_witness.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_collusion.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_counterfeit.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_hidden_cause.py' -v
+      - name: Adversarial external audit/omitted source matrix
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_missing_node.py' -v
+      - name: Signed hidden-node contradiction and read-only cold replay
+        run: |
+          python3 ghot/unheard_choir_missing_node.py demo > /tmp/choir008.json
+          python3 - <<'PY'
+          import json
+          x = json.load(open('/tmp/choir008.json'))
+          assert x['007_decision'] == 'REVIEW_DECLARED_DISJOINT_SIGNED_GRAPH_NOT_ADMITTED'
+          assert x['008_decision'] == 'HOLD_EXTERNAL_AUDIT_CONTRADICTS_OWNER_GRAPH'
+          assert x['auditor_claimed_hidden_node'] == ['fixture-hidden']
+          assert x['signed_graph_conflict_count'] >= 2
+          assert x['cold_replay_verified'] is True
+          assert x['physical_truth_proven'] is False
+          assert x['external_execution'] is False
+          print('UNHEARD CHOIR 008: separately pinned signed auditor claims contradict owner-complete graph; HOLD')
+          PY
