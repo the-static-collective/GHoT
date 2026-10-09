@@ -132,6 +132,7 @@ def plan(world: dict[str, Any]) -> dict[str, Any]:
             reasons.append("LIFE_SUPPORT_UNFUNDED")
 
         eligible = []
+        rejected_routes = []
         for path in sorted(world["paths"], key=lambda x: x["id"]):
             if path["to"] != load["id"]:
                 continue
@@ -161,11 +162,11 @@ def plan(world: dict[str, Any]) -> dict[str, Any]:
             if path_remaining[path["id"]] < load["demand_units"]:
                 problems.append("PATH_CAPACITY_EXCEEDED")
             if problems:
-                reasons.extend(problems)
+                rejected_routes.extend(problems)
             else:
                 eligible.append((source, path))
 
-        if eligible and not reasons[:1]:
+        if eligible and not reasons:
             # Lexical, explainable and NOT a physically optimal objective.
             source, path = sorted(eligible, key=lambda pair: (
                 -remaining[pair[0]["id"]], pair[1]["id"]))[0]
@@ -188,7 +189,7 @@ def plan(world: dict[str, Any]) -> dict[str, Any]:
                 "source_id": None, "path_id": None,
                 "resource": load["resource"], "unit": load["unit"],
                 "proposed_units": 0,
-                "reasons": sorted(set(reasons)) or ["NO_ROUTE_OFFERED"],
+                "reasons": sorted(set(reasons + rejected_routes)) or ["NO_ROUTE_OFFERED"],
             })
     return {
         "schema": PLAN,
