@@ -1,0 +1,56 @@
+{
+  "schema": "ghot.external-adapter-manifest/v0",
+  "adapter_id": "public-print-venues-004",
+  "capabilities": [
+    {
+      "capability": "printer.venue.xerox.mfp.prepare",
+      "protocol": "stdin-json/stdout-json-v0",
+      "command": "python3",
+      "args": [
+        "../../ghot/public_print_venues_004.py"
+      ],
+      "timeout_seconds": 15,
+      "limits": {
+        "requires_operator_owned_local_pdf": true,
+        "pdf_preflight": "pypdf-5.9.0",
+        "network": false,
+        "actuation": false,
+        "payment": false,
+        "model_verified": false
+      }
+    },
+    {
+      "capability": "printer.venue.library.public.prepare",
+      "protocol": "stdin-json/stdout-json-v0",
+      "command": "python3",
+      "args": [
+        "../../ghot/public_print_venues_004.py"
+      ],
+      "timeout_seconds": 15,
+      "limits": {
+        "requires_operator_owned_local_pdf": true,
+        "pdf_preflight": "pypdf-5.9.0",
+        "network": false,
+        "actuation": false,
+        "release_code_created": false
+      }
+    },
+    {
+      "capability": "printer.venue.fedex-office.prepare",
+      "protocol": "stdin-json/stdout-json-v0",
+      "command": "python3",
+      "args": [
+        "../../ghot/public_print_venues_004.py"
+      ],
+      "timeout_seconds": 15,
+      "limits": {
+        "requires_operator_owned_local_pdf": true,
+        "pdf_preflight": "pypdf-5.9.0",
+        "network": false,
+        "actuation": false,
+        "email_sent": false,
+        "payment": false
+      }
+    }
+  ]
+}
