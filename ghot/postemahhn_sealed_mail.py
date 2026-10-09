@@ -415,6 +415,13 @@ def fetch_http(url: str, recipient_address: str) -> list[dict[str, Any]]:
     return parcels
 
 
+def approved_relay_bind(host: str, allow_insecure_lan: bool) -> str:
+    # V0 has public opaque GET/list endpoints: require explicit LAN opt-in.
+    if host not in {"127.0.0.1", "localhost", "::1"} and not allow_insecure_lan:
+        raise ValueError("non-loopback relay requires explicit --allow-insecure-lan")
+    return host
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="PostEmahh'n encrypted MAIL-002 pilot")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -426,6 +433,8 @@ def main() -> None:
     srv = sub.add_parser("serve")
     srv.add_argument("--root", type=Path, required=True)
     srv.add_argument("--port", type=int, default=7789)
+    srv.add_argument("--bind", default="127.0.0.1")
+    srv.add_argument("--allow-insecure-lan", action="store_true")
     push = sub.add_parser("send")
     push.add_argument("--url", required=True)
     push.add_argument("--parcel", type=Path, required=True)
@@ -461,8 +470,9 @@ def main() -> None:
     elif args.cmd == "serve":
         if args.port < 0 or args.port > 65535:
             raise ValueError("invalid port")
-        with ThreadingHTTPServer(("127.0.0.1", args.port), relay_handler(OpaqueRelay(args.root))) as server:
-            print(json.dumps({"bind": "127.0.0.1", "port": server.server_port, "content": "opaque"}), flush=True)
+        host = approved_relay_bind(args.bind, args.allow_insecure_lan)
+        with ThreadingHTTPServer((host, args.port), relay_handler(OpaqueRelay(args.root))) as server:
+            print(json.dumps({"bind": host, "port": server.server_port, "content": "opaque", "authenticated": False, "tls": False}), flush=True)
             server.serve_forever()
     elif args.cmd == "send":
         print(json.dumps(send_http(args.url, load_json(args.parcel)), indent=2))
