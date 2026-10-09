@@ -180,8 +180,11 @@ def make_notice(prior: list, policy: dict, signer: IdentityKey,
     if not claimed_at <= effective_at <= not_after:
         raise InvalidWorld("notice effect cannot precede its declared origin or exceed interval")
     prior_grant = prior[11]
-    if kind == "REVOKE_EXACT_SOURCE_REVIEW" and prior_grant is None:
-        raise InvalidWorld("cannot revoke a missing specific signed source review")
+    if kind == "REVOKE_EXACT_SOURCE_REVIEW":
+        if prior_grant is None:
+            raise InvalidWorld("cannot revoke a missing specific signed source review")
+        if claimed_at < prior_grant["simulated_claimed_at"]:
+            raise InvalidWorld("revocation cannot claim issuance before its target source review")
     body = {
         "schema": NOTICE, "scope": "SOURCE_LOCAL_REPORT_NOT_GLOBAL_EVIDENCE_ABSENCE",
         "policy_digest": digest(policy),
@@ -226,6 +229,9 @@ def verify_notice(prior: list, policy: dict, notice: Any, *, now: int):
     if (notice["review_target_digest"] != target
         or (notice["kind"] == "REVOKE_EXACT_SOURCE_REVIEW" and target is None)):
         raise InvalidWorld("source revocation must identify the exact existing source review")
+    if (notice["kind"] == "REVOKE_EXACT_SOURCE_REVIEW"
+        and notice["simulated_claimed_at"] < prior[11]["simulated_claimed_at"]):
+        raise InvalidWorld("revocation cannot claim issuance before its target source review")
     body = {k: v for k, v in notice.items() if k != "signature"}
     authenticate(body, notice["signature"], policy["source_public_key"],
                  ND, "independent source reviewer")
