@@ -241,7 +241,9 @@ class Worker:
                 return enable(conn, False)
             if op == "media":
                 require(set(args) == {"mode"}, "EXTRA_ACTION_FIELDS")
-                return observe_media(conn, args["mode"])
+                # 003 uses integer epoch seconds for signed crossing validity;
+                # preserve that clock grain for 002 idle freshness as well.
+                return observe_media(conn, args["mode"], at=int(time.time()))
             if op == "verify":
                 require(not args, "EXTRA_ACTION_FIELDS")
                 return cold_verify(conn)
