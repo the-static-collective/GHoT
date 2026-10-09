@@ -365,14 +365,43 @@ def load(path):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("demo", "import", "verify"))
+    parser.add_argument("command", choices=("demo", "export", "import", "verify"))
     for name in ("parcel", "local-package", "pins", "receiver-key", "receiver-db", "receipt"):
         parser.add_argument("--" + name, type=Path)
+    for name in ("source-evidence", "log-policy", "log-root", "gossip-roster",
+                 "gossip-root", "sender-envelope", "sender-key", "not-after",
+                 "nonce", "output"):
+        parser.add_argument("--" + name, type=int if name == "not-after" else
+                            str if name == "nonce" else Path)
     parser.add_argument("--now", type=int)
     args = parser.parse_args()
     try:
         if args.command == "demo":
             result = demo()
+        elif args.command == "export":
+            required = ("source_evidence", "log_policy", "log_root", "gossip_roster",
+                        "gossip_root", "sender_envelope", "sender_key",
+                        "not_after", "nonce", "output")
+            if any(getattr(args, name) is None for name in required):
+                parser.error("export requires full public source files, sender key, nonce, expiry and output")
+            if not args.sender_key.is_file() or args.output.exists():
+                parser.error("sender private key must already exist and output file must not exist")
+            sources = load(args.source_evidence)
+            exact(sources, PUBLIC_ROLES, "source evidence export")
+            common = [sources[name] for name in PUBLIC_ROLES]
+            private = IdentityKey.load_or_create(args.sender_key)
+            parcel = make_parcel(common, load(args.log_policy), load(args.log_root),
+                                 load(args.gossip_roster), load(args.gossip_root),
+                                 load(args.sender_envelope), private,
+                                 not_after=args.not_after, nonce=args.nonce)
+            # Exact standalone public file: receiver needs no sender private key.
+            with args.output.open("x", encoding="utf-8") as stream:
+                json.dump(parcel, stream, sort_keys=True, separators=(",", ":"))
+                stream.flush()
+                import os
+                os.fsync(stream.fileno())
+            result = {"status": "EXPORTED", "parcel_digest": digest(parcel),
+                      "recipient": parcel["recipient"], "source_private_key_included": False}
         else:
             if not args.parcel or not getattr(args, "local_package") or not args.pins:
                 parser.error("import/verify need --parcel --local-package and --pins")
