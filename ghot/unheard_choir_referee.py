@@ -509,9 +509,8 @@ def demo():
         certificates = list(sources[10])
         # Authenticate a genuine but incompatible second epoch assignment:
         second_doc_name = certificates[1]["source_event_digest"]
-        from unheard_choir_source_fork import signed_events as _events
-        documents = _events(sources[0], sources[1], sources[4],
-                            sources[6], sources[7])
+        documents = signed_events(sources[0], sources[1], sources[4],
+                                  sources[6], sources[7])
         collision = make_epoch(sources[8], documents[second_doc_name]["document"],
                                keys["019-epoch-witness"],
                                epoch=certificates[0]["source_epoch"])
