@@ -1,0 +1,231 @@
+{
+  "schema": "ghot.ecology-field/v0",
+  "mode": "simulation-only",
+  "step": 1,
+  "sources": [
+    {
+      "id": "solar-bus",
+      "node": "floating-platform-a",
+      "resource": "electricity",
+      "unit": "mWh",
+      "available_units": 10000,
+      "reserved_units": 1000,
+      "evidence": "synthetic-scenario",
+      "fresh_until_step": 5,
+      "status": "available"
+    },
+    {
+      "id": "wave-converter",
+      "node": "wave-dock",
+      "resource": "electricity",
+      "unit": "mWh",
+      "available_units": 30000,
+      "reserved_units": 2000,
+      "evidence": "unverified-observation",
+      "fresh_until_step": 5,
+      "status": "available"
+    },
+    {
+      "id": "soil-cu-zn-cell",
+      "node": "orchard",
+      "resource": "electricity",
+      "unit": "mWh",
+      "available_units": 100000,
+      "reserved_units": 0,
+      "evidence": "unverified-observation",
+      "fresh_until_step": 5,
+      "status": "available"
+    },
+    {
+      "id": "insulated-heat-bank",
+      "node": "shore-thermal-room",
+      "resource": "heat",
+      "unit": "J",
+      "available_units": 600000,
+      "reserved_units": 200000,
+      "evidence": "synthetic-scenario",
+      "fresh_until_step": 5,
+      "status": "available"
+    },
+    {
+      "id": "tree-coil-detector",
+      "node": "orchard",
+      "resource": "information",
+      "unit": "events",
+      "available_units": 50,
+      "reserved_units": 0,
+      "evidence": "synthetic-scenario",
+      "fresh_until_step": 5,
+      "status": "available"
+    },
+    {
+      "id": "sorted-hdpe-stock",
+      "node": "shore-material-yard",
+      "resource": "materials",
+      "unit": "g",
+      "available_units": 50000,
+      "reserved_units": 0,
+      "evidence": "synthetic-scenario",
+      "fresh_until_step": 5,
+      "status": "available"
+    }
+  ],
+  "loads": [
+    {
+      "id": "fish-aeration",
+      "node": "floating-fish-system",
+      "resource": "electricity",
+      "unit": "mWh",
+      "demand_units": 6000,
+      "priority": "life-support",
+      "selected_by_owner": true,
+      "status": "requested"
+    },
+    {
+      "id": "ghot-background-render",
+      "node": "floating-compute",
+      "resource": "electricity",
+      "unit": "mWh",
+      "demand_units": 6000,
+      "priority": "optional",
+      "selected_by_owner": true,
+      "status": "requested"
+    },
+    {
+      "id": "fish-water-heating",
+      "node": "floating-fish-system",
+      "resource": "heat",
+      "unit": "J",
+      "demand_units": 80000,
+      "priority": "essential",
+      "selected_by_owner": true,
+      "status": "requested"
+    },
+    {
+      "id": "orchard-wind-music",
+      "node": "orchard",
+      "resource": "information",
+      "unit": "events",
+      "demand_units": 5,
+      "priority": "optional",
+      "selected_by_owner": true,
+      "status": "requested"
+    },
+    {
+      "id": "floating-habitat-structure",
+      "node": "floating-city",
+      "resource": "materials",
+      "unit": "g",
+      "demand_units": 10000,
+      "priority": "essential",
+      "selected_by_owner": true,
+      "status": "requested"
+    }
+  ],
+  "paths": [
+    {
+      "id": "solar-to-fish",
+      "from": "solar-bus",
+      "to": "fish-aeration",
+      "resource": "electricity",
+      "unit": "mWh",
+      "limit_units": 999999,
+      "isolation_ok": true,
+      "permit_ok": true,
+      "environment_ok": true,
+      "owner_reviewed": true,
+      "status": "offered"
+    },
+    {
+      "id": "solar-to-compute",
+      "from": "solar-bus",
+      "to": "ghot-background-render",
+      "resource": "electricity",
+      "unit": "mWh",
+      "limit_units": 999999,
+      "isolation_ok": true,
+      "permit_ok": true,
+      "environment_ok": true,
+      "owner_reviewed": true,
+      "status": "offered"
+    },
+    {
+      "id": "wave-to-fish",
+      "from": "wave-converter",
+      "to": "fish-aeration",
+      "resource": "electricity",
+      "unit": "mWh",
+      "limit_units": 999999,
+      "isolation_ok": true,
+      "permit_ok": true,
+      "environment_ok": false,
+      "owner_reviewed": true,
+      "status": "offered"
+    },
+    {
+      "id": "wave-to-compute",
+      "from": "wave-converter",
+      "to": "ghot-background-render",
+      "resource": "electricity",
+      "unit": "mWh",
+      "limit_units": 999999,
+      "isolation_ok": true,
+      "permit_ok": true,
+      "environment_ok": false,
+      "owner_reviewed": true,
+      "status": "offered"
+    },
+    {
+      "id": "soil-to-compute",
+      "from": "soil-cu-zn-cell",
+      "to": "ghot-background-render",
+      "resource": "electricity",
+      "unit": "mWh",
+      "limit_units": 999999,
+      "isolation_ok": false,
+      "permit_ok": true,
+      "environment_ok": true,
+      "owner_reviewed": true,
+      "status": "offered"
+    },
+    {
+      "id": "heatbank-to-fish",
+      "from": "insulated-heat-bank",
+      "to": "fish-water-heating",
+      "resource": "heat",
+      "unit": "J",
+      "limit_units": 999999,
+      "isolation_ok": true,
+      "permit_ok": true,
+      "environment_ok": true,
+      "owner_reviewed": true,
+      "status": "offered"
+    },
+    {
+      "id": "tree-wind-to-music",
+      "from": "tree-coil-detector",
+      "to": "orchard-wind-music",
+      "resource": "information",
+      "unit": "events",
+      "limit_units": 999999,
+      "isolation_ok": true,
+      "permit_ok": true,
+      "environment_ok": true,
+      "owner_reviewed": true,
+      "status": "offered"
+    },
+    {
+      "id": "sorted-hdpe-to-platform",
+      "from": "sorted-hdpe-stock",
+      "to": "floating-habitat-structure",
+      "resource": "materials",
+      "unit": "g",
+      "limit_units": 999999,
+      "isolation_ok": false,
+      "permit_ok": false,
+      "environment_ok": true,
+      "owner_reviewed": true,
+      "status": "offered"
+    }
+  ]
+}
