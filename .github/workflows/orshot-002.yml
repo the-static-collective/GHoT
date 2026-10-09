@@ -1,0 +1,26 @@
+name: ORSHOT-002 receipt boundary
+
+on:
+  pull_request:
+    paths:
+      - 'ghot/physical_receipt_router.py'
+      - 'test/test_physical_receipt_router.py'
+      - '.github/workflows/orshot-002.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signed-print-staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Confirm OpenSSL available
+        run: openssl version
+      - name: Verify trust pins, exact-PDF hash, and no-print boundary
+        run: python3 -m unittest discover -s test -p test_physical_receipt_router.py -v
