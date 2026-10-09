@@ -92,3 +92,6 @@ jobs:
 
       - name: Riff-Raft simulated transport network
         run: python3 ghot/riff_raft_sim.py
+
+      - name: Riff-Raft Rube Goldberg terraformer rehearsal
+        run: python3 ghot/riff_raft_terraformer_sim.py

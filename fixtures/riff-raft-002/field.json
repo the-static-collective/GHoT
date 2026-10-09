@@ -1,0 +1,26 @@
+{
+  "field_id": "RIFF-RAFT-MAKE-GROUND-PLOT-001",
+  "owner_id": "orchard-steward",
+  "permissions": {
+    "land_steward_consented": true,
+    "erosion_plan_reviewed": true,
+    "native_seed_origin_checked": true,
+    "water_path_reviewed": true,
+    "biological_contamination_absent": true
+  },
+  "stocks": {
+    "rain_ml": 1200,
+    "banked_ml": 0,
+    "runoff_ml": 0,
+    "soil_water_ml": 0,
+    "brush_g": 1100,
+    "structure_brush_g": 0,
+    "compost_g": 400,
+    "soil_amendment_g": 0,
+    "imported_biomass_g": 400,
+    "mulch_g": 0,
+    "biomass_loss_g": 0,
+    "native_seeds": 8,
+    "seeds_sown": 0
+  }
+}
