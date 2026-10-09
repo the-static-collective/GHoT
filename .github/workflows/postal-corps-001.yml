@@ -1,0 +1,61 @@
+name: POSTAL-CORPS-001 first mile
+
+on:
+  pull_request:
+    paths:
+      - 'ghot/postal_corps.py'
+      - 'test/test_postal_corps.py'
+      - 'test/postal_corps_native_lemon.py'
+      - 'test/postal_corps_native_penny.mjs'
+      - '.github/workflows/postal-corps-001.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  carrier-claims-and-donor-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ghot
+      - uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/lemonPRESS
+          ref: 62a20ebf1e5b65ed8ff1ad3559e2b8779e4656be
+          path: donor-lemonpress
+      - uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/Jubilee-treasury
+          ref: a36777cb87bcfb6b7706b910ba18c4c4b24c73a3
+          path: donor-penny
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Source pins and local OpenSSL
+        run: |
+          openssl version
+          test "$(git -C donor-lemonpress rev-parse HEAD)" = '62a20ebf1e5b65ed8ff1ad3559e2b8779e4656be'
+          test "$(git -C donor-penny rev-parse HEAD)" = 'a36777cb87bcfb6b7706b910ba18c4c4b24c73a3'
+      - name: Verify six signer roles and hostile custody states
+        working-directory: ghot
+        run: python3 -m unittest discover -s test -p test_postal_corps.py -v
+      - name: Actual LemonPRESS Dispatch Gate produces source snapshot
+        run: |
+          python3 ghot/test/postal_corps_native_lemon.py \
+            --lemon donor-lemonpress \
+            --out "$RUNNER_TEMP/postal-penny-proposals.json"
+      - name: PENNY-014 native treasury only accepts independent signed work
+        run: |
+          node ghot/test/postal_corps_native_penny.mjs \
+            "$RUNNER_TEMP/postal-penny-proposals.json" \
+            donor-penny/src/penny-work-matter-014.mjs
+      - name: Archive public-safe simulation outcome only
+        uses: actions/upload-artifact@v4
+        with:
+          name: postal-corps-001-no-physical-carriage
+          path: ${{ runner.temp }}/postal-penny-proposals.json
+          if-no-files-found: error
+          retention-days: 14
