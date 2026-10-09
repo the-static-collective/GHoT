@@ -1,0 +1,65 @@
+name: Unheard Choir 016
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-016
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_witness_custody.py'
+      - 'tests/test_unheard_choir_witness_custody.py'
+      - 'docs/UNHEARD-CHOIR-016.md'
+      - '.github/workflows/unheard-choir-016.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  witness-owns-nothing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    steps:
+      - uses: actions/checkout@v4
+      - name: Crypto and SQLite providers
+        run: |
+          openssl version
+          python3 -c 'import sqlite3; print(sqlite3.sqlite_version)'
+      - name: 016 signed omissions, unknown response, source revocation and hostile cases
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_witness_custody.py' -v
+      - name: Inherited Choir 001–015 adversarial suites
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_lying_witness.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_collusion.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_counterfeit.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_hidden_cause.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_missing_node.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_timestamp.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_gossip.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_vanishing.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_dead_letter.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_reincarnation.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_successors.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_third_party.py' -v
+      - name: Holder cannot become a source and source silence cannot become denial
+        run: |
+          python3 ghot/unheard_choir_witness_custody.py demo > /tmp/choir016.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/choir016.json'))
+          assert x['full_prior_evidence_archive_only'] == 'HOLD_CUSTODY_EVIDENCE_ONLY_NOT_ADMITTED'
+          assert x['source_never_responded'] == 'HOLD_SOURCE_RESPONSE_UNKNOWN_NOT_DENIAL'
+          assert x['signed_source_unavailable'] == 'HOLD_SOURCE_SIGNED_UNAVAILABLE_NOT_DENIAL'
+          assert x['signed_exact_source_review_revocation'] == 'HOLD_SOURCE_REVOKED_CURRENT_ARCHIVE_REVIEW'
+          assert x['revoked_source_history_retained'] is True
+          assert x['no_reply_does_not_mean_refusal'] is True
+          assert x['signed_omission_does_not_prove_absence'] is True
+          assert x['neutral_signed_local_receipt'] is True
+          assert x['cold_public_receipt_verified'] is True
+          assert x['native_relatte_admission'] is False
+          assert x['external_execution'] is False
+          print('UNHEARD CHOIR 016: signed gaps preserve evidence; silence stays UNKNOWN, revoked source blocks current review')
+          PY
