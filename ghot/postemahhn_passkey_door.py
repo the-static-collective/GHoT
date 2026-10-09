@@ -206,6 +206,8 @@ def verify_assertion(root, ticket, wallet_request, policy, station_public, asser
     issued = root / "assertions" / (digest(unb64url(ticket["challenge"]))+".json")
     if not issued.is_file() or issued.is_symlink() or load_json(issued) != ticket:
         raise ValueError("unknown assertion challenge")
+    if issued.with_suffix(".used").exists():
+        raise ValueError("passkey challenge already consumed")
     file = credential_file(root, ticket["credential_id"])
     if not file.is_file() or file.is_symlink():
         raise ValueError("credential not registered")
