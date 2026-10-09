@@ -156,7 +156,7 @@ def assess(parcel: dict, historic_local_package: dict, historic_pins: dict,
     # evidence is checked at the original signed challenge instant, not promoted
     # to any current action/grant.
     historical_instant = common[2]["issued_at"]
-    verify_package(common, policy, root, roster, gossip_root,
+    verify_package(common, policy, root, roster,
                    historic_pins["recipient_site"], historic_local_package,
                    now=historical_instant)
     comparison = compare_views(common, policy, root, roster, gossip_root,
