@@ -199,7 +199,9 @@ def verify_epochs(policy: dict, source_events: dict,
         body = {k: v for k, v in cert.items() if k != "signature"}
         authenticate(body, cert["signature"], policy["pinned_epoch_witness"],
                      E_DOMAIN, "independent epoch assignment")
-        by_document.setdefault(name, []).append(cert)
+        # Repeated authentication of the same (event, epoch) is not a
+        # contradictory assignment, even when ECDSA signatures differ.
+        by_document.setdefault(name, set()).add(epoch)
         by_epoch.setdefault(epoch, set()).add(name)
     complete = set(by_document) == set(policy["event_digest_set"])
     unique = (complete and all(len(x) == 1 for x in by_document.values())
@@ -207,8 +209,8 @@ def verify_epochs(policy: dict, source_events: dict,
     winner = None
     if unique:
         winner = max(
-            ((certs[0]["source_epoch"], name)
-             for name, certs in by_document.items())
+            ((next(iter(epochs)), name)
+             for name, epochs in by_document.items())
         )[1]
     return {
         "complete": complete, "unique": unique, "winner": winner,
