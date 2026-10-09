@@ -1,0 +1,55 @@
+name: PostEmahh'n MAIL-001
+
+on:
+  pull_request:
+    paths:
+      - 'ghot/postemahhn_mail.py'
+      - 'test/test_postemahhn_mail.py'
+      - '.github/workflows/postemahhn-mail-001.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  addressed-mail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify OpenSSL available
+        run: openssl version
+      - name: Run addressed MAIL, HOLD and release tests
+        run: python3 -m unittest discover -s test -p test_postemahhn_mail.py -v
+      - name: Send actual Orshot PDF to personal digital address and release locally
+        shell: bash
+        run: |
+          set -euo pipefail
+          D="$RUNNER_TEMP/posted-mail"
+          mkdir -p "$D"
+          curl --fail --location --retry 2 --max-time 35 \
+            'https://storage.orshot.com/cloud/w-11442/renders/images/orshot-001-signed-test-receipt-6bu9B4ng54q.pdf' \
+            -o "$D/original.pdf"
+          python3 ghot/postemahhn_mail.py register \
+            --owner-key "$D/secrets/recipient.pem" --mail-root "$D/mail" --contact-out "$D/address.json"
+          python3 ghot/postemahhn_mail.py compose \
+            --sender-key "$D/secrets/sender.pem" --to "$D/address.json" \
+            --pdf "$D/original.pdf" --out "$D/portable-parcel"
+          python3 ghot/postemahhn_mail.py receive \
+            --mail-root "$D/mail" --parcel "$D/portable-parcel"
+          python3 ghot/postemahhn_mail.py inbox \
+            --mail-root "$D/mail" --owner-key "$D/secrets/recipient.pem" > "$D/inbox.json"
+          cid="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))[0]["crossing_id"])' "$D/inbox.json")"
+          python3 ghot/postemahhn_mail.py release \
+            --mail-root "$D/mail" --owner-key "$D/secrets/recipient.pem" \
+            --crossing-id "$cid" --station-id station-locale-001 --out "$D/release.json"
+          python3 ghot/postemahhn_mail.py export \
+            --mail-root "$D/mail" --release "$D/release.json" \
+            --station-id station-locale-001 --out-dir "$D/print-ready"
+          destination="$(find "$D/print-ready" -maxdepth 1 -name 'postemahhn-*.pdf' -type f -print -quit)"
+          test -n "$destination"
+          cmp "$D/original.pdf" "$destination"
+          echo 'The exact Orshot PDF arrived at a personal address and was released at a named station; no hardware printing invoked.'
