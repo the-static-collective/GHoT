@@ -1,0 +1,50 @@
+name: GHoT Public Print Venues 004 — native PDF and no-dispatch HOLD
+on:
+  push:
+    branches: [experiment/public-print-venues-004]
+  pull_request:
+    paths:
+      - 'ghot/public_print_venues_004.py'
+      - 'ghot/public_print_venues_004_sim.py'
+      - 'adapters/public-print-venues-004/**'
+      - 'docs/PUBLIC-PRINT-VENUES-004.md'
+      - '.github/workflows/public-print-venues-004.yml'
+permissions:
+  contents: read
+jobs:
+  public-print:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install native PDF structure inspector
+        run: python3 -m pip install 'pypdf==5.9.0'
+      - name: Compile bounded local-only adapter
+        run: python3 -m py_compile ghot/public_print_venues_004.py ghot/public_print_venues_004_sim.py
+      - name: Inspect real PDF page structure and reject hostile public print routes
+        run: python3 ghot/public_print_venues_004_sim.py
+      - name: Inherit Zebra and Kodak proof
+        run: python3 ghot/print_surfaces_003_sim.py
+      - name: Inherit physical 3D printer HOLD
+        run: python3 ghot/printer_organ_sim.py
+      - name: Inherit signed-source three-owner composition HOLD
+        run: python3 ghot/sovereign_print_shop_002_sim.py
+      - name: Check GHoT pantry exposes exactly the venue surface capabilities
+        env:
+          GHOT_ADAPTER_MANIFESTS: ${{ github.workspace }}/adapters/public-print-venues-004/adapter-manifest.json
+        run: |
+          python3 ghot/reference_node.py pantry > /tmp/public-print-004-pantry.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/public-print-004-pantry.json'))
+          assert d['status']=='ok'
+          caps={offer['capability'] for offer in d['output']['offers']}
+          names={'printer.venue.xerox.mfp.prepare',
+                 'printer.venue.library.public.prepare',
+                 'printer.venue.fedex-office.prepare'}
+          assert names <= caps, f'Unregistered venues: {names-caps}'
+          print('THREE_PRINT_VENUES_VISIBLE_NO_PRINT_AUTHORITY')
+          PY
