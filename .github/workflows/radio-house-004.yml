@@ -1,0 +1,46 @@
+name: RADIO HOUSE 004 — clickable localhost console and signed real HTTP
+on:
+  push:
+    branches:
+      - experiment/radio-house-004-clicky-lan
+  pull_request:
+    paths:
+      - ghot/radio_house_004.py
+      - web/radio-house-004.html
+      - docs/RADIO-HOUSE-004.md
+      - tests/test_radio_house_004.py
+      - .github/workflows/radio-house-004.yml
+permissions:
+  contents: read
+jobs:
+  click-to-admit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Original media, power and signed-courier safety tests
+        run: |
+          python3 -m unittest discover -s tests -p 'test_radio_house_001.py' -v
+          python3 -m unittest discover -s tests -p 'test_radio_house_002.py' -v
+          python3 -m unittest discover -s tests -p 'test_radio_house_003.py' -v
+      - name: Real localhost HTTP in separate worker subprocess and requester CLI
+        run: python3 -m unittest discover -s tests -p 'test_radio_house_004.py' -v
+      - name: Preserve strict private listener split and UI buttons
+        run: |
+          python3 -m py_compile ghot/radio_house_004.py
+          python3 - <<'PY'
+          from pathlib import Path
+          script=Path('ghot/radio_house_004.py').read_text()
+          assert 'ThreadingHTTPServer(("127.0.0.1",port)' in script
+          assert '0.0.0.0' not in script
+          page=Path('web/radio-house-004.html').read_text()
+          for term in ('Enable voluntary compute','Withdraw permission',
+                       'Confirm idle','Step ×10','Refuse / cancel'):
+              assert term in page,term
+          print('RADIO HOUSE 004: BOUNDED CLICK CONTROLS AND SIGNED HTTP VERIFIED')
+          PY
