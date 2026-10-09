@@ -45,6 +45,13 @@ jobs:
           ref: ded308b463df4eda2003000b4202d3c7aaa2dc84
           path: external/static-os/external/reLATTE-013
           persist-credentials: false
+      - name: Checkout original pinned GHoT instrument rack owner (Static OS CAD donor)
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/GHoT
+          ref: 6e4aab6aec3b28f8dd50d01c3d571ae754c653d1
+          path: external/static-os/external/GHoT-CAD-donor
+          persist-credentials: false
       - name: Install native CAD and actual slicer requirements
         run: |
           python3 -m pip install cadquery==2.8.0 cryptography
@@ -60,7 +67,7 @@ jobs:
       - name: Native Static OS instrument to solved CAD and actual signed OCCT STEP
         working-directory: external/static-os
         env:
-          GHOT_SRC: ${{ github.workspace }}
+          GHOT_SRC: ${{ github.workspace }}/external/static-os/external/GHoT-CAD-donor
           GHOT_HOME: ${{ runner.temp }}/ghot-shop-002
           GHOT_ADAPTER_MANIFESTS: ${{ github.workspace }}/external/static-os/integrations/apparatus-002/adapter-manifest.json
         run: |
