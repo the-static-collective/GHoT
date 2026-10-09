@@ -1,0 +1,9 @@
+{
+  "name": "PostEmahh'n Carrier's Pocket — Experimental",
+  "short_name": "Carrier Pocket",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f3efe7",
+  "theme_color": "#183942",
+  "description": "Offline-only synthetic custody QR proofs; not real carrier infrastructure."
+}
