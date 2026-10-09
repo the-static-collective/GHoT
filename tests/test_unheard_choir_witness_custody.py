@@ -148,10 +148,16 @@ class UnheardWitnessCustodyTests(unittest.TestCase):
     def test_expired_source_status_never_becomes_current_authority(self):
         prior = self.evidence()
         note = self.notice_for(prior, "REVOKE_EXACT_SOURCE_REVIEW",
-                               when=1000, effective=1050, end=1100)
+                               when=1100, effective=1150, end=1200)
         result = self.evaluate(prior, notice=note, now=1250)
         self.assertEqual(result["decision"], CUSTODY_ONLY)
         self.assertFalse(result["source_notice_status"]["active_at_simulated_clock"])
+
+    def test_revocation_cannot_predate_its_original_approval(self):
+        prior = self.evidence()
+        with self.assertRaises(InvalidWorld):
+            self.notice_for(prior, "REVOKE_EXACT_SOURCE_REVIEW",
+                            when=1000, effective=1100, end=5000)
 
     def test_missing_owner_consent_stays_unknown(self):
         prior = self.inputs(missing_owner=True)
