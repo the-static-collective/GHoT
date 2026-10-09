@@ -253,10 +253,12 @@ def assemble(claims: dict, pinned: dict, keys: dict, grants: dict) -> dict:
     return packet
 
 
-def verify(packet: dict) -> bool:
-    """Cold verifier uses public evidence only; never accepts self-asserted success."""
+def verify(packet: dict, *, expected_pins: dict | None = None) -> bool:
+    """Cold verifier; an out-of-band pinset is required for external signer trust."""
     if not isinstance(packet, dict) or packet.get("schema") != SCHEMA:
         raise ValueError("WRONG_PACKET_SCHEMA")
+    if expected_pins is not None and packet.get("pinned") != expected_pins:
+        raise ValueError("EXTERNAL_OWNER_PIN_MISMATCH")
     proposal = compose(packet["claims"], packet["pinned"])
     if packet["proposal"] != proposal:
         raise ValueError("FORGED_OR_STALE_PROPOSAL")
@@ -336,10 +338,16 @@ def demo(home: Path, *, approve: bool = True, stock: int = 30) -> dict:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) >= 2 and argv[1] == "verify" and len(argv) == 3:
+    if len(argv) >= 2 and argv[1] == "verify" and len(argv) in (3, 5):
+        if len(argv) == 5 and argv[3] != "--pins":
+            raise ValueError("usage: verify <packet.json> [--pins <trusted-roster.json>]")
         packet = json.loads(Path(argv[2]).read_text(encoding="utf-8"))
-        verify(packet)
-        print(json.dumps({"verified": True, "status": packet["status"]}))
+        expected = (json.loads(Path(argv[4]).read_text(encoding="utf-8"))
+                    if len(argv) == 5 else None)
+        verify(packet, expected_pins=expected)
+        print(json.dumps({"verified": True, "status": packet["status"],
+                          "trust_scope": ("externally-pinned" if expected is not None
+                                          else "packet-pinned-only")}))
         return 0
     if len(argv) >= 2 and argv[1] == "demo":
         if len(argv) > 4 or any(a not in ("--hold",) for a in argv[2:]):
@@ -349,7 +357,7 @@ def main(argv: list[str]) -> int:
             # Key material is destroyed when the temporary directory closes.
             print(json.dumps(packet, sort_keys=True, indent=2))
         return 0
-    raise ValueError("usage: world_asks_back.py demo [--hold] | verify <packet.json>")
+    raise ValueError("usage: world_asks_back.py demo [--hold] | verify <packet.json> [--pins <trusted-roster.json>]")
 
 
 if __name__ == "__main__":
