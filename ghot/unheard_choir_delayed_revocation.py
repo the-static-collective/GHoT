@@ -21,7 +21,7 @@ from unheard_choir_witness_custody import (
     build_fixture as fixture016, make_notice,
     assess as assess016, verify_policy as verify016_policy,
     verify_notice as verify016_notice,
-    CUSTODY_ONLY, REVOKED, prior_key_set,
+    CUSTODY_ONLY, REVOKED, UNAVAILABLE, RECORD_GAP, DECLINED, prior_key_set,
 )
 from unheard_choir_successors import exact, public, distinct, sign, authenticate
 from unheard_choir_third_party import check_clock
@@ -118,7 +118,7 @@ def make_snapshot(prior: list, policy016: dict, root016: dict,
     if site not in SITES or public(signer.public_jwk()) != public(roster["sites"][site]):
         raise InvalidWorld("only exact pinned local site may create its observation")
     a = assess016(prior, policy016, root016, holder_manifest, notice, now=now)
-    if a["decision"] not in (CUSTODY_ONLY, REVOKED):
+    if a["decision"] not in (CUSTODY_ONLY, REVOKED, UNAVAILABLE, RECORD_GAP, DECLINED):
         raise InvalidWorld("unexpected 016 predecessor; cannot claim a verified positive snapshot")
     body = {
         "schema": OBS, "scope": "OBSERVER_KNOWLEDGE_NOT_WORLD_COMPLETENESS",
@@ -165,7 +165,7 @@ def verify_snapshot(prior: list, policy016: dict, root016: dict,
     check_clock(now, "observation clock")
     a = assess016(prior, policy016, root016, holder_manifest,
                   snapshot["source_notice"], now=now)
-    if (a["decision"] not in (CUSTODY_ONLY, REVOKED)
+    if (a["decision"] not in (CUSTODY_ONLY, REVOKED, UNAVAILABLE, RECORD_GAP, DECLINED)
         or snapshot["016_assessment_digest"] != a["assessment_digest"]
         or snapshot["016_decision"] != a["decision"]
         or snapshot["revocation_knowledge"] != local_status(
@@ -215,10 +215,10 @@ def observe_once(db_path: Path, prior: list, policy016: dict, root016: dict,
             existing = db.execute("SELECT snapshot_json FROM original_observations WHERE site=?",
                                   (site,)).fetchone()
             if existing:
-                if json.loads(existing[0]) != snapshot:
+                original = json.loads(existing[0])
+                if original != snapshot:
                     # ECDSA may be nondeterministic: a second freshly signed
                     # snapshot must not rewrite an existing local history.
-                    original = json.loads(existing[0])
                     verify_snapshot(prior, policy016, root016, manifest, roster,
                                     pinned_root, original, expected_site=site)
                     if {k: v for k, v in original.items() if k != "signature"} != {
