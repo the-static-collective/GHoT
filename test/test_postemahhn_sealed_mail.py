@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ghot"))
 from postemahhn_mail import register, digest
 from postemahhn_sealed_mail import (
     OpaqueRelay, accept_at_station, fetch_http, make_sealed,
-    open_sealed, relay_handler, send_http, stage_release, verify_sealed,
+    open_sealed, relay_handler, send_http, stage_release, verify_sealed, approved_relay_bind,
 )
 from relatte_identity import IdentityKey, sign_receipt
 
@@ -161,6 +161,13 @@ class TravelingPostOfficeTest(unittest.TestCase):
         for f in (self.root / "relay-node").rglob("*"):
             if f.is_file():
                 self.assertNotIn(b"%PDF-", f.read_bytes())
+
+
+    def test_nonlocal_relay_requires_explicit_opt_in(self):
+        self.assertEqual(approved_relay_bind("127.0.0.1", False), "127.0.0.1")
+        with self.assertRaisesRegex(ValueError, "explicit --allow-insecure-lan"):
+            approved_relay_bind("0.0.0.0", False)
+        self.assertEqual(approved_relay_bind("0.0.0.0", True), "0.0.0.0")
 
 
 if __name__ == "__main__":
