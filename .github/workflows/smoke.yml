@@ -107,3 +107,6 @@ jobs:
 
       - name: Counterfactual Riff-Raft observed-evidence proposer tests
         run: python3 ghot/riff_raft_counterfactual_sim.py
+
+      - name: Counterfactual signed reception hostile tests
+        run: python3 ghot/riff_raft_counterfactual_return_sim.py
