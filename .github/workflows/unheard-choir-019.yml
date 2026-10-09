@@ -1,0 +1,66 @@
+name: Unheard Choir 019
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-019
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_referee.py'
+      - 'tests/test_unheard_choir_referee.py'
+      - 'docs/UNHEARD-CHOIR-019.md'
+      - '.github/workflows/unheard-choir-019.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  referee-refused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Signing and SQLite providers
+        run: |
+          openssl version
+          python3 -c 'import sqlite3; print(sqlite3.sqlite_version)'
+      - name: 019 independently pinned epochs, referee refusal and owner-local selection
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_referee.py' -v
+      - name: Inherited Choir 001–018 signed suites
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_lying_witness.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_collusion.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_counterfeit.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_hidden_cause.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_missing_node.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_timestamp.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_gossip.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_vanishing.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_dead_letter.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_reincarnation.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_successors.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_third_party.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_witness_custody.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_delayed_revocation.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_source_fork.py' -v
+      - name: Independently certified epochs cannot create global grant
+        run: |
+          python3 ghot/unheard_choir_referee.py demo > /tmp/choir019.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/choir019.json'))
+          assert x['no_referee'] == 'HOLD_REFEREE_HAS_NOT_RULED'
+          assert x['signed_referee_declined'] == 'HOLD_REFEREE_EXPLICITLY_DECLINED'
+          assert x['independently_signed_epoch_collision'] == 'HOLD_CONFLICTING_EPOCH_ASSIGNMENTS'
+          assert x['referee_and_separate_owner_consented'] == 'HOLD_SCOPED_ARCHIVAL_REVIEW_SELECTED_NOT_ADMITTED'
+          assert x['old_source_fork_retained'] is True
+          assert x['owner_local_receipt_durable'] is True
+          assert x['cold_public_receipt_valid'] is True
+          assert x['native_relatte_receive'] is False
+          assert x['external_execution'] is False
+          print('UNHEARD CHOIR 019: separate epoch proof + referee + owner review still HOLD; refusal and split epochs stay durable')
+          PY
