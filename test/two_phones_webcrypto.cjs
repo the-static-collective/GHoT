@@ -5,9 +5,7 @@
    Only test keys exist in process memory. */
 "use strict";
 const {readFileSync,writeFileSync}=require("node:fs");
-const {webcrypto}=require("node:crypto");
 const assert=require("node:assert/strict");
-globalThis.crypto=webcrypto;
 const C=require("../web/carrier-pocket/two-phone-core.js");
 const qrgen=require("../web/carrier-pocket/vendor/qrgen.min.js");
 const [dispatchFile,out]=process.argv.slice(2);
