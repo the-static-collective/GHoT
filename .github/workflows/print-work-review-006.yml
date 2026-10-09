@@ -1,0 +1,150 @@
+name: GHoT Print Witness 006 — native Full Measure to PENNY review
+on:
+  push:
+    branches: [experiment/fullmeasure-penny-witness-006]
+  pull_request:
+    paths:
+      - "ghot/print_work_review_006.mjs"
+      - "tests/print-work-review-006.test.mjs"
+      - "docs/FULLMEASURE-PENNY-PRINT-WITNESS-006.md"
+      - ".github/workflows/print-work-review-006.yml"
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Pin real Full Measure source
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/full-measure-world-layer
+          ref: c9206d5055ad574a23acb2eceb5f8785a4ad64fe
+          path: external/full-measure
+          persist-credentials: false
+      - name: Pin real PENNY-014 source
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/Jubilee-treasury
+          ref: a36777cb87bcfb6b7706b910ba18c4c4b24c73a3
+          path: external/penny-014
+          persist-credentials: false
+      - name: Install Full Measure runner and real PDF inspector
+        run: |
+          (cd external/full-measure && npm ci --ignore-scripts --no-audit --no-fund)
+          python3 -m pip install pypdf==5.9.0
+      - name: Build held source from actual GHoT PDF preflight
+        run: |
+          mkdir -p dist/print-witness-006
+          python3 - <<'PY'
+          import json,os,sys
+          from pathlib import Path
+          from tempfile import TemporaryDirectory
+          from pypdf import PdfWriter
+          sys.path.insert(0,'ghot')
+          from public_print_venues_004 import compile_handoff,json_digest
+          with TemporaryDirectory() as temporary:
+              root=Path(temporary)
+              (root/'reviewed').mkdir()
+              writer=PdfWriter()
+              writer.add_blank_page(width=612,height=792)
+              with (root/'reviewed/approved.pdf').open('wb') as f:writer.write(f)
+              os.environ['GHOT_PUBLIC_PRINT_INBOX']=str(root)
+              cmd={
+                'schema':'ghot.public-print-input-004/v0',
+                'action':'printer.venue.library.public.prepare',
+                'input':{
+                  'relative_pdf':'reviewed/approved.pdf',
+                  'source_ref':'fixture:print006',
+                  'venue_ref':'fixture:library006',
+                  'method':'MANUAL_WEB_RELEASE','copies':1,
+                  'color':'MONOCHROME','duplex':'SIMPLEX',
+                  'paper':'LETTER','sensitivity':'PUBLIC','operator_review':True
+                }
+              }
+              packet=compile_handoff(cmd['action'],cmd)
+              assert packet['packet_id']=='ghot-print-venue-004:'+json_digest(
+                {k:v for k,v in packet.items() if k!='packet_id'})
+              Path('dist/print-witness-006/source004.json').write_text(json.dumps(packet,indent=2)+'\n')
+              print('NATIVE_PDF_PREFLIGHT_AND_ORIGINAL_RECEIPT_GOOD')
+          PY
+          FM="$PWD/external/full-measure"
+          PN="$PWD/external/penny-014"
+          node "$FM/node_modules/tsx/dist/cli.mjs" "$PWD/ghot/public_print_world_005.mjs" \
+            "$FM" "$PN" \
+            "$PWD/dist/print-witness-006/source004.json" \
+            "$PWD/dist/print-witness-006/held005.json"
+      - name: Hostile source and native confirmation/PENNY zero tests
+        working-directory: external/full-measure
+        run: |
+          FM_DONOR_ROOT="$GITHUB_WORKSPACE/external/full-measure" \
+          PENNY_DONOR_ROOT="$GITHUB_WORKSPACE/external/penny-014" \
+          GHOT_005_PROOF_PATH="$GITHUB_WORKSPACE/dist/print-witness-006/held005.json" \
+          node --import tsx --test "$GITHUB_WORKSPACE/tests/print-work-review-006.test.mjs"
+      - name: Create synthetic local Full Measure participation store
+        run: |
+          node --input-type=module - <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {fakeGardenStore} from './tests/print-work-review-006.test.mjs';
+          const prefix='dist/print-witness-006/';
+          const source=JSON.parse(readFileSync(prefix+'held005.json','utf8'));
+          const {store,selection}=fakeGardenStore(source);
+          writeFileSync(prefix+'synthetic-local-garden.json',JSON.stringify(store,null,2));
+          writeFileSync(prefix+'operator-selection.json',JSON.stringify(selection,null,2));
+          console.log('SYNTHETIC_FM_LOCAL_STORE_NOT_REAL_HUMANS');
+          JS
+      - name: Execute native Full Measure confirmation to PENNY work-review proof
+        run: |
+          FM="$PWD/external/full-measure"
+          PN="$PWD/external/penny-014"
+          node "$FM/node_modules/tsx/dist/cli.mjs" "$PWD/ghot/print_work_review_006.mjs" \
+            "$FM" "$PN" \
+            "$PWD/dist/print-witness-006/held005.json" \
+            "$PWD/dist/print-witness-006/synthetic-local-garden.json" \
+            "$PWD/dist/print-witness-006/operator-selection.json" \
+            "$PWD/dist/print-witness-006/review006.json"
+      - name: Verify no currency, false witness, printer control or backing
+        run: |
+          python3 - <<'PY'
+          import json
+          p=json.load(open('dist/print-witness-006/review006.json'))
+          assert p['status']=='LOCAL_HUMAN_RECORD_TO_PENNY_REVIEW_NO_ALLOCATION'
+          assert p['full_measure_sheet_deed_count']==1
+          assert p['full_measure_local_record_state']=='CONFIRMED_BY_LOCAL_STORE'
+          assert p['full_measure_human_identity_authenticated'] is False
+          assert p['actual_physical_print_independently_verified'] is False
+          assert p['source_export_signature_verified'] is False
+          assert p['penny_review']['status']=='REVIEW_ELIGIBLE_ONLY_NEEDS_INDEPENDENT_WORK_WITNESS'
+          assert p['penny_review']['penny_work_witness_attestation_present'] is False
+          assert p['penny_review']['pending_penny_units_created']==0
+          assert p['penny_review']['active_penny_units_issued']==0
+          assert p['penny_review']['work_quantity_authorized']==0
+          assert p['native_penny_check']['boxBookCoinCount']==0
+          assert p['native_penny_check']['sourceEventCount']==0
+          assert p['vendor_submission_performed'] is False
+          assert p['real_relatte_crossing'] is False
+          print('NATIVE_FM_LOCAL_CONFIRMED_RECORD_PENNY_REVIEW_ZERO_ISSUANCE')
+          PY
+      - name: Full Measure authentic donor role and Deed regression
+        working-directory: external/full-measure
+        run: node --import tsx --test tests/pledgeAuthority.test.ts tests/fullMeasure.test.ts
+      - name: PENNY-014 authentic donor signed work and coin backing regression
+        working-directory: external/penny-014
+        run: node --test test/penny-work-matter-014.test.mjs
+      - name: Upload public-safe proof only
+        uses: actions/upload-artifact@v4
+        with:
+          name: ghot-print-work-review-006-no-allocation
+          path: |
+            dist/print-witness-006/source004.json
+            dist/print-witness-006/held005.json
+            dist/print-witness-006/review006.json
+          retention-days: 7
+          if-no-files-found: error
