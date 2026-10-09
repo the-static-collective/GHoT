@@ -128,7 +128,10 @@ class PrintShop(unittest.TestCase):
 
     def test_native_signed_proof_must_bind_original_source(self):
         values=list(pieces())
-        values[5]["request"]["request_id"]="other"
+        changed=copy.deepcopy(values[0])
+        changed["purpose_ref"]="new-destination"
+        changed["request_id"]="static-os-fabrication-013:"+digest({k:v for k,v in changed.items() if k!="request_id"})
+        values[5]["request"]=changed
         with self.assertRaisesRegex(ValueError,"RELATTE_PROOF_SOURCE_CHANGED"):
             validate_binding(*values)
 
