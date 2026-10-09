@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ghot"))
 
 from postemahhn_mail import (
     address, authorize_export, compose, contact_for_key, export_pdf, inbox,
-    read_json as unused_read_json,
+    load_json,
     receive, register, release, verify_parcel, write_json,
 )
 from relatte_identity import IdentityKey, sign_receipt
@@ -61,7 +61,7 @@ class AddressedMailTest(unittest.TestCase):
             self.delivered()
 
     def test_crossing_signature_rejected_if_changed(self):
-        crossing = unused_read_json(self.parcel / "crossing.json")
+        crossing = load_json(self.parcel / "crossing.json")
         crossing["requested_effect"]["recipient_address"] = "pm1-evil"
         write_json(self.parcel / "crossing.json", crossing)
         with self.assertRaisesRegex(ValueError, "invalid reLATTE source crossing"):
