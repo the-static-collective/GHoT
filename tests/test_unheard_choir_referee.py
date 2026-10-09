@@ -43,7 +43,9 @@ class RefereeWhoRefusedTests(unittest.TestCase):
         self.scratch.cleanup()
 
     def inputs(self):
-        return copy.deepcopy(self.sources)
+        # Fixture ancestry is an immutable tuple; hostile tests mutate only
+        # their independently copied list, never the signed source fixture.
+        return list(copy.deepcopy(self.sources))
 
     def calculate(self, sources=None, *, now=1350):
         return assess(*(self.inputs() if sources is None else sources), now=now)
