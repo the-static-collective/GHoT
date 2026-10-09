@@ -217,7 +217,8 @@ def verify_receipt(parcel: dict, historic_local_package: dict,
     if (receipt["schema"] != RECEIPT
         or receipt["scope"] != "RECONSTITUTED_RECEIVER_LOCAL_HISTORY_ONLY"
         or type(receipt["local_index"]) is not int or receipt["local_index"] < 0
-        or type(receipt["previous_receipt_digest"]) is not str
+        or receipt["local_index"] != 0
+        or receipt["previous_receipt_digest"] != GENESIS
         or type(receipt["assessment"]) is not dict):
         raise InvalidWorld("not a bounded 013 custody receipt")
     claimed_now = receipt["assessment"].get("simulated_receiver_clock")
