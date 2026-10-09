@@ -173,6 +173,7 @@ def discover(raw: Any, dial: int = 1) -> dict[str, Any]:
                 missing.append(need)
         status = ("RELEASED" if item["state"] == "RELEASED" else
                   "HOLD" if item["state"] == "HELD" else
+                  "SOURCE_ONLY" if not item["needs"] else
                   "OBSTACLE" if missing else
                   "CANDIDATE")
         case = {
