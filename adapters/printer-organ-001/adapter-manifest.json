@@ -1,0 +1,36 @@
+{
+  "schema": "ghot.external-adapter-manifest/v0",
+  "adapter_id": "printer-organ-001",
+  "capabilities": [
+    {
+      "capability": "printer.status.read",
+      "protocol": "stdin-json/stdout-json-v0",
+      "command": "python3",
+      "args": [
+        "../../ghot/printer_organ.py"
+      ],
+      "timeout_seconds": 5,
+      "limits": {
+        "readonly": true,
+        "actuation": false,
+        "requires_local_owner_manifest": true,
+        "remote_shell": false
+      }
+    },
+    {
+      "capability": "printer.fabrication.propose",
+      "protocol": "stdin-json/stdout-json-v0",
+      "command": "python3",
+      "args": [
+        "../../ghot/printer_organ.py"
+      ],
+      "timeout_seconds": 5,
+      "limits": {
+        "readonly": true,
+        "actuation": false,
+        "requires_local_owner_manifest": true,
+        "physical_print_permission": false
+      }
+    }
+  ]
+}
