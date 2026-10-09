@@ -1,0 +1,47 @@
+name: RADIO HOUSE 003 — native signed courier / media-first work
+on:
+  push:
+    branches:
+      - experiment/radio-house-003-signed-work
+  pull_request:
+    paths:
+      - ghot/radio_house_003.py
+      - docs/RADIO-HOUSE-003.md
+      - tests/test_radio_house_003.py
+      - .github/workflows/radio-house-003.yml
+permissions:
+  contents: read
+jobs:
+  sovereign-signed-courier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Original recording and opt-in power safety gates
+        run: |
+          python3 -m unittest discover -s tests -p 'test_radio_house_001.py' -v
+          python3 -m unittest discover -s tests -p 'test_radio_house_002.py' -v
+      - name: Adversarial native reLATTE crossing, pinned-identity and signed result tests
+        run: python3 -m unittest discover -s tests -p 'test_radio_house_003.py' -v
+      - name: Two independently held keys, offline courier, recording interruption
+        run: |
+          python3 -m ghot.radio_house_003 demo /tmp/radio-house-003-fresh-proof > /tmp/rh3-proof.json
+          python3 - <<'PY'
+          import json
+          with open('/tmp/rh3-proof.json',encoding='utf8') as f: d=json.load(f)
+          assert d['status']=='SIGNED_CROSSING_AND_LOCAL_HASH_RETURN_VERIFIED',d
+          assert d['media_interruption']=='HOLD',d
+          assert d['compute_during_recording_bytes']==0,d
+          assert d['final_compute']=='COMPLETE',d
+          assert d['cold']=='LOCAL_COLD_REPLAY_VERIFIED',d
+          assert d['courier']=='OFFLINE_MANUAL_COURIER',d
+          assert d['live_network_calls']==0,d
+          assert d['media_broadcasts']==0,d
+          assert d['donated_work_claim'] is False,d
+          print('RADIO HOUSE 003: signed original + sovereign local execution + signed output verified')
+          PY
