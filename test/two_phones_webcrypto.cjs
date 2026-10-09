@@ -72,8 +72,9 @@ async function attemptReject(test,label){
  const forgedTail=structuredClone(confirmed.event);
  forgedTail.body.prior_event_sha256="f".repeat(64);
  await attemptReject(()=>C.syncTail(route,dispatch,Bevents,forgedTail),"divergent tail");
+ const duplicateHash=await C.hexhash("duplicate");
  await attemptReject(()=>C.issue(route,dispatch,confirmed.events,A,
-    await C.hexhash("duplicate")),"duplicate issue");
+    duplicateHash),"duplicate issue");
  const bundle={
    schema:"postemahhn.two-phones-fieldkit/v0",
    classification:"synthetic_no_real_carriage",
