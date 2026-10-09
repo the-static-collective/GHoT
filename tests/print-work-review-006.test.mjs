@@ -124,7 +124,7 @@ test('missing confirmation but confirmed pledge state refuses',async()=>{
   if(!enabled)return;
   const {store,selection}=fakeGardenStore(source);
   store.domainEvents.pop();
-  await assert.rejects(go({store,selection}),/MISSING_OR_CONFLICTING_PLEDGE_HISTORY/);
+  await assert.rejects(go({store,selection}),/HISTORY_MISSING_OR_OUT_OF_ORDER/);
 });
 test('duplicate confirmation, forged branch history or vanished report refuses',async()=>{
   if(!enabled)return;
@@ -136,7 +136,7 @@ test('duplicate confirmation, forged branch history or vanished report refuses',
   await assert.rejects(go(b),/DUPLICATE_EVENT_ID/);
   const c=fakeGardenStore(source);
   c.store.domainEvents[2].eventType='pledge.confirmed';
-  await assert.rejects(go(c),/HISTORY_MISSING_OR_OUT_OF_ORDER/);
+  await assert.rejects(go(c),/EVENT_BENEFICIARY_CONTRADICTION/);
 });
 test('reordered and inconsistent Full Measure timestamps fail',async()=>{
   if(!enabled)return;
