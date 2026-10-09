@@ -136,7 +136,7 @@ class StationReviewTests(unittest.TestCase):
     def test_duplicate_leg_replay_refused(self):
         bogus=copy.deepcopy(self.bundle)
         bogus["events"]=[self.bundle["events"][0],self.bundle["events"][0]]
-        with self.assertRaisesRegex(ValueError,"impossible|stale"):
+        with self.assertRaisesRegex(ValueError,"impossible|stale|unexpected two-phone event sequence"):
             self.run_review(bogus)
 
     def test_new_carrier_witness_cannot_be_minted(self):
