@@ -1,0 +1,64 @@
+name: Unheard Choir 015
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-015
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_third_party.py'
+      - 'tests/test_unheard_choir_third_party.py'
+      - 'docs/UNHEARD-CHOIR-015.md'
+      - '.github/workflows/unheard-choir-015.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rightful-third-party:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Crypto and SQLite providers
+        run: |
+          openssl version
+          python3 -c 'import sqlite3; print(sqlite3.sqlite_version)'
+      - name: 015 legacy delegation, dual fresh consent and hostile matrix
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_third_party.py' -v
+      - name: Inherited Choir 001–014 hostile suites
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_lying_witness.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_collusion.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_counterfeit.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_hidden_cause.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_missing_node.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_timestamp.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_gossip.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_vanishing.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_dead_letter.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_reincarnation.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_successors.py' -v
+      - name: Historical third party signature cannot bypass source and owner consent
+        run: |
+          python3 ghot/unheard_choir_third_party.py demo > /tmp/choir015.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/choir015.json'))
+          assert x['historic_delegation_alone'] == 'HOLD_014_SUCCESSION_NOT_RESOLVED_FOR_ARCHIVAL_REVIEW'
+          assert x['third_party_presents'] == 'HOLD_LEGACY_DELEGATION_NO_FRESH_SOURCE_REVIEW'
+          assert x['source_reviews'] == 'HOLD_FRESH_SOURCE_BUT_SELECTED_OWNER_CONSENT_MISSING'
+          assert x['fresh_three_party'] == 'HOLD_THREE_PARTY_ARCHIVAL_EVIDENCE_ONLY_NOT_ADMITTED'
+          assert x['legacy_instrument_expired_at'] == 1050
+          assert x['receiver_simulated_now'] == 1100
+          assert x['one_signed_receipt'] is True
+          assert x['cold_receipt_verified'] is True
+          assert x['no_native_admission'] is True
+          assert x['no_forwarding'] is True
+          assert x['no_external_execution'] is True
+          print('UNHEARD CHOIR 015: old signed grant survives only as history; source and owner consent remain separate')
+          PY
