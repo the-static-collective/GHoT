@@ -65,6 +65,14 @@ Start loopback-only relay in a separate shell:
 python3 ghot/postemahhn_sealed_mail.py serve --root .local/opaque-relay --port 7789
 ```
 
+For a two-device **trusted LAN experiment only**, an operator may explicitly opt into accepting remote connections:
+
+```bash
+python3 ghot/postemahhn_sealed_mail.py serve --root .local/opaque-relay --port 7789 --bind 0.0.0.0 --allow-insecure-lan
+```
+
+The sending device then uses the relay device's LAN IP in its `--url`. This is plaintext HTTP for routing metadata and has NO login/TLS. The document remains encrypted to the recipient, but even test deployments must be kept behind a trusted LAN/firewall; do not forward this port or host confidential mail. Production needs TLS, authenticated recipient listing, abuse prevention and secure station access.
+
 Move ciphertext through HTTP, then decrypt ONLY with recipient key:
 
 ```bash
