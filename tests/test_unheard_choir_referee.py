@@ -164,6 +164,34 @@ class RefereeWhoRefusedTests(unittest.TestCase):
         self.assertEqual(outcome["decision"], EPOCH_COLLISION)
         self.assertEqual(outcome["epoch_evidence"]["winner"], None)
 
+    def test_exact_duplicate_attestation_is_not_falsely_called_a_fork(self):
+        source = self.inputs()
+        source[10].append(copy.deepcopy(source[10][0]))
+        referee = make_referee(source[8], source[10], self.keys["019-referee"],
+                               action="SELECT",
+                               selected=source[11]["selected_event_digest"])
+        owner = make_owner(source[8], referee, self.keys["019-owner-selector"],
+                           action="SELECT",
+                           selected=source[11]["selected_event_digest"])
+        source[11], source[12] = referee, owner
+        self.assertEqual(self.calculate(source)["decision"], BOUNDED)
+
+    def test_independently_signed_same_epoch_is_repeated_evidence_not_fork(self):
+        source = self.inputs()
+        first = source[10][0]
+        second = make_epoch(source[8],
+                            self.source_docs[first["source_event_digest"]]["document"],
+                            self.keys["019-epoch-witness"], first["source_epoch"])
+        source[10].append(second)
+        referee = make_referee(source[8], source[10], self.keys["019-referee"],
+                               action="SELECT",
+                               selected=source[11]["selected_event_digest"])
+        owner = make_owner(source[8], referee, self.keys["019-owner-selector"],
+                           action="SELECT",
+                           selected=source[11]["selected_event_digest"])
+        source[11], source[12] = referee, owner
+        self.assertEqual(self.calculate(source)["decision"], BOUNDED)
+
     def test_same_event_claims_two_valid_epochs_cannot_resolve_conflict(self):
         source = self.inputs()
         first = source[10][0]
