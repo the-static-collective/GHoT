@@ -320,17 +320,19 @@ class UnheardWitnessCustodyTests(unittest.TestCase):
 
     def test_new_source_notice_never_rewrites_existing_signed_receipt(self):
         prior = self.evidence()
-        a = self.store(prior)
+        manifest = self.manifest_for(prior)
+        a = self.store(prior, manifest=manifest)
         self.assertEqual(a["receipt"]["assessment"]["decision"], CUSTODY_ONLY)
         notice = self.notice_for(prior, "REVOKE_EXACT_SOURCE_REVIEW")
         with self.assertRaises(InvalidWorld):
-            self.store(prior, notice=notice)
+            self.store(prior, manifest=manifest, notice=notice)
         self.assertEqual(read_receipts(self.db)[0]["assessment"]["decision"], CUSTODY_ONLY)
 
     def test_duplicate_signed_receipt_is_byte_for_byte_stable(self):
         prior = self.inputs(missing_source=True)
-        a = self.store(prior)
-        b = self.store(prior)
+        manifest = self.manifest_for(prior)
+        a = self.store(prior, manifest=manifest)
+        b = self.store(prior, manifest=manifest)
         self.assertEqual(a["receipt"], b["receipt"])
         self.assertEqual(b["status"], "DUPLICATE_UNCHANGED")
         self.assertEqual(len(read_receipts(self.db)), 1)
@@ -344,12 +346,14 @@ class UnheardWitnessCustodyTests(unittest.TestCase):
             self.store(signer=self.keys["delegation-holder"])
 
     def test_corrupt_sqlite_record_refuses_replay(self):
-        self.store()
+        prior = self.evidence()
+        manifest = self.manifest_for(prior)
+        self.store(prior, manifest=manifest)
         with sqlite3.connect(self.db) as db:
             db.execute("UPDATE custody SET receipt_json=?",
                        (json.dumps({"schema": "fabricated"}),))
         with self.assertRaises(InvalidWorld):
-            self.store()
+            self.store(prior, manifest=manifest)
 
     def test_forged_receipt_cannot_claim_native_effect(self):
         receipt = self.store()["receipt"]
@@ -360,10 +364,11 @@ class UnheardWitnessCustodyTests(unittest.TestCase):
 
     def test_source_history_can_still_be_replayed_after_revocation(self):
         prior = self.evidence()
+        manifest = self.manifest_for(prior)
         notice = self.notice_for(prior, "REVOKE_EXACT_SOURCE_REVIEW")
-        output = self.store(prior, notice=notice)["receipt"]
+        output = self.store(prior, manifest=manifest, notice=notice)["receipt"]
         r = verify_receipt(prior, self.policy, self.root,
-                           self.manifest_for(prior), notice, output)
+                           manifest, notice, output)
         self.assertEqual(r["decision"], REVOKED)
         self.assertFalse(r["historical_document_erased_by_revocation"])
 
