@@ -133,5 +133,33 @@ class AddressedMailTest(unittest.TestCase):
             self.delivered()
 
 
+    def test_malicious_release_address_path_rejected_before_read(self):
+        self.delivered()
+        cid = inbox(self.station, self.owner)[0]["crossing_id"]
+        signed = release(self.station, self.owner, cid, "station-1")
+        signed["extensions"]["postemahhn_release"]["recipient_address"] = "pm1-../../other"
+        with self.assertRaisesRegex(ValueError, "invalid release address"):
+            authorize_export(self.station, signed, "station-1")
+
+    def test_symlinked_parcel_directory_rejected(self):
+        fake_path = self.root / "linked"
+        fake_path.symlink_to(self.parcel, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, "real directory"):
+            receive(self.station, fake_path)
+
+    def test_future_dated_signed_release_rejected(self):
+        self.delivered()
+        cid = inbox(self.station, self.owner)[0]["crossing_id"]
+        signed = release(self.station, self.owner, cid, "station-1")
+        signed["created_at"] = (datetime.now(timezone.utc)
+            + timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        signed["extensions"]["postemahhn_release"]["expires_at"] = (
+            datetime.now(timezone.utc) + timedelta(minutes=10)
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
+        signed = sign_receipt(signed, self.owner)
+        with self.assertRaisesRegex(ValueError, "expired or invalid"):
+            authorize_export(self.station, signed, "station-1")
+
+
 if __name__ == "__main__":
     unittest.main()
