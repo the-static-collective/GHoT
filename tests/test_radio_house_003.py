@@ -214,9 +214,21 @@ class SignedWorkTest(unittest.TestCase):
         ack=self.received()
         finished=self.finish()
         wrong=IdentityKey.load_or_create(Path(self.tmp.name)/"third"/"key.pem")
-        with self.assertRaisesRegex(ValueError,"WORKER_RECEIPT_SIGNATURE_OR_PIN"):
+        # A substituted worker pin is denied against the original crossing
+        # BEFORE any receipt can be treated as relevant.
+        with self.assertRaisesRegex(ValueError,"WRONG_WORKER_OR_ACTION"):
             verify_return(self.bundle,ack,finished,pinned_requester_public=self.pin,
                           pinned_worker_public=wrong.public_jwk(),at=1004)
+        # An attacker independently signing a modified receipt with their own
+        # key cannot impersonate the actual worker, even when the crossing
+        # and the original requester/recipient pins remain unchanged.
+        from ghot.relatte_identity import sign_receipt
+        forged=copy.deepcopy(finished)
+        forged["receiver_particular"]=wrong.particular()
+        forged=sign_receipt(forged,wrong)
+        with self.assertRaisesRegex(ValueError,"WORKER_RECEIPT_SIGNATURE_OR_PIN_INVALID"):
+            verify_return(self.bundle,ack,forged,pinned_requester_public=self.pin,
+                          pinned_worker_public=self.worker_pin,at=1004)
 
     def test_false_signed_completion_result_is_recomputed_and_rejected(self):
         self.permit()
