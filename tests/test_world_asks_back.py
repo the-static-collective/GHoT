@@ -151,17 +151,31 @@ class WorldAsksBackTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             wab.verify(packet)
 
+    def test_out_of_band_pinset_rejects_rogue_roster(self):
+        original_pins = copy.deepcopy(self.packet["pinned"])
+        rogue_packet = wab.demo(self.root / "rogue-owners")
+        # Both packets can be internally consistent. Only the authentic fixture
+        # roster can establish which test keys the verifier was told to trust.
+        self.assertTrue(wab.verify(rogue_packet))
+        self.assertTrue(wab.verify(self.packet, expected_pins=original_pins))
+        with self.assertRaisesRegex(ValueError, "EXTERNAL_OWNER_PIN_MISMATCH"):
+            wab.verify(rogue_packet, expected_pins=original_pins)
+
     def test_cold_verifier_without_private_keys(self):
         path = self.root / "public-packet.json"
+        roster = self.root / "trusted-public-roster.json"
         path.write_text(json.dumps(self.packet), encoding="utf-8")
+        roster.write_text(json.dumps(self.packet["pinned"]), encoding="utf-8")
         for role in wab.ROLES:
             (self.root / (role + ".pem")).unlink()
         outcome = subprocess.run(
-            [sys.executable, "-m", "ghot.world_asks_back", "verify", str(path)],
+            [sys.executable, "-m", "ghot.world_asks_back", "verify",
+             str(path), "--pins", str(roster)],
             capture_output=True, text=True, check=True,
         )
         self.assertEqual(json.loads(outcome.stdout),
-                         {"verified": True, "status": "SIMULATED_PART_CREATED"})
+                         {"verified": True, "status": "SIMULATED_PART_CREATED",
+                          "trust_scope": "externally-pinned"})
 
 
 if __name__ == "__main__":
