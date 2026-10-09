@@ -271,6 +271,52 @@ class DeadLetterTests(unittest.TestCase):
             self.assertEqual(len(read_receipts(db)), 1)
             self.assertFalse(receiver_key.exists())
 
+    def test_sender_cli_exports_standalone_public_parcel(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            cargo = self.original["cargo"]
+            fields = {
+                "source-evidence": cargo["common_evidence"],
+                "log-policy": cargo["log_policy"],
+                "log-root": cargo["log_root"],
+                "gossip-roster": cargo["gossip_roster"],
+                "gossip-root": cargo["gossip_root"],
+                "sender-envelope": cargo["011_envelope"],
+            }
+            argv = []
+            for field, data in fields.items():
+                file = folder / (field + ".json")
+                file.write_text(json.dumps(data), encoding="utf-8")
+                argv.extend(("--" + field, str(file)))
+            # Existing west signing key is kept on sender side only.
+            west_key = Path(self.fixture.name) / "gossip-west.pem"
+            outgoing = folder / "outgoing.json"
+            cli = [sys.executable, str(ROOT / "ghot" / "unheard_choir_dead_letter.py")]
+            result = subprocess.run(cli + ["export"] + argv + [
+                "--sender-key", str(west_key),
+                "--not-after", "1050", "--nonce", "b" * 32,
+                "--output", str(outgoing),
+            ], capture_output=True, text=True, cwd=str(folder))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)["status"], "EXPORTED")
+            self.assertTrue(outgoing.is_file())
+            self.assertNotIn("PRIVATE KEY", outgoing.read_text())
+            parcel = json.loads(outgoing.read_text())
+            a = assess_parcel(parcel, self.recipient_package, self.pins, now=1001)
+            self.assertEqual(a["decision"], HELD)
+            self.assertEqual(a["recipient_site"], "east")
+
+    def test_export_wont_overwrite_existing_parcel(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            outgoing = folder / "already-exists.json"
+            outgoing.write_text("DO NOT DELETE")
+            cmd = [sys.executable, str(ROOT / "ghot" / "unheard_choir_dead_letter.py"),
+                   "export", "--output", str(outgoing)]
+            run = subprocess.run(cmd, capture_output=True, text=True)
+            self.assertNotEqual(run.returncode, 0)
+            self.assertEqual(outgoing.read_text(), "DO NOT DELETE")
+
     def test_demo_owner_local_receipt_and_dedupe(self):
         result = demo()
         self.assertTrue(result["portable_public_parcel"])
