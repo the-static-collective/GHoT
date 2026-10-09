@@ -177,7 +177,7 @@ class Surfaces003(unittest.TestCase):
     def test_no_cross_class_cast_of_kodak_photo_to_fff(self):
         with self.assertRaisesRegex(ValueError,"INPUT_OBJECT_REQUIRED"):
             dispatch(KODAK_FFF_CAP,input_for(KODAK_FFF_CAP,None))
-        with self.assertRaisesRegex(ValueError,"KODAK_3D_INPUT_FIELDS_INVALID"):
+        with self.assertRaisesRegex(ValueError,"KODAK_3D_FIELDS_INVALID"):
             dispatch(KODAK_FFF_CAP,input_for(KODAK_FFF_CAP,photo()))
 
     def test_missing_or_mismatched_ghot_capability_denied(self):
