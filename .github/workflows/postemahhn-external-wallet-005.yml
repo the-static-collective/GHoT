@@ -6,6 +6,7 @@ on:
       - 'ghot/postemahhn_external_wallets.py'
       - 'test/test_postemahhn_external_wallets.py'
       - '.github/workflows/postemahhn-external-wallet-005.yml'
+      - 'web/postemahhn-external-wallet-lab.html'
   workflow_dispatch:
 
 permissions:
@@ -28,3 +29,15 @@ jobs:
         run: |
           python3 -m unittest discover -s test -p test_postemahhn_passkey_door.py -v
           python3 -m unittest discover -s test -p test_postemahhn_wallet_door.py -v
+      - name: Syntax-check browser wallet signMessage page
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          page = Path("web/postemahhn-external-wallet-lab.html").read_text()
+          scripts = re.findall(r"<script>(.*?)</script>", page, flags=re.S)
+          assert len(scripts) == 1, "expected single inline browser script"
+          Path("/tmp/postemahhn-wallet-lab.js").write_text(scripts[0])
+          PY
+          node --check /tmp/postemahhn-wallet-lab.js
