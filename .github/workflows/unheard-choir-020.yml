@@ -1,0 +1,70 @@
+name: Unheard Choir 020
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-020
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_referee_reincarnation.py'
+      - 'tests/test_unheard_choir_referee_reincarnation.py'
+      - 'docs/UNHEARD-CHOIR-020.md'
+      - '.github/workflows/unheard-choir-020.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dead-referee:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm signing and SQLite providers
+        run: |
+          openssl version
+          python3 -c 'import sqlite3; print(sqlite3.sqlite_version)'
+      - name: Preflight 020 retired referee, fresh consent and cold historical preservation
+        run: |
+          python3 ghot/unheard_choir_referee_reincarnation.py demo > /tmp/choir020.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/choir020.json'))
+          assert x['old_private_file_deleted_in_fixture'] is True
+          assert x['old_signed_historical_decision'] == 'HOLD_SCOPED_ARCHIVAL_REVIEW_SELECTED_NOT_ADMITTED'
+          assert x['without_reconstitution'] == 'HOLD_NEW_REFEREE_EPOCH_NOT_ADMITTED'
+          assert x['without_fresh_referee'] == 'HOLD_NEW_CASE_REFEREE_MISSING'
+          assert x['without_fresh_owner'] == 'HOLD_NEW_CASE_OWNER_CONSENT_MISSING'
+          assert x['with_fresh_separate_approvals'] == 'HOLD_NEW_CASE_ARCHIVAL_REVIEW_ONLY_NOT_ADMITTED'
+          assert x['historic_receipt_preserved'] is True
+          assert x['old_source_event_set_preserved'] is True
+          assert x['public_cold_replay_without_old_private_file'] is True
+          assert x['one_neutral_durable_receipt'] is True
+          assert x['native_relatte_receive'] is False
+          assert x['external_execution'] is False
+          print('UNHEARD CHOIR 020: old historical signature survives; fresh epoch/owner consent only produces signed archival HOLD')
+          PY
+      - name: 020 hostile referee retirement and new case signatures
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_referee_reincarnation.py' -v
+      - name: Inherited Choir 001–019 adversarial regressions
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_lying_witness.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_collusion.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_counterfeit.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_hidden_cause.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_missing_node.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_timestamp.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_gossip.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_vanishing.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_dead_letter.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_reincarnation.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_successors.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_third_party.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_witness_custody.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_delayed_revocation.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_source_fork.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_referee.py' -v
