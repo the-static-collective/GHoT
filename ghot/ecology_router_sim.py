@@ -125,8 +125,12 @@ class RoutingTests(unittest.TestCase):
         with self.assertRaises(Hold):
             validate(w)
         w = world()
-        next(p for p in w["paths"] if p["id"] == "heatbank-to-fish")["resource"] = "electricity"
-        d = decisions(plan(w))
+        bad_path = next(p for p in w["paths"] if p["id"] == "heatbank-to-fish")
+        bad_path["resource"] = "electricity"
+        with self.assertRaises(Hold):
+            validate(w)  # malformed resource/unit combination refuses at schema boundary
+        bad_path["unit"] = "mWh"
+        d = decisions(plan(w))  # now valid schema, but no compatible thermal route
         self.assertEqual(d["fish-water-heating"]["decision"], "HOLD")
         self.assertIn("RESOURCE_OR_UNIT_MISMATCH", d["fish-water-heating"]["reasons"])
 
