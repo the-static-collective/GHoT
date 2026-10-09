@@ -51,3 +51,14 @@ References:
 - https://eips.ethereum.org/EIPS/eip-4361
 - https://github.com/bitcoin/bips/blob/master/bip-0322.mediawiki
 - MAIL-004: https://github.com/the-static-collective/GHoT/pull/116
+
+## Browser signMessage laboratory (unverified with a real extension)
+
+The new static browser proof page is web/postemahhn-external-wallet-lab.html. On a browser with an injected Solana-compatible wallet implementing connect() and signMessage(), the user may:
+
+1. Paste a PostEmahh'n owner-approved link body, inspect the wallet address and narrow permission, and explicitly ask that wallet to sign the exact domain-separated linkage bytes.
+2. Export the signed link packet to the verifier to prove ownership of the Ed25519 public address.
+3. After separately verifying a real MAIL-003 station challenge with the trusted GHoT station key, paste that request, the link packet, and the recipient policy; the wallet can sign exactly that request as an off-chain verification message.
+4. Carry the resulting proof JSON back to verify_external(). Wallet sign-in never replaces recipient mail release, guardian approval, passkey user verification, or device-local print admission.
+
+This is a manual demonstration page, not a connected hosted PostEmahh'n wallet app. Browser provider compatibility and live user approval have **not** been tested. The page cannot independently authenticate the incoming station signature; always use the trusted server verifier before asking the wallet to sign. The signing bytes are exposed for inspection and have separate fixed application domain prefixes.
