@@ -231,7 +231,8 @@ class TwoProcessTest(unittest.TestCase):
                                                "X-Radio-House-Token":token})
                 self.assertEqual(click("enable",{})[0],200)
                 self.assertEqual(click("media",{"mode":"IDLE_CONFIRMED"})[0],200)
-                self.assertEqual(click("approve",{"crossing_id":cid})[0],200)
+                approved=click("approve",{"crossing_id":cid})
+                self.assertEqual(approved[0],200,approved)
                 self.assertEqual(click("step",{"crossing_id":cid})[1]["state"],"COMPLETE")
                 bundle=sender/"outbox"/(cid.replace(":","_")+".json")
                 ret=subprocess.run([sys.executable,"-m","ghot.radio_house_004","poll",
