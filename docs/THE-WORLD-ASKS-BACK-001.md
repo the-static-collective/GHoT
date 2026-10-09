@@ -45,7 +45,7 @@ Three owners must **separately** sign an exact (proposal_id, cut, epoch, scope) 
 
 Partial grants cause **HOLD**, with a fabricator-signed HELD receipt. The household signs a genuine P-256 relatte.crossing-envelope/v0 carrying the proposal digest, and the fabricator signs a RECEIVED receipt with no effect. With all exact simulation grants, only the **virtual** part is produced, with a fabricator-signed EXECUTED / artifact-created receipt whose post-state address matches the virtual artifact.
 
-The native signing equations come from ghot/relatte_identity.py. This is **not an invocation of a live reLATTE source verifier or LocalReceiver**; schema-shaped locally signed artifacts cannot establish external admission. A pinned public key is a fixture trust assumption, not human identity or physical property ownership.
+The native signing equations come from ghot/relatte_identity.py. This is **not an invocation of a live reLATTE source verifier or LocalReceiver**; schema-shaped locally signed artifacts cannot establish external admission. A pinned public key is a fixture trust assumption, not human identity or physical property ownership. The packet carries a **self-declared** public roster for reproducible self-consistency checks. For signer trust beyond that packet, the verifier must receive a separate **out-of-band, independently established** pinset with --pins. Merely copying the roster out of the untrusted packet does not establish identity.
 
 ## Reproduce
 
@@ -55,17 +55,19 @@ Requires Python 3.10+ and the OpenSSL CLI, no PyPI dependencies, no network:
 python3 -m unittest discover -s tests -p test_world_asks_back.py -v
 python3 -m ghot.world_asks_back demo > /tmp/world-asks-back-packet.json
 python3 -m ghot.world_asks_back verify /tmp/world-asks-back-packet.json
+# With a separately trusted roster (same JSON shape as packet.pinned):
+python3 -m ghot.world_asks_back verify /tmp/world-asks-back-packet.json --pins /secure/trusted-public-roster.json
 python3 -m ghot.world_asks_back demo --hold > /tmp/world-asks-back-held.json
 python3 -m ghot.world_asks_back verify /tmp/world-asks-back-held.json
 ~~~
 
-Demo keys live in a disposable temporary directory and are gone before the packet is inspected. The verifier accepts only pinned **public** signatures; it rebuilds the eleven readings, options, proposal and virtual consequence, then checks exact grants and both signed reLATTE-profile receipts.
+Demo keys live in a disposable temporary directory and are gone before the packet is inspected. The verifier rebuilds the eleven readings, options, proposal and virtual consequence, then checks signed grants and both signed reLATTE-profile receipts. Without --pins, it reports **packet-pinned-only**: a valid signature is attributable only to an identity asserted inside that packet. With --pins it reports **externally-pinned** and denies otherwise valid packages from a rogue replacement three-key roster. The caller must independently establish which public keys belong to the owners.
 
 Use --hold to inspect the absence of admission. With 30 virtual grams of PLA, the green simulation creates an artifact recording 12 virtually consumed grams and 18 virtual grams remaining, a geometry fixture PASS and zero economic credit.
 
 ## Negative controls
 
-The dedicated test suite checks false measurements, changed epochs and cuts, wrong roles, unpinned signers, tampered grants, expanded scope, fabricated physical completion, forgery of post-state, an unauthorized success flag, partial consent, inadequate inventory, withdrawn privacy and public-only subprocess verification after the signing keys are deleted.
+The dedicated test suite checks false measurements, changed epochs and cuts, wrong roles, rogue replacement roster against external pins, tampered grants, expanded scope, fabricated physical completion, forgery of post-state, an unauthorized success flag, partial consent, inadequate inventory, withdrawn privacy and public-only subprocess verification after the signing keys are deleted.
 
 ## Laws retained
 
