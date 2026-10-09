@@ -516,8 +516,10 @@ def demo():
         collision = make_epoch(sources[8], documents[second_doc_name]["document"],
                                keys["019-epoch-witness"],
                                epoch=certificates[0]["source_epoch"])
+        # The old referee/owner signatures bind the original certificate
+        # set; a changed set must not inherit those old authorizations.
         conflict = assess(*sources[:10], certificates + [collision],
-                          sources[11], sources[12], now=1350)
+                          None, None, now=1350)
         selected = assess(*sources, now=1350)
         path = Path(tmp.name) / "019-local-receipt.sqlite"
         written = record_once(path, *sources, keys["019-neutral-recorder"], now=1350)
