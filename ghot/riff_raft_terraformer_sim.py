@@ -170,11 +170,11 @@ class TerraformerTests(unittest.TestCase):
         self.assertIn("CONTAMINATION_SCREEN_MISSING", next_door(field, plan)["reasons"])
 
     def test_missing_water_hold_no_infinite_growth(self):
-        field, plan = field_plan()
+        _, _, plan = world_and_plan()
+        config = load("fixtures/riff-raft-002/field.json")
+        config["stocks"]["rain_ml"] = 0
+        field = bootstrap(plan, config)
         field = advance(field, plan, 2)
-        field["stocks"]["rain_ml"] = 0
-        field["initial_balances"]["water_ml"] = 0
-        field["state_sha256"] = digest({k: v for k, v in field.items() if k != "state_sha256"})
         self.assertIn("INPUT_NOT_AVAILABLE:rain_ml", next_door(field, plan)["reasons"])
 
     def test_unearned_physical_witness_never_minted(self):
