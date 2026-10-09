@@ -225,10 +225,9 @@ class DelayedRevocationTest(unittest.TestCase):
         self.assertFalse(r["forwarding_permitted"])
 
     def test_expired_signed_notice_history_does_not_restore_permission(self):
-        west = make_snapshot(*self.common, "west", self.keys["017-west"], None, now=5100)
-        east = make_snapshot(*self.common, "east", self.keys["017-east"],
-                             self.notice, now=5100)
-        r = compare(*self.common, west, east, now=5100)
+        # Replay older signed snapshots at a later review clock; never claim
+        # current 015 authorization once its separately signed TTL elapsed.
+        r = compare(*self.common, self.west, self.east, now=5100)
         self.assertEqual(r["decision"], EXPIRED)
         self.assertEqual(r["retained_historical_015_approval_digest"], digest(self.prior[11]))
 
