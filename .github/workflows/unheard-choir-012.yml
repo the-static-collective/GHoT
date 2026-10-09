@@ -1,0 +1,60 @@
+name: Unheard Choir 012
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-012
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_dead_letter.py'
+      - 'tests/test_unheard_choir_dead_letter.py'
+      - 'docs/UNHEARD-CHOIR-012.md'
+      - '.github/workflows/unheard-choir-012.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dead-letter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - name: Crypto and SQLite providers
+        run: |
+          openssl version
+          python3 -c 'import sqlite3; print(sqlite3.sqlite_version)'
+      - name: Inherited Choir 001–011
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_lying_witness.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_collusion.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_counterfeit.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_hidden_cause.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_missing_node.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_timestamp.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_gossip.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_vanishing.py' -v
+      - name: 012 offline separate-process import, receiver-local HOLD and hostile cases
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_dead_letter.py' -v
+      - name: Standalone portable letter demo
+        run: |
+          python3 ghot/unheard_choir_dead_letter.py demo > /tmp/choir012.json
+          python3 - <<'PY'
+          import json
+          r=json.load(open('/tmp/choir012.json'))
+          assert r['portable_public_parcel'] is True
+          assert r['sender_private_key_absent_from_parcel'] is True
+          assert r['import_decision'] == 'RECEIVED_HELD_FORK_EVIDENCE_NOT_ADMITTED'
+          assert r['new_receipt'] == 'RECEIPT_DURABLY_WRITTEN'
+          assert r['duplicate_import'] == 'DUPLICATE_RECEIPT_REPLAY'
+          assert r['recipient_journal_entries'] == 1
+          assert r['cold_public_verification'] is True
+          assert r['source_and_receiver_authority_not_transferred'] is True
+          assert r['native_relatte_receive'] is False
+          assert r['external_execution'] is False
+          print('UNHEARD CHOIR 012: portable signed evidence survives source process; receiver-local signed HOLD and cold replay')
+          PY
