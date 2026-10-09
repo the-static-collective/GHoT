@@ -89,3 +89,6 @@ jobs:
 
       - name: Ecology resource routing simulation
         run: python3 ghot/ecology_router_sim.py
+
+      - name: Riff-Raft simulated transport network
+        run: python3 ghot/riff_raft_sim.py
