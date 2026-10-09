@@ -98,6 +98,21 @@ python3 ghot/unheard_choir_dead_letter.py demo
 python3 -m unittest discover -s tests -p 'test_unheard_choir_dead_letter.py' -v
 ```
 
+CLI export from the origin using its *existing* signer key, before removing access to it:
+
+```bash
+python3 ghot/unheard_choir_dead_letter.py export \\
+  --source-evidence original-008-public-documents.json \\
+  --log-policy log-policy.json --log-root log-root.json \\
+  --gossip-roster observer-roster.json --gossip-root gossip-root.json \\
+  --sender-envelope west-to-east-011.json \\
+  --sender-key west-private.pem --not-after 1050 \\
+  --nonce bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb \\
+  --output incoming.json
+```
+
+The export command does not overwrite an existing parcel and does not include the sender's private key. The source-evidence file contains an object with the 17 named public 008 evidence components documented in the Python module; the export checks every required field and revalidates signed 011 ancestry before signing the parcel.
+
 CLI import in a separately invoked Python process:
 
 ```bash
