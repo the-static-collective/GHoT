@@ -1,0 +1,57 @@
+{
+  "schema": "ghot.external-adapter-manifest/v0",
+  "adapter_id": "zebra-kodak-surfaces-003",
+  "capabilities": [
+    {
+      "capability": "printer.surface.zebra.label.prepare",
+      "protocol": "stdin-json/stdout-json-v0",
+      "command": "python3",
+      "args": [
+        "../../ghot/print_surfaces_003.py"
+      ],
+      "timeout_seconds": 5,
+      "limits": {
+        "output": "ZPL_SOURCE_ONLY_NO_TRANSPORT",
+        "device_class": "ZEBRA_THERMAL_LABEL",
+        "physical_actuation": false,
+        "remote_shell": false,
+        "hardware_connected": false,
+        "permission": "PROPOSE_ONLY"
+      }
+    },
+    {
+      "capability": "printer.surface.kodak.photo.inspect",
+      "protocol": "stdin-json/stdout-json-v0",
+      "command": "python3",
+      "args": [
+        "../../ghot/print_surfaces_003.py"
+      ],
+      "timeout_seconds": 5,
+      "limits": {
+        "output": "PHOTO_METADATA_ONLY_NO_DRIVER",
+        "device_class": "KODAK_4PASS_DYE_SUBLIMATION",
+        "physical_actuation": false,
+        "remote_shell": false,
+        "hardware_connected": false,
+        "permission": "PROPOSE_ONLY"
+      }
+    },
+    {
+      "capability": "printer.surface.kodak.portrait3d.propose",
+      "protocol": "stdin-json/stdout-json-v0",
+      "command": "python3",
+      "args": [
+        "../../ghot/print_surfaces_003.py"
+      ],
+      "timeout_seconds": 5,
+      "limits": {
+        "output": "FFF_CANDIDATE_R3_HOLD",
+        "device_class": "KODAK_PORTRAIT_FFF",
+        "physical_actuation": false,
+        "remote_shell": false,
+        "hardware_connected": false,
+        "permission": "PROPOSE_ONLY"
+      }
+    }
+  ]
+}

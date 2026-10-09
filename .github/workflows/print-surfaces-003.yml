@@ -1,0 +1,48 @@
+name: GHoT Zebra Kodak Print Surfaces 003 — no-device compatibility and HOLD
+on:
+  push:
+    branches: [experiment/zebra-kodak-print-surfaces-003]
+  pull_request:
+    paths:
+      - 'ghot/print_surfaces_003.py'
+      - 'ghot/print_surfaces_003_sim.py'
+      - 'adapters/zebra-kodak-surfaces-003/**'
+      - 'docs/ZEBRA-KODAK-PRINT-SURFACES-003.md'
+      - '.github/workflows/print-surfaces-003.yml'
+permissions:
+  contents: read
+jobs:
+  print-surfaces:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Native Python compile
+        run: python3 -m py_compile ghot/print_surfaces_003.py ghot/print_surfaces_003_sim.py
+      - name: GHoT Zebra and Kodak physical boundary hostile tests
+        run: python3 ghot/print_surfaces_003_sim.py
+      - name: Inherited printer organ and physical printer HOLD regression
+        run: python3 ghot/printer_organ_sim.py
+      - name: Inherited source-bound reLATTE owner HOLD regression
+        run: python3 ghot/sovereign_print_shop_002_sim.py
+      - name: Actually discover new GHoT bounded external printer capabilities
+        env:
+          GHOT_ADAPTER_MANIFESTS: ${{ github.workspace }}/adapters/zebra-kodak-surfaces-003/adapter-manifest.json
+        run: |
+          python3 ghot/reference_node.py pantry > /tmp/ghot-printer-pantry.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/ghot-printer-pantry.json'))
+          assert p['status']=='ok'
+          caps={offer['capability'] for offer in p['output']['offers']}
+          expected={
+            'printer.surface.zebra.label.prepare',
+            'printer.surface.kodak.photo.inspect',
+            'printer.surface.kodak.portrait3d.propose'
+          }
+          assert expected<=caps, f'Capabilities absent: {expected-caps}'
+          print('THREE_SOURCE_ONLY_PRINTER_SURFACE_CAPABILITIES_VISIBLE')
+          PY
