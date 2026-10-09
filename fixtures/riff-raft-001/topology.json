@@ -1,0 +1,205 @@
+{
+  "schema": "ghot.riff-raft-topology/v0",
+  "mode": "simulation-only",
+  "ecology_world_sha256": "8a812b09aab372c4686c4799dac833f4eaef322c27ac971e2eb9e68a1952f462",
+  "places": [
+    {
+      "id": "floating-platform-a",
+      "kind": "floating",
+      "owner_id": "raft-solar-steward",
+      "status": "modeled-active",
+      "scenario_integrity_ok": true
+    },
+    {
+      "id": "wave-dock",
+      "kind": "shore",
+      "owner_id": "harbor-commons",
+      "status": "modeled-active",
+      "scenario_integrity_ok": true
+    },
+    {
+      "id": "orchard",
+      "kind": "land",
+      "owner_id": "orchard-steward",
+      "status": "modeled-active",
+      "scenario_integrity_ok": true
+    },
+    {
+      "id": "shore-thermal-room",
+      "kind": "shore",
+      "owner_id": "thermal-steward",
+      "status": "modeled-active",
+      "scenario_integrity_ok": true
+    },
+    {
+      "id": "shore-material-yard",
+      "kind": "shore",
+      "owner_id": "recovery-coop",
+      "status": "modeled-active",
+      "scenario_integrity_ok": true
+    },
+    {
+      "id": "floating-fish-system",
+      "kind": "floating",
+      "owner_id": "aqua-steward",
+      "status": "modeled-active",
+      "scenario_integrity_ok": true
+    },
+    {
+      "id": "floating-compute",
+      "kind": "floating",
+      "owner_id": "compute-coop",
+      "status": "modeled-active",
+      "scenario_integrity_ok": true
+    },
+    {
+      "id": "floating-city",
+      "kind": "floating",
+      "owner_id": "habitat-coop",
+      "status": "modeled-active",
+      "scenario_integrity_ok": true
+    },
+    {
+      "id": "shore-switch",
+      "kind": "shore",
+      "owner_id": "energy-steward",
+      "status": "modeled-active",
+      "scenario_integrity_ok": true
+    },
+    {
+      "id": "river-landing",
+      "kind": "river",
+      "owner_id": "river-commons",
+      "status": "modeled-active",
+      "scenario_integrity_ok": true
+    }
+  ],
+  "links": [
+    {
+      "id": "solar-to-shore-switch",
+      "from": "floating-platform-a",
+      "to": "shore-switch",
+      "carrier": "cable",
+      "resource": "electricity",
+      "unit": "mWh",
+      "limit_units": 8000,
+      "permit_ok": true,
+      "weather_ok": true,
+      "isolation_ok": true,
+      "owner_grants": [
+        "energy-steward",
+        "raft-solar-steward"
+      ],
+      "status": "offered",
+      "scenario_only": true
+    },
+    {
+      "id": "shore-switch-to-fish",
+      "from": "shore-switch",
+      "to": "floating-fish-system",
+      "carrier": "cable",
+      "resource": "electricity",
+      "unit": "mWh",
+      "limit_units": 8000,
+      "permit_ok": true,
+      "weather_ok": true,
+      "isolation_ok": true,
+      "owner_grants": [
+        "aqua-steward",
+        "energy-steward"
+      ],
+      "status": "offered",
+      "scenario_only": true
+    },
+    {
+      "id": "shore-switch-to-compute",
+      "from": "shore-switch",
+      "to": "floating-compute",
+      "carrier": "cable",
+      "resource": "electricity",
+      "unit": "mWh",
+      "limit_units": 4000,
+      "permit_ok": true,
+      "weather_ok": true,
+      "isolation_ok": true,
+      "owner_grants": [
+        "compute-coop",
+        "energy-steward"
+      ],
+      "status": "offered",
+      "scenario_only": true
+    },
+    {
+      "id": "thermal-to-fish",
+      "from": "shore-thermal-room",
+      "to": "floating-fish-system",
+      "carrier": "thermal-exchanger",
+      "resource": "heat",
+      "unit": "J",
+      "limit_units": 100000,
+      "permit_ok": true,
+      "weather_ok": true,
+      "isolation_ok": true,
+      "owner_grants": [
+        "aqua-steward",
+        "thermal-steward"
+      ],
+      "status": "offered",
+      "scenario_only": true
+    },
+    {
+      "id": "wave-to-fish",
+      "from": "wave-dock",
+      "to": "floating-fish-system",
+      "carrier": "cable",
+      "resource": "electricity",
+      "unit": "mWh",
+      "limit_units": 20000,
+      "permit_ok": true,
+      "weather_ok": false,
+      "isolation_ok": true,
+      "owner_grants": [
+        "aqua-steward",
+        "harbor-commons"
+      ],
+      "status": "offered",
+      "scenario_only": true
+    },
+    {
+      "id": "material-yard-to-river",
+      "from": "shore-material-yard",
+      "to": "river-landing",
+      "carrier": "cargo",
+      "resource": "materials",
+      "unit": "g",
+      "limit_units": 20000,
+      "permit_ok": true,
+      "weather_ok": true,
+      "isolation_ok": true,
+      "owner_grants": [
+        "recovery-coop",
+        "river-commons"
+      ],
+      "status": "offered",
+      "scenario_only": true
+    },
+    {
+      "id": "river-to-habitat",
+      "from": "river-landing",
+      "to": "floating-city",
+      "carrier": "cargo",
+      "resource": "materials",
+      "unit": "g",
+      "limit_units": 20000,
+      "permit_ok": false,
+      "weather_ok": true,
+      "isolation_ok": false,
+      "owner_grants": [
+        "habitat-coop",
+        "river-commons"
+      ],
+      "status": "offered",
+      "scenario_only": true
+    }
+  ]
+}
