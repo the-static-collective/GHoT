@@ -257,6 +257,8 @@ def verify_history(rows: list, parcel: dict, local_package: dict, pins: dict):
         raise InvalidWorld("invalid local custody count")
     prior = GENESIS
     for i, row in enumerate(rows):
+        exact(row, ("schema", "scope", "local_index", "previous_receipt_digest",
+                    "assessment", "signature"), "stored custody receipt")
         if row["local_index"] != i or row["previous_receipt_digest"] != prior:
             raise InvalidWorld("custody chain index or predecessor mismatch")
         verify_receipt(parcel, local_package, pins, row)
