@@ -1,0 +1,30 @@
+name: PostEmahh'n MAIL-005 external wallet proofs
+
+on:
+  pull_request:
+    paths:
+      - 'ghot/postemahhn_external_wallets.py'
+      - 'test/test_postemahhn_external_wallets.py'
+      - '.github/workflows/postemahhn-external-wallet-005.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-signers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install signer crypto and WebAuthn CBOR
+        run: python3 -m pip install 'cryptography>=43,<47' 'cbor2>=5.6,<6'
+      - name: Verify Solana Ed25519 proof and reject other chain profiles
+        run: python3 -m unittest discover -s test -p test_postemahhn_external_wallets.py -v
+      - name: Preserve separate phone passkey and recipient-mail gates
+        run: |
+          python3 -m unittest discover -s test -p test_postemahhn_passkey_door.py -v
+          python3 -m unittest discover -s test -p test_postemahhn_wallet_door.py -v
