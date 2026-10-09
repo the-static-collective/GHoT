@@ -25,6 +25,8 @@ jobs:
         run: |
           openssl version
           python3 -c 'import sqlite3; print(sqlite3.sqlite_version)'
+      - name: 013 stale receiver identity, signed archive-only grant and hostile tests
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_reincarnation.py' -v
       - name: Inherited Choir 001–012 suites
         run: |
           python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
@@ -39,8 +41,6 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_unheard_choir_gossip.py' -v
           python3 -m unittest discover -s tests -p 'test_unheard_choir_vanishing.py' -v
           python3 -m unittest discover -s tests -p 'test_unheard_choir_dead_letter.py' -v
-      - name: 013 stale receiver identity, signed archive-only grant and hostile tests
-        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_reincarnation.py' -v
       - name: Old signed parcel survives dead owner, new owner can only archive
         run: |
           python3 ghot/unheard_choir_reincarnation.py demo > /tmp/choir013.json
