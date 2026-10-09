@@ -43,14 +43,14 @@ class SignedWorkTest(unittest.TestCase):
                       pinned_requester_public=self.pin,operator_approved=approved,
                       power=power,at=1001)
 
-    def run(self, *, at=1001, power=POWER):
+    def work(self, *, at=1001, power=POWER):
         return advance(self.conn,self.bundle,receiver_key=self.receiver,
                        pinned_requester_public=self.pin,power=power,at=at)
 
     def finish(self):
         last=None
         for _ in range(40):
-            last=self.run()
+            last=self.work()
             if last["status"]=="COMPLETE":
                 break
         self.assertEqual(last["status"],"COMPLETE")
@@ -91,16 +91,16 @@ class SignedWorkTest(unittest.TestCase):
     def test_media_recording_yields_then_resume_and_signs_real_result(self):
         self.permit()
         held=self.received()
-        first=self.run()
+        first=self.work()
         self.assertEqual(first["work_done_bytes"],256)
         observe_media(self.conn,"RECORDING",at=1002)
-        blocked=self.run(at=1002)
+        blocked=self.work(at=1002)
         self.assertEqual(blocked["status"],"HOLD")
         self.assertEqual(blocked["work_done_bytes"],0)
         observe_media(self.conn,"IDLE_CONFIRMED",at=1003)
         final=None
         for _ in range(40):
-            item=self.run(at=1003)
+            item=self.work(at=1003)
             if item["status"]=="COMPLETE":
                 final=settle(self.conn,self.bundle,receiver_key=self.receiver,
                              pinned_requester_public=self.pin,at=1004)
@@ -253,8 +253,8 @@ class SignedWorkTest(unittest.TestCase):
     def test_power_loss_mid_crossing_and_stale_idle_holds(self):
         self.permit()
         self.received()
-        before=self.run()
-        blocked=self.run(at=1050)
+        before=self.work()
+        blocked=self.work(at=1050)
         self.assertEqual(blocked["status"],"HOLD")
         self.assertEqual(blocked["cursor"],before["cursor"])
         self.assertEqual(verify_local(self.conn)["status"],"LOCAL_COLD_REPLAY_VERIFIED")
