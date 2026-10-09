@@ -1,0 +1,28 @@
+name: PostEmahh'n MAIL-003 wallet doors
+
+on:
+  pull_request:
+    paths:
+      - 'ghot/postemahhn_wallet_door.py'
+      - 'test/test_postemahhn_wallet_door.py'
+      - '.github/workflows/postemahhn-wallet-door-003.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wallet-door:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install authenticated-mail dependency
+        run: python3 -m pip install 'cryptography>=43,<47'
+      - name: Exercise signer roles, scoped print permission, and refusal cases
+        run: python3 -m unittest discover -s test -p test_postemahhn_wallet_door.py -v
+      - name: Check original MAIL-002 cryptographic relay tests
+        run: python3 -m unittest discover -s test -p test_postemahhn_sealed_mail.py -v
