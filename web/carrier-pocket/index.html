@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#183942">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>PostEmahh'n — Carrier's Pocket</title>
+<style>
+:root{font:16px/1.46 system-ui,sans-serif;background:#f3efe7;color:#19353c}
+*{box-sizing:border-box}
+body{margin:0}main{max-width:720px;margin:auto;padding:1rem 1rem 5rem}
+h1{font-size:clamp(2.1rem,7vw,3.5rem);letter-spacing:-.065em;line-height:1.02;margin:.7rem 0}
+h2{font-size:1.2rem;margin:.2rem 0 .7rem}
+p{line-height:1.5}.eyebrow{font-size:.72rem;letter-spacing:.18em;color:#9a493c;font-weight:800}
+.card{background:#fffdfa;border:1px solid #cbd1c9;padding:1rem;border-radius:14px;margin-top:1rem;box-shadow:0 2px 6px #19353c12}
+.flag{border-left:4px solid #9a493c;background:#f8e8d4;padding:.7rem 1rem;margin:1rem 0}
+label{display:block;font-weight:700;margin:.8rem 0 .3rem}
+textarea,select{font:13px/1.4 ui-monospace,monospace;display:block;width:100%;background:white;border:1px solid #9cadac;border-radius:9px;padding:.75rem;color:#183942}
+textarea{min-height:120px;resize:vertical}select{font:1rem system-ui}
+button{padding:.8rem 1rem;background:#235967;border:none;border-radius:9px;color:white;font-size:1rem;font-weight:700;margin:.6rem .4rem .4rem 0;min-height:46px}
+button.secondary{background:#e5efed;color:#153a45;border:1px solid #abc2bd}
+button:disabled{opacity:.45}
+pre{background:#e8efe9;padding:.8rem;white-space:pre-wrap;overflow-wrap:anywhere;border-radius:8px;font:12px/1.45 ui-monospace,monospace}
+.muted{color:#597277;font-size:.89rem}.status{background:#e7eee8;border-radius:8px;padding:.7rem;margin-top:1rem;white-space:pre-wrap;overflow-wrap:anywhere}
+video{width:100%;max-height:260px;background:#233b40;border-radius:8px}
+input[type=checkbox]{width:22px;height:22px;vertical-align:middle}
+small{color:#63797d}
+</style>
+</head>
+<body><main>
+<div class="eyebrow">THE STATIC COLLECTIVE / POSTAL-CORPS-002</div>
+<h1>The Carrier's Pocket.</h1>
+<p>Receive a signed simulated handoff QR while offline, inspect what it asks, and explicitly cosign one synthetic custody <em>claim</em>. Transfer the response JSON when connectivity returns.</p>
+<div class="flag"><strong>Research-only interface.</strong> It does not track a real parcel, authorize paid carriage, grant custody, issue PENNY, award a Deed or print paper. A server-side GHoT journal must separately verify and admit each response.</div>
+
+<section class="card">
+<h2>01 / Your pocket key</h2>
+<p class="muted">A separate non-exportable WebCrypto P-256 private key stays in your browser's device storage for this demo. Losing browser storage loses access. Do not use this as a production identity.</p>
+<label for="role">Which simulated handoff role?</label>
+<select id="role"><option value="carrier1">First carrier</option><option value="relay">Relay station</option><option value="carrier2">Second carrier</option><option value="recipient">Recipient</option><option value="origin">Origin</option></select>
+<button id="create">Create or open local key</button>
+<button id="copy-key" class="secondary">Copy public key</button>
+<pre id="key">No device key selected.</pre>
+</section>
+
+<section class="card">
+<h2>02 / Source-signed route</h2>
+<p class="muted">Paste the organizer's signed, fictional route. The browser verifies the P-256 origin signature before allowing a handoff.</p>
+<label for="route">Route JSON</label>
+<textarea id="route" spellcheck="false" placeholder='{"schema":"postemahhn.postal-corps-route/v0", ...}'></textarea>
+<button id="load-route">Verify route</button>
+</section>
+
+<section class="card">
+<h2>03 / Scan or paste a handoff QR</h2>
+<button id="camera" class="secondary">Scan with camera (when supported)</button>
+<video id="video" autoplay playsinline hidden></video>
+<label for="qr">Signed handoff challenge JSON</label>
+<textarea id="qr" spellcheck="false" placeholder='{"body":{"schema":"postemahhn.carrier-pocket-challenge/v0",...},...}'></textarea>
+<button id="inspect">Verify and inspect</button>
+<pre id="summary">No pending handoff.</pre>
+<label><input id="consent" type="checkbox"> I inspected this <strong>synthetic</strong> claim and choose to sign it.</label>
+<button id="sign" disabled>Sign one handoff response</button>
+</section>
+
+<section class="card">
+<h2>04 / Carry the receipt home</h2>
+<p class="muted">Your signed response is retained offline in this browser until you copy it. Transfer it to the station with a trusted channel. It does not advance the route by itself.</p>
+<textarea id="receipt" spellcheck="false" readonly></textarea>
+<button id="copy-response" class="secondary">Copy response JSON</button>
+<button id="recover" class="secondary">Recover last outgoing response</button>
+</section>
+<div id="status" class="status" role="status">Ready. No network needed after installation.</div>
+<p><small>CHALLENGE ≠ HANDOFF · SIGNED CLAIM ≠ PHYSICAL TRUTH · RECOVERED ≠ SYNCED · NO FINANCIAL WALLET ACCESS</small></p>
+</main>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const enc=new TextEncoder();
+const out=new TextDecoder();
+const D_ROUTE="PostEmahh-n-Postal-Corps-001-Route|";
+const D_EVENT="PostEmahh-n-Postal-Corps-001-Event|";
+const D_CHALLENGE="PostEmahh-n-Carrier-Pocket-Challenge-v0|";
+const D_RESPONSE="PostEmahh-n-Carrier-Pocket-Response-v0|";
+const ROLES={
+  PICKUP_LEG1:["origin","carrier1"],
+  HANDOFF_RELAY:["carrier1","relay"],
+  PICKUP_LEG2:["relay","carrier2"],
+  DELIVER_RECIPIENT:["carrier2","recipient"]
+};
+let db, keyPair=null, activeRole="", signedRoute=null, approvedChallenge=null, scanStream=null;
+const canonical=value=>{
+  if(value===null||typeof value!=="object")return JSON.stringify(value);
+  if(Array.isArray(value))return "["+value.map(canonical).join(",")+"]";
+  const names=Object.keys(value).sort();
+  return "{"+names.map(k=>JSON.stringify(k)+":"+canonical(value[k])).join(",")+"}";
+};
+function bytes(s){return enc.encode(s);}
+function fromB64(s){const b=atob(s.replace(/-/g,"+").replace(/_/g,"/")+"=".repeat((4-s.length%4)%4));return Uint8Array.from(b,x=>x.charCodeAt(0));}
+function b64(raw){return btoa(String.fromCharCode(...new Uint8Array(raw))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");}
+async function sha(raw){return b64(await crypto.subtle.digest("SHA-256",raw));}
+async function hashHex(raw){return Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",raw))).map(x=>x.toString(16).padStart(2,"0")).join("");}
+function pureJwk(p){return {kty:p.kty,crv:p.crv,x:p.x,y:p.y};}
+async function verify(pub,data,sig){
+  const key=await crypto.subtle.importKey("jwk",pureJwk(pub),{name:"ECDSA",namedCurve:"P-256"},false,["verify"]);
+  return crypto.subtle.verify({name:"ECDSA",hash:"SHA-256"},key,fromB64(sig),bytes(data));
+}
+async function sign(data){return b64(await crypto.subtle.sign({name:"ECDSA",hash:"SHA-256"},keyPair.privateKey,bytes(data)));}
+function localDB(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open("postemahhn-carrier-pocket-002",1);
+    req.onupgradeneeded=()=>{
+      const d=req.result;d.createObjectStore("keys");d.createObjectStore("outbox");
+    };
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+  });
+}
+function get(store,key){return new Promise((resolve,reject)=>{
+  const r=db.transaction(store,"readonly").objectStore(store).get(key);
+  r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+});}
+function put(store,key,value){return new Promise((resolve,reject)=>{
+  const tx=db.transaction(store,"readwrite");
+  tx.objectStore(store).put(value,key);tx.oncomplete=()=>resolve();
+  tx.onerror=()=>reject(tx.error);
+});}
+function note(msg){$("status").textContent=msg;}
+async function action(fn){
+  try{if(!window.isSecureContext)throw Error("A secure browser origin is required");
+      await fn();}catch(e){note("HOLD: "+String(e?.message||e));}
+}
+async function ensureKey(){
+  const role=$("role").value;
+  let entry=await get("keys",role);
+  if(!entry){
+    const pair=await crypto.subtle.generateKey({name:"ECDSA",namedCurve:"P-256"},false,["sign","verify"]);
+    const jwk=pureJwk(await crypto.subtle.exportKey("jwk",pair.publicKey));
+    entry={pair,publicJwk:jwk};
+    await put("keys",role,entry);
+  }
+  keyPair=entry.pair; activeRole=role;$("key").textContent=JSON.stringify(entry.publicJwk,null,2);
+  note("Local "+role+" key ready. Register this public JWK independently with the trusted route organizer.");
+}
+async function checkRoute(){
+  const route=JSON.parse($("route").value);
+  if(route.schema!=="postemahhn.postal-corps-route/v0" ||
+     route.classification!=="synthetic_parcel_no_real_carriage" ||
+     !route.role_pins || !route.source_signature)throw Error("Wrong or untrusted route format");
+  const copy={...route};delete copy.source_signature;
+  if(!await verify(route.role_pins.origin,D_ROUTE+canonical(copy),route.source_signature))
+    throw Error("Source route signature failed");
+  signedRoute=route;
+  note("Source signature verified. Route remains a synthetic custody proposal.");
+}
+async function checkChallenge(){
+  if(!keyPair || !signedRoute)throw Error("Select a key and verify a route first");
+  const q=JSON.parse($("qr").value);
+  if(Object.keys(q).sort().join(",")!=="body,event_proof,initiator_proof")throw Error("Unknown QR packet fields");
+  const b=q.body;const evt=b.event;
+  if(b.schema!=="postemahhn.carrier-pocket-challenge/v0" ||
+     b.scope!=="SYNTHETIC_CUSTODY_CLAIM_ONLY" ||
+     evt.schema!=="postemahhn.postal-corps-event/v0")
+    throw Error("Challenge is not a synthetic handoff");
+  const roles=ROLES[evt.action];
+  if(!roles||b.initiator!==roles[0]||b.responder!==roles[1]||b.responder!==activeRole)
+    throw Error("This handoff is for a different device role");
+  const expected=await get("keys",activeRole);
+  if(canonical(expected.publicJwk)!==canonical(pureJwk(signedRoute.role_pins[activeRole])))
+    throw Error("Your local signing key is not enrolled in this route");
+  const rh=await hashHex(bytes(canonical(signedRoute)));
+  if(b.route_hash!==rh || b.parcel_sha256!==signedRoute.parcel_sha256
+     || evt.route_id!==signedRoute.route_id)
+    throw Error("Challenge addresses a different route or parcel");
+  const epoch=Math.floor(Date.now()/1000);
+  if(!Number.isInteger(b.issued_at)||!Number.isInteger(b.expires_at)
+     ||b.expires_at-b.issued_at<1||b.expires_at-b.issued_at>300
+     || epoch>b.expires_at||epoch<b.issued_at-60)
+    throw Error("Challenge expired or local device clock is inconsistent");
+  if(!/^[0-9a-f]{32}$/.test(b.nonce))throw Error("Bad challenge nonce");
+  const pub=signedRoute.role_pins[b.initiator];
+  if(!await verify(pub,D_CHALLENGE+canonical(b),q.initiator_proof))
+    throw Error("QR signature invalid");
+  if(!await verify(pub,D_EVENT+canonical(evt),q.event_proof))
+    throw Error("Originating role event proof invalid");
+  approvedChallenge=q;
+  $("consent").checked=false;$("sign").disabled=false;
+  $("summary").textContent=
+    "Action: "+evt.action+
+    "\nParcel SHA-256: "+b.parcel_sha256+
+    "\nEvidence SHA-256: "+evt.evidence_sha256+
+    "\nRoute step: "+evt.seq+
+    "\nFrom: "+b.initiator+" → "+b.responder+
+    "\nExpires (UTC): "+new Date(b.expires_at*1000).toISOString()+
+    "\nClaim only; physical custody not established.";
+  note("Challenge P-256 signatures passed. Server still must verify route history and original dispatch.");
+}
+async function createResponse(){
+  if(!approvedChallenge||!keyPair||!$("consent").checked)
+    throw Error("Inspect the request and explicitly check consent");
+  const q=approvedChallenge,b=q.body,evt=b.event;
+  const epoch=Math.floor(Date.now()/1000);
+  if(epoch>b.expires_at)throw Error("QR expired; request a new one");
+  const nonce=b.nonce, key="outbox:"+nonce;
+  const stored=await get("outbox",key);
+  if(stored){
+    $("receipt").value=JSON.stringify(stored,null,2);
+    note("Previous signed response recovered. No second signature made.");return;
+  }
+  const responseBody={
+    schema:"postemahhn.carrier-pocket-response/v0",
+    challenge_sha256:await hashHex(bytes(canonical(q))),
+    nonce, event_sha256:await hashHex(bytes(canonical(evt))),
+    responder:b.responder,scope:"SYNTHETIC_CUSTODY_CLAIM_ONLY"
+  };
+  const reply={
+    challenge:q,response_body:responseBody,
+    response_proof:await sign(D_RESPONSE+canonical(responseBody)),
+    event_proof:await sign(D_EVENT+canonical(evt))
+  };
+  await put("outbox",key,reply);
+  await put("outbox","last",reply);
+  $("receipt").value=JSON.stringify(reply,null,2);
+  note("Offline receipt saved. Carry the JSON to the originating GHoT journal for separate admission.");
+}
+$("create").onclick=()=>action(ensureKey);
+$("copy-key").onclick=()=>action(async()=>{const e=await get("keys",$("role").value);if(!e)throw Error("Create a key first");await navigator.clipboard.writeText(JSON.stringify(e.publicJwk));note("Public key copied; private key remains local.");});
+$("load-route").onclick=()=>action(checkRoute);
+$("inspect").onclick=()=>action(checkChallenge);
+$("sign").onclick=()=>action(createResponse);
+$("copy-response").onclick=()=>action(async()=>{if(!$("receipt").value)throw Error("Nothing signed yet");await navigator.clipboard.writeText($("receipt").value);note("Signed response copied.");});
+$("recover").onclick=()=>action(async()=>{const r=await get("outbox","last");if(!r)throw Error("No saved response");$("receipt").value=JSON.stringify(r,null,2);note("Saved offline response recovered.");});
+$("camera").onclick=()=>action(async()=>{
+  if(!("BarcodeDetector" in window))throw Error("QR camera detection unavailable here; paste the JSON instead");
+  const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
+  scanStream=stream;$("video").hidden=false;$("video").srcObject=stream;
+  const detector=new BarcodeDetector({formats:["qr_code"]});
+  const until=Date.now()+20000;
+  while(Date.now()<until && scanStream===stream){
+    const codes=await detector.detect($("video")).catch(()=>[]);
+    const found=codes.find(c=>c.rawValue&&c.rawValue.startsWith("{"));
+    if(found){$("qr").value=found.rawValue;note("QR scanned. Press Verify and inspect.");break;}
+    await new Promise(resolve=>setTimeout(resolve,200));
+  }
+  stream.getTracks().forEach(t=>t.stop());scanStream=null;$("video").hidden=true;
+});
+(async()=>{try{
+  db=await localDB();
+  if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
+  note("Local storage ready. Generate or reopen your role's key.");
+}catch(e){note("Storage unavailable: "+e.message)}})();
+</script>
+</body>
+</html>
