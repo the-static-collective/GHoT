@@ -1,0 +1,94 @@
+name: POSTAL-CORPS-003 two phones offline
+
+on:
+  pull_request:
+    paths:
+      - 'ghot/carrier_pocket.py'
+      - 'ghot/two_phone_station.py'
+      - 'test/two_phones_webcrypto.cjs'
+      - 'test/test_two_phone_station.py'
+      - 'test/two_phone_dispatch_fixture.py'
+      - 'web/carrier-pocket/**'
+      - 'experiments/027-two-phones-one-parcel.md'
+      - '.github/workflows/postal-corps-003.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-phones:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ghot
+      - uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/lemonPRESS
+          ref: 62a20ebf1e5b65ed8ff1ad3559e2b8779e4656be
+          path: lemon
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify source revision and browser static syntax
+        shell: bash
+        run: |
+          test "$(git -C lemon rev-parse HEAD)" = 62a20ebf1e5b65ed8ff1ad3559e2b8779e4656be
+          python3 -m py_compile ghot/ghot/carrier_pocket.py ghot/ghot/two_phone_station.py
+          node --check ghot/web/carrier-pocket/two-phone-core.js
+          node --check ghot/web/carrier-pocket/vendor/qrgen.min.js
+          node --check ghot/web/carrier-pocket/sw.js
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          raw=Path("ghot/web/carrier-pocket/two-phones.html").read_text()
+          inline=re.findall(r"<script>(.*?)</script>",raw,re.S)
+          assert len(inline)==1
+          Path("/tmp/postal003-browser.js").write_text(inline[0])
+          PY
+          node --check /tmp/postal003-browser.js
+      - name: Produce genuine native LemonPRESS fictional dispatch
+        run: |
+          python3 ghot/test/two_phone_dispatch_fixture.py --lemon lemon \
+            --out "$RUNNER_TEMP/native-dispatch.json"
+      - name: Simulate two independent WebCrypto phones, encode all four scannable QRs
+        run: |
+          node ghot/test/two_phones_webcrypto.cjs \
+            "$RUNNER_TEMP/native-dispatch.json" "$RUNNER_TEMP/fieldkit.json"
+      - name: Reconcile the exact native source and two phone WebCrypto signatures
+        shell: bash
+        run: |
+          python3 - "$RUNNER_TEMP/fieldkit.json" "$RUNNER_TEMP" <<'PY'
+          import sys,json
+          from pathlib import Path
+          p=json.loads(Path(sys.argv[1]).read_text())
+          root=Path(sys.argv[2])
+          (root/"a-public.json").write_text(json.dumps(p["route"]["role_pins"]["origin"]))
+          (root/"b-public.json").write_text(json.dumps(p["route"]["role_pins"]["carrier1"]))
+          PY
+          python3 ghot/ghot/two_phone_station.py \
+            --fieldkit "$RUNNER_TEMP/fieldkit.json" \
+            --origin-pin "$RUNNER_TEMP/a-public.json" \
+            --carrier-pin "$RUNNER_TEMP/b-public.json" \
+            --journal "$RUNNER_TEMP/station.sqlite3" \
+            --out "$RUNNER_TEMP/station-result.json"
+          grep -q SYNTHETIC_HANDOFF_ADMITTED "$RUNNER_TEMP/station-result.json"
+      - name: Full hostile offline recovery, replay, incorrect pin, late HOLD suite
+        working-directory: ghot
+        run: |
+          python3 -m unittest discover -s test -p test_two_phone_station.py -v
+          python3 -m unittest discover -s test -p test_carrier_pocket.py -v
+          python3 -m unittest discover -s test -p test_postal_corps.py -v
+      - name: Archive only public-safe synthetic reconciliation summary
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postal-corps-003-two-phones-no-physical-delivery
+          path: ${{ runner.temp }}/station-result.json
+          if-no-files-found: error
+          retention-days: 14

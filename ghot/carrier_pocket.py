@@ -286,6 +286,33 @@ class PocketJournal:
         )
         return challenge
 
+    def register_browser_issued(self, challenge: dict[str, Any],
+                                now: int | None = None) -> str:
+        """Admit a source-signed phone QR into the trusted station's issued
+        nonce ledger. Requires current route history, key pins and expiry.
+        It is NOT evidence of custody, and does not commit the event.
+        """
+        self.db.execute("BEGIN IMMEDIATE")
+        try:
+            verify_challenge(self.route, self.dispatch, challenge, self.events(), now)
+            nonce = challenge["body"]["nonce"]
+            prior = self.db.execute(
+                "SELECT json,status FROM challenges WHERE nonce=?", (nonce,)
+            ).fetchone()
+            if prior:
+                require(json.loads(prior[0]) == challenge,
+                        "nonce already bound to another signed challenge")
+            else:
+                self.db.execute(
+                    "INSERT INTO challenges VALUES (?,?,?)",
+                    (nonce, canonical(challenge), "PREPARED")
+                )
+            self.db.execute("COMMIT")
+            return nonce
+        except Exception:
+            self.db.execute("ROLLBACK")
+            raise
+
     def respond(self, challenge: dict[str, Any], signer: IdentityKey,
                 now: int | None = None) -> dict[str, Any]:
         nonce = challenge["body"]["nonce"]
