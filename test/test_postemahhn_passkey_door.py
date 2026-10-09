@@ -22,7 +22,7 @@ from postemahhn_sealed_mail import make_sealed, stage_release
 from postemahhn_wallet_door import approve, issue_request, policy_for
 from postemahhn_passkey_door import (
     approve_enrollment, begin_assertion, begin_enrollment, finish_enrollment,
-    stage_with_passkey, verify_assertion, approved_origin, passkey_record_path,
+    stage_with_passkey, verify_assertion, approved_origin,
 )
 
 PDF = b"%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\n%%EOF\n"
@@ -147,7 +147,7 @@ class PasskeyDoorTest(unittest.TestCase):
 
     def test_enrollment_is_one_time(self):
         self.enrolled()
-        with self.assertRaises(OSError):
+        with self.assertRaises(ValueError):
             self.enrolled()
 
     def test_invalid_rp_origin_denied(self):
