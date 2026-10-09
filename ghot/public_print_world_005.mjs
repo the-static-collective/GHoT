@@ -181,6 +181,23 @@ async function main(){
   const fm=pin(fmDir,FM_SHA),penny=pin(treasDir,PENNY_SHA);
   const raw=readFileSync(resolve(inFile));
   must(raw.length>0&&raw.length<100000,'BOUNDED_SOURCE_PACKET_REQUIRED');
+  // Cold-source check uses Python because the original GHoT 004 receipt used
+  // Python canonical JSON and decimal media-box values (612.0 != 612).
+  // This checks the exact original file bytes BEFORE JavaScript JSON parsing.
+  const checker=[
+    'import sys,json,hashlib',
+    'p=json.load(sys.stdin)',
+    'old=p.pop("packet_id",None)',
+    'raw=json.dumps(p,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode("utf8")',
+    'expected="ghot-print-venue-004:"+hashlib.sha256(raw).hexdigest()',
+    'assert old==expected,"ORIGINAL_GHOT_RECEIPT_DIGEST_MISMATCH"'
+  ].join(';');
+  try{
+    execFileSync('python3',['-c',checker],{
+      input:raw,timeout:10000,maxBuffer:4096,stdio:['pipe','pipe','pipe']
+    });
+  }catch{fail('ORIGINAL_GHOT_RECEIPT_DIGEST_MISMATCH')}
+
   const result=await compose(JSON.parse(raw.toString('utf8')),fm,penny);
   const output=resolve(outFile);
   must(!existsSync(output),'OCCURRENCE_EXISTS_NO_AUTORETRY');
