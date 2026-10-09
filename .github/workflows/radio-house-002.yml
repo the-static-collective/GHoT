@@ -1,0 +1,50 @@
+name: RADIO HOUSE 002 — media-first voluntary spare compute
+on:
+  push:
+    branches:
+      - experiment/radio-house-002-spare-compute
+  pull_request:
+    paths:
+      - ghot/radio_house_002.py
+      - docs/RADIO-HOUSE-002.md
+      - tests/test_radio_house_002.py
+      - .github/workflows/radio-house-002.yml
+permissions:
+  contents: read
+jobs:
+  bounded-local-work:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Hostile tests — media priority, power, checkpoint, corruption, concurrency
+        run: |
+          python -m unittest discover -s tests -p 'test_radio_house_001.py' -v
+          python -m unittest discover -s tests -p 'test_radio_house_002.py' -v
+      - name: Compose actual local compute and an independent media handoff
+        run: |
+          python -m ghot.radio_house_002 demo /tmp/ghot-radio-house-002-proof > /tmp/radio-house-002-proof.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/radio-house-002-proof.json',encoding='utf8'))
+          assert d['recording_hold']=='HOLD',d
+          assert d['work_done_during_recording_bytes']==0,d
+          assert d['media_packet']=='REVIEW_BYTES_COMPLETE',d
+          assert d['media_aired'] is False,d
+          assert d['resumed'] is True,d
+          assert d['compute_final']=='COMPLETE',d
+          assert d['cold_verify']=='LOCAL_COLD_REPLAY_VERIFIED',d
+          assert d['real_station_or_ministry_actions']==0,d
+          assert d['remote_compute_jobs']==0,d
+          print(json.dumps({
+             'status':'SYNTHETIC_MEDIA_FIRST_PROOF',
+             'compute':'PAUSED_DURING_RECORDING_THEN_RESUMED',
+             'media':'REVIEW_ONLY_NOT_AIRED',
+             'remote_work':'NOT_PRESENT'
+          },sort_keys=True))
+          PY
