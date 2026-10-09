@@ -136,18 +136,20 @@ def submit(relatte: Path, root: Path, proposal: dict, crossing: dict,
     })
 
 
-def validate_native_admission(result: dict, crossing: dict) -> None:
+def validate_native_admission(result: dict, crossing: dict, trusted_receiver_key: dict) -> None:
     if (result.get("status") != "ADMITTED_FOR_LOCAL_HASH"
             or result.get("approved") is not True
             or result.get("physical_execution") is not False
-            or result.get("economic_credit") != 0):
-        raise ValueError("NATIVE_HASH_NOT_ADMITTED")
+            or result.get("economic_credit") != 0
+            or result.get("receiver_public_key") != trusted_receiver_key):
+        raise ValueError("NATIVE_HASH_NOT_ADMITTED_OR_NOT_PINNED")
     receive = result.get("receive_receipt")
     disposition = result.get("disposition_receipt")
     for record in (receive, disposition):
         if not isinstance(record, dict) or not verify_receipt(record):
             raise ValueError("NATIVE_SIGNED_RECEIPT_INVALID")
-        if (record["crossing_id"] != crossing["crossing_id"]
+        if (record["signing"]["public_key"] != trusted_receiver_key
+                or record["crossing_id"] != crossing["crossing_id"]
                 or record["world_id"] != "world:ghot:wab-native-hash"
                 or record["receiver_particular"] != "particular:relatte:wab-native-hash"):
             raise ValueError("NATIVE_RECEIVER_CROSSING_MISMATCH")
@@ -160,9 +162,9 @@ def validate_native_admission(result: dict, crossing: dict) -> None:
 
 def execute_authorized_hash(
     proposal: dict, crossing: dict, admitted: dict, frozen_offer: dict, *,
-    body_fn, execute_fn, node_key: IdentityKey,
+    body_fn, execute_fn, node_key: IdentityKey, trusted_receiver_key: dict,
 ) -> dict:
-    validate_native_admission(admitted, crossing)
+    validate_native_admission(admitted, crossing, trusted_receiver_key)
     if current_hash_offer(body_fn) != frozen_offer:
         raise ValueError("NATIVE_OFFER_CHANGED_BEFORE_EXECUTION")
     if crossing["extensions"]["world_asks_back_native"]["offer_address"] != offer_address(frozen_offer):
@@ -238,7 +240,8 @@ def demo(relatte: Path, *, approving: bool = True) -> dict:
             node_key = IdentityKey.load_or_create(root / "ghot-state" / "identity" / "body-p256.pem")
             executed = execute_authorized_hash(
                 proposal, crossing, admitted, offer,
-                body_fn=body, execute_fn=execute, node_key=node_key)
+                body_fn=body, execute_fn=execute, node_key=node_key,
+                trusted_receiver_key=boot["receiver_public_key"])
             return {"status": "NATIVE_LOCAL_HASH_EXECUTED",
                     "receiver_receive": admitted["receive_receipt"],
                     "receiver_admit": admitted["disposition_receipt"],
