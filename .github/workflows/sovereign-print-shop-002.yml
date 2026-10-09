@@ -1,0 +1,137 @@
+name: GHoT Sovereign Print Shop 002 — pinned original CAD and native reLATTE owners
+on:
+  push:
+    branches: [experiment/sovereign-print-shop-002]
+  pull_request:
+    paths:
+      - "ghot/sovereign_print_shop_002.py"
+      - "ghot/sovereign_print_shop_002_sim.py"
+      - "fixtures/sovereign-print-shop-002/**"
+      - ".github/workflows/sovereign-print-shop-002.yml"
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: GHoT owner and source-gate hostile tests
+        run: python3 ghot/sovereign_print_shop_002_sim.py
+      - name: Checkout pinned Static OS fabrication source
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/static-os
+          ref: 7bc551610421bd60a8dbf624d93d7a6682ce3987
+          path: external/static-os
+          persist-credentials: false
+      - name: Checkout pinned native reLATTE CAD donor
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/reLATTE
+          ref: dcc8cdca84c440aa4294134f020fb7095bf87f24
+          path: external/static-os/external/reLATTE
+          persist-credentials: false
+      - name: Checkout pinned signed reLATTE fabrication owner worlds
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/reLATTE
+          ref: ded308b463df4eda2003000b4202d3c7aaa2dc84
+          path: external/static-os/external/reLATTE-013
+          persist-credentials: false
+      - name: Install native CAD and actual slicer requirements
+        run: |
+          python3 -m pip install cadquery==2.8.0 cryptography
+          sudo apt-get update
+          sudo apt-get install -y prusa-slicer xvfb xauth
+          command -v prusa-slicer
+      - name: Install native reLATTE signers and experimental owner-verifier
+        run: |
+          cd external/static-os/external/reLATTE
+          npm install --ignore-scripts --no-audit --no-fund
+          cd ../reLATTE-013
+          npm ci --ignore-scripts --no-audit --no-fund
+      - name: Native Static OS instrument to solved CAD and actual signed OCCT STEP
+        working-directory: external/static-os
+        env:
+          GHOT_SRC: ${{ github.workspace }}
+          GHOT_HOME: ${{ runner.temp }}/ghot-shop-002
+          GHOT_ADAPTER_MANIFESTS: ${{ github.workspace }}/external/static-os/integrations/apparatus-002/adapter-manifest.json
+        run: |
+          python3 scripts/apparatus-compiler.py compile --ghot-root "$GHOT_SRC" --seed fixtures/apparatus-002/source-grounded-question.json --out /tmp/shop002-parent.json
+          python3 scripts/static-cad.py compile --apparatus-plan /tmp/shop002-parent.json --parameters fixtures/static-cad-003/reference-parameters.json --candidate gear-then-screw --out-dir dist/shop002-cad-parent
+          python3 -c 'import json; p=json.load(open("dist/shop002-cad-parent/project.json")); s=json.load(open("fixtures/static-cad-004/rounded-mount-sketch.json")); s["cad_parent_id"]=p["project_id"]; json.dump(s,open("/tmp/shop002-seed.json","w"))'
+          python3 scripts/static-sketch.py solve --seed /tmp/shop002-seed.json --parent-project dist/shop002-cad-parent/project.json --out-dir dist/shop002-sketch
+          python3 scripts/static-solid.py build --sketch dist/shop002-sketch/sketch.json --out-dir dist/shop002-real-solid
+          python3 scripts/static-solid.py cross --out-dir dist/shop002-real-solid --private-relatte-root "$RUNNER_TEMP/shop002-private"
+          python3 scripts/static-solid.py verify --out-dir dist/shop002-real-solid
+      - name: Genuine PrusaSlicer FFF toolpath with no printer connected
+        working-directory: external/static-os
+        run: |
+          xvfb-run -a python3 scripts/static-print.py slice --source dist/shop002-real-solid --packet dist/shop002-print011
+          xvfb-run -a python3 scripts/static-print.py verify --source dist/shop002-real-solid --packet dist/shop002-print011
+      - name: Cold 012 printer family discovery and source 013 human-selected request
+        working-directory: external/static-os
+        run: |
+          python3 scripts/static-printer-field.py discover --source dist/shop002-real-solid --print-packet dist/shop002-print011 --fleet fixtures/printer-field-012/synthetic-fleet.json --out dist/shop002-printer-field.json
+          python3 scripts/static-printer-field.py verify --source dist/shop002-real-solid --print-packet dist/shop002-print011 --fleet fixtures/printer-field-012/synthetic-fleet.json --out dist/shop002-printer-field.json
+          python3 scripts/static-fabrication-request.py propose --source dist/shop002-real-solid --packet dist/shop002-print011 --fleet fixtures/printer-field-012/synthetic-fleet.json --selection fixtures/fabrication-013/three-node-selection.json --out dist/shop002-fabrication-request.json
+          python3 scripts/static-fabrication-request.py verify --source dist/shop002-real-solid --packet dist/shop002-print011 --fleet fixtures/printer-field-012/synthetic-fleet.json --selection fixtures/fabrication-013/three-node-selection.json --out dist/shop002-fabrication-request.json
+      - name: Native reLATTE 013 hostile and stale grant tests
+        working-directory: external/static-os/external/reLATTE-013
+        run: node --test experiments/fabrication-crossing-013/tests/*.test.mjs
+      - name: GHoT owner-local proposal to native reLATTE signed printer lab
+        env:
+          GHOT_ADAPTER_MANIFESTS: ${{ github.workspace }}/adapters/printer-organ-001/adapter-manifest.json
+          GHOT_PRINTER_OWNER_FILE: ${{ github.workspace }}/fixtures/sovereign-print-shop-002/fff-owner.json
+          GHOT_HOME: ${{ runner.temp }}/ghot-shop-002
+        run: |
+          python3 ghot/sovereign_print_shop_002.py \
+            --static-root external/static-os \
+            --relatte-root external/static-os/external/reLATTE-013 \
+            --original-source external/static-os/dist/shop002-real-solid \
+            --print-packet external/static-os/dist/shop002-print011 \
+            --fleet external/static-os/fixtures/printer-field-012/synthetic-fleet.json \
+            --selection external/static-os/fixtures/fabrication-013/three-node-selection.json \
+            --request external/static-os/dist/shop002-fabrication-request.json \
+            --owner fixtures/sovereign-print-shop-002/fff-owner.json \
+            --out dist/shop002-native-proof \
+            --static-commit 7bc551610421bd60a8dbf624d93d7a6682ce3987 \
+            --relatte-commit ded308b463df4eda2003000b4202d3c7aaa2dc84
+      - name: Cold receipt asserts no physical start, stock, money or physical machine identity
+        run: |
+          python3 - <<'PY'
+          import json
+          p=json.load(open('dist/shop002-native-proof/shop-hold-receipt.json'))
+          assert p['state']=='R3_HOLD_COMPOSED_PROPOSAL_NOT_NATIVE_CROSSING'
+          assert p['static_os_source_verified_by_native_process'] is True
+          assert p['relatte_signature_and_history_verified_by_native_process'] is True
+          assert p['actual_remote_printer_crossing'] is False
+          assert p['physical_execution_approved'] is False
+          assert p['physical_printer_contacted'] is False
+          assert p['physical_parts']==p['material_consumed']==p['cash_or_token_minted']==0
+          assert p['lab_owner_trust_pins']=='EPHEMERAL_SELF_GENERATED_NOT_INDEPENDENTLY_VERIFIED'
+          proof=json.load(open('dist/shop002-native-proof/native-relatte-lab/proof.json'))
+          assert proof['claims']['grants_for_physical_print']==0
+          assert proof['claims']['machine_dispatched'] is False
+          assert proof['fresh_ticket']['operation']=='propose'
+          assert proof['stale_grant']['offer_id']!=proof['fresh_grant']['offer_id']
+          print('GHoT_NATIVE_SOURCE_RELATTE_HOLD_WITHOUT_PHYSICAL_EFFECT')
+          PY
+      - name: Export public proposal proof without private CAD keys
+        uses: actions/upload-artifact@v4
+        with:
+          name: ghot-sovereign-print-shop-002-public-proof
+          path: |
+            external/static-os/dist/shop002-fabrication-request.json
+            dist/shop002-native-proof/shop-hold-receipt.json
+            dist/shop002-native-proof/native-relatte-lab/proof.json
+            dist/shop002-native-proof/native-relatte-lab/trust-pins.json
+          if-no-files-found: error
+          retention-days: 14
