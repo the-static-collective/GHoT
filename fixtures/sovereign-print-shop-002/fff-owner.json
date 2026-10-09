@@ -1,0 +1,22 @@
+{
+  "schema": "ghot.printer-owner-declaration/v0",
+  "machine_id": "example:machine-01",
+  "owner_ref": "synthetic-owner:fff-01",
+  "manufacturer": "Hypothetical Sample Lab",
+  "model": "Unverified Device 1",
+  "technology": "FFF_FDM",
+  "build_volume_mm": {
+    "x": 400,
+    "y": 400,
+    "z": 400
+  },
+  "materials": [
+    "PLA"
+  ],
+  "profile_ref": null,
+  "endpoint_kind": "NONE",
+  "status_endpoint": null,
+  "hardware_authenticated": false,
+  "physical_execution_authorized": false,
+  "physical_output_created": false
+}
