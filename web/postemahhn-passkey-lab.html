@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PostEmahh'n • Passkey Door Laboratory</title>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#14333b;background:#f6f1e8}
+main{max-width:760px;margin:2rem auto;padding:0 1rem}
+h1{letter-spacing:-.05em;font-size:clamp(2rem,6vw,3.4rem);margin:.5rem 0}
+p{line-height:1.5} .eyebrow{color:#9a493d;font-size:.8rem;font-weight:800;letter-spacing:.18em}
+article{background:#fffdf8;border:1px solid #c7c5bd;border-radius:14px;padding:1.1rem;margin:1rem 0}
+textarea{display:block;width:100%;box-sizing:border-box;min-height:150px;padding:12px;font-family:ui-monospace,monospace;border:1px solid #879fa3;border-radius:8px}
+button{background:#174d56;color:white;padding:13px 20px;border:0;border-radius:8px;font-size:1rem;font-weight:700;margin:.7rem 0;cursor:pointer}
+button:hover{background:#287181}
+small{line-height:1.4;color:#527178} output{display:block;white-space:pre-wrap;overflow-wrap:anywhere}
+.warn{padding:12px;background:#fff0dd;border-left:4px solid #a45537} footer{padding:1rem 0}
+</style>
+</head>
+<body>
+<main>
+<div class="eyebrow">THE STATIC COLLECTIVE / MAIL-004</div>
+<h1>Your phone. Your door.</h1>
+<p>This page invokes your browser's real WebAuthn passkey prompt. It does not send any data to a network service. Paste a locally issued challenge, approve on your device, then carry the JSON response back to your trusted local verifier.</p>
+<p class="warn"><strong>Prototype, not a hosted mail service.</strong> Works only at its configured secure WebAuthn origin. For the first local experiment, serve this repository at <code>http://localhost:8000</code> with RP ID <code>localhost</code>. On a separate phone, localhost means the phone itself: using a real phone requires hosting this page on a controlled HTTPS domain and issuing challenges bound to that exact domain.</p>
+<article>
+<h2>01 / Register a passkey</h2>
+<p>Paste a PostEmahh'n registration ticket issued for your address. Registration additionally needs a separately verified signature from the mail-owner key; browser registration by itself does not add a trusted identity.</p>
+<label for="registration">Registration ticket JSON</label>
+<textarea id="registration" spellcheck="false" placeholder='{"schema":"postemahhn.passkey-enrollment/v0",...}'></textarea>
+<button id="reg">Create passkey</button>
+</article>
+<article>
+<h2>02 / Authorize a print request</h2>
+<p>First inspect the independently signed print request: station, document hash, address, and expiration. This browser does not validate the station key. The recipient must verify that identity using the trusted PostEmahh'n verifier before approving.</p>
+<label for="assertion">Assertion challenge JSON</label>
+<textarea id="assertion" spellcheck="false" placeholder='{"schema":"postemahhn.passkey-challenge/v0",...}'></textarea>
+<button id="get">Approve with passkey</button>
+</article>
+<article>
+<h2>03 / Verification packet</h2>
+<p>Copy this response to the station-side verifier; it cannot print anything simply because this JSON exists.</p>
+<textarea id="result" spellcheck="false" readonly placeholder="The browser's WebAuthn response appears here."></textarea>
+<small id="status" role="status">Waiting for a user gesture.</small>
+</article>
+<footer><small>PASSKEY SIGNATURE ≠ MAIL DECRYPTION KEY · VERIFIED ≠ PRINTED · NO FINANCIAL WALLET ACCESS</small></footer>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const b64url = raw => btoa(String.fromCharCode(...new Uint8Array(raw))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+const bytes = encoded => {
+  const normalized=encoded.replace(/-/g,"+").replace(/_/g,"/");
+  const binary=atob(normalized+"=".repeat((4-normalized.length%4)%4));
+  return Uint8Array.from(binary, v=>v.charCodeAt(0));
+};
+function assertSite(ticket) {
+  if (!window.isSecureContext) throw new Error("Secure WebAuthn context required");
+  if (ticket.origin !== location.origin)
+    throw new Error("Ticket origin differs from this website");
+  if (ticket.rp_id !== location.hostname)
+    throw new Error("Ticket RP ID differs from this website");
+}
+async function run(kind) {
+  const btn=$ (kind === "create" ? "reg" : "get");
+  btn.disabled=true;
+  $("status").textContent="Waiting for the authenticator...";
+  try {
+    const ticket=JSON.parse($(kind === "create" ? "registration":"assertion").value);
+    assertSite(ticket);
+    let credential;
+    if (kind === "create") {
+      const user = new TextEncoder().encode(ticket.address);
+      credential=await navigator.credentials.create({publicKey:{
+        challenge:bytes(ticket.challenge),
+        rp:{name:"PostEmahh'n Experiment",id:ticket.rp_id},
+        user:{id:user,name:ticket.address,displayName:"PostEmahh'n address"},
+        pubKeyCredParams:[{alg:-7,type:"public-key"}],
+        authenticatorSelection:{userVerification:"required",residentKey:"preferred"},
+        attestation:"none",timeout:60000
+      }});
+      $("result").value=JSON.stringify({
+        id:b64url(credential.rawId),rawId:b64url(credential.rawId),
+        type:credential.type,
+        response:{
+          clientDataJSON:b64url(credential.response.clientDataJSON),
+          attestationObject:b64url(credential.response.attestationObject)
+        }
+      },null,2);
+    } else {
+      credential=await navigator.credentials.get({publicKey:{
+        challenge:bytes(ticket.challenge),rpId:ticket.rp_id,
+        allowCredentials:[{id:bytes(ticket.credential_id),type:"public-key"}],
+        userVerification:"required",timeout:60000
+      }});
+      $("result").value=JSON.stringify({
+        id:b64url(credential.rawId),rawId:b64url(credential.rawId),
+        type:credential.type,
+        response:{
+          clientDataJSON:b64url(credential.response.clientDataJSON),
+          authenticatorData:b64url(credential.response.authenticatorData),
+          signature:b64url(credential.response.signature)
+        }
+      },null,2);
+    }
+    $("status").textContent="Browser ceremony complete. The local verifier must independently check and admit this response.";
+  } catch(e) {
+    $("status").textContent=String(e?.message || e);
+  } finally {btn.disabled=false;}
+}
+$("reg").addEventListener("click",()=>run("create"));
+$("get").addEventListener("click",()=>run("get"));
+</script>
+</body>
+</html>
