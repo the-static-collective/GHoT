@@ -5,6 +5,8 @@ on:
     paths:
       - 'ghot/carrier_pocket.py'
       - 'test/test_carrier_pocket.py'
+      - 'test/carrier_pocket_webcrypto.mjs'
+      - 'test/carrier_pocket_cross_runtime.py'
       - '.github/workflows/postal-corps-002.yml'
       - 'web/carrier-pocket/**'
       - 'experiments/026-carrier-pocket.md'
@@ -31,6 +33,8 @@ jobs:
           python3 -m py_compile ghot/carrier_pocket.py
       - name: Test signed QR, durable outbox, WAL recovery, and fork HOLD
         run: python3 -m unittest discover -s test -p test_carrier_pocket.py -v
+      - name: Verify browser WebCrypto and native GHoT P-256 signatures interoperate
+        run: python3 test/carrier_pocket_cross_runtime.py
       - name: Keep first-mile signed route tests green
         run: python3 -m unittest discover -s test -p test_postal_corps.py -v
       - name: Validate phone UI script and service worker syntax
