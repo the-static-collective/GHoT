@@ -1,0 +1,64 @@
+name: World Asks Back 002 Native Crossing
+
+on:
+  push:
+    paths:
+      - "ghot/world_asks_back_native.py"
+      - "tests/test_world_asks_back_native.py"
+      - ".github/workflows/world-asks-back-002.yml"
+  pull_request:
+    paths:
+      - "ghot/world_asks_back_native.py"
+      - "tests/test_world_asks_back_native.py"
+      - ".github/workflows/world-asks-back-002.yml"
+
+jobs:
+  cross-repo-native-receiver:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout GHoT
+        uses: actions/checkout@v4
+      - name: Checkout native reLATTE receiver experiment
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/reLATTE
+          ref: c107087ccb65227be78e844a422b174b84cee06e
+          path: relatte-native
+      - name: Setup Node with TS stripping
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install reLATTE dependencies
+        working-directory: relatte-native
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Verify actual reLATTE typecheck and receiver tests
+        working-directory: relatte-native
+        run: |
+          npm run check
+          node --test --experimental-strip-types test/receiver.test.ts
+      - name: Compile GHoT bridge and hostile tests
+        run: python3 -m py_compile ghot/world_asks_back_native.py tests/test_world_asks_back_native.py
+      - name: Run inherited 001 suite and native 002 hostile tests
+        run: |
+          export RELATTE_ROOT="$GITHUB_WORKSPACE/relatte-native"
+          python3 -m unittest discover -s tests -p 'test_world_asks_back.py' -v
+          python3 -m unittest discover -s tests -p 'test_world_asks_back_native.py' -v
+      - name: Native hash specimen
+        run: python3 ghot/world_asks_back_native.py demo "$GITHUB_WORKSPACE/relatte-native" > /tmp/wab002-green.json
+      - name: Native no-consent HOLD specimen
+        run: python3 ghot/world_asks_back_native.py hold "$GITHUB_WORKSPACE/relatte-native" > /tmp/wab002-hold.json
+      - name: Check exact outcomes
+        run: |
+          python3 - <<'PY'
+          import json
+          g = json.load(open('/tmp/wab002-green.json'))
+          h = json.load(open('/tmp/wab002-hold.json'))
+          assert g['status'] == 'NATIVE_LOCAL_HASH_EXECUTED'
+          assert g['receiver_admit']['kind'] == 'R3_ADMIT'
+          assert g['result']['physical_part_produced'] is False
+          assert g['result']['economic_credit'] == 0
+          assert h['status'] == 'HOLD'
+          assert h['disposition_receipt']['kind'] == 'R3_HOLD'
+          assert h['execution'] is None
+          print('native authorized hash PASS; no-consent HOLD PASS; physical execution NONE')
+          PY
