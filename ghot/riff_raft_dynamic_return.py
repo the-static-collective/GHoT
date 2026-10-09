@@ -22,7 +22,7 @@ BUNDLE = "ghot.riff-raft-dynamic-return-bundle/v0"
 SCHEMA = "ghot.riff-raft-dynamic-return/v0"
 CORE = "c0e4d2c59481e0fb2a4bf4bb294f373907fd2b76"
 DONOR = "a63624f1be6a533f5ab927b1e4e8b1a629f1ba53"
-QUEST_COMMIT = "f611c388c9c81d701d09019337cb459ac6b0e984"
+QUEST_COMMIT = "9aee07370ffb4ace0fcfaffb840359dc8797c0f0"
 STAGES = (
     "READ_FIELD", "LAY_BONES", "CATCH_WATER", "MAKE_SHADE",
     "MAKE_GROUND", "SEED_NUCLEUS", "FEED_FIELD", "WITNESS_DELTA",
