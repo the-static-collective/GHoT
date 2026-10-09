@@ -14,7 +14,7 @@ permissions:
 jobs:
   signed-print-staging:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -24,3 +24,25 @@ jobs:
         run: openssl version
       - name: Verify trust pins, exact-PDF hash, and no-print boundary
         run: python3 -m unittest discover -s test -p test_physical_receipt_router.py -v
+      - name: Stage the actual ORSHOT-001 PDF as a signed HELD proposal
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --max-time 35 \
+            'https://storage.orshot.com/cloud/w-11442/renders/images/orshot-001-signed-test-receipt-6bu9B4ng54q.pdf' \
+            -o "$RUNNER_TEMP/orshot-001.pdf"
+          python3 ghot/physical_receipt_router.py demo-stage "$RUNNER_TEMP/orshot-001.pdf" \
+            --spool "$RUNNER_TEMP/print-spool" --keys "$RUNNER_TEMP/print-test-keys"
+          bundle="$(find "$RUNNER_TEMP/print-spool" -mindepth 1 -maxdepth 1 -name 'ghot-print-v0-*' -type d -print -quit)"
+          test -n "$bundle"
+          python3 ghot/physical_receipt_router.py verify "$bundle" \
+            --source-pin "$bundle/source-pin.json" --receiver-pin "$bundle/receiver-pin.json"
+          echo "Verified Orshot PDF becomes HELD; no physical print submitted"
+      - name: Preserve bounded specimen (no private signing keys)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orshot-002-held-print-specimen
+          path: ${{ runner.temp }}/print-spool/
+          if-no-files-found: error
+          retention-days: 14
