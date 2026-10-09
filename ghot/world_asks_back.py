@@ -226,7 +226,7 @@ def assemble(claims: dict, pinned: dict, keys: dict, grants: dict) -> dict:
         "source_world": "world:ghot:synthetic-household",
         "declared_kind": "synthetic-repair-proposal",
         "payload_refs": [{"address": digest(proposal), "role": "proposal"}],
-        "requested_effect": "simulate-hinge-print",
+        "requested_effect": {"action": "simulate-hinge-print", "scope": "fixture-only"},
         "created_at": SIMULATED_TIME,
         "extensions": {"world_asks_back": {"synthetic": True,
                         "proposal_id": proposal["proposal_id"], "cut": proposal["cut"]}},
@@ -276,7 +276,7 @@ def verify(packet: dict) -> bool:
             or crossing["source_particular"] != particular_for_public_key(packet["pinned"]["household"])
             or crossing["source_world"] != "world:ghot:synthetic-household"
             or crossing["declared_kind"] != "synthetic-repair-proposal"
-            or crossing["requested_effect"] != "simulate-hinge-print"
+            or crossing["requested_effect"] != {"action": "simulate-hinge-print", "scope": "fixture-only"}
             or crossing["payload_refs"] != [{"address": digest(proposal), "role": "proposal"}]
             or crossing.get("extensions") != {"world_asks_back": {
                 "synthetic": True, "proposal_id": proposal["proposal_id"], "cut": proposal["cut"]}}):
