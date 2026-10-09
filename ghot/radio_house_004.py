@@ -52,8 +52,9 @@ def _write_private(path, obj):
 
 
 def _root(root):
-    p = Path(root).resolve()
-    require(not p.is_symlink(), "STATE_ROOT_SYMLINK")
+    raw = Path(root)
+    require(not raw.is_symlink(), "STATE_ROOT_SYMLINK")
+    p = raw.resolve()
     p.mkdir(parents=True, exist_ok=True, mode=0o700)
     os.chmod(p, 0o700)
     return p
@@ -420,7 +421,7 @@ class RadioHTTP(BaseHTTPRequestHandler):
 
 
 def _server(worker, port, surface):
-    require(type(port) is int and 1025<=port<=65535,"INVALID_PORT")
+    require(type(port) is int and (port == 0 or 1025<=port<=65535),"INVALID_PORT")
     srv=ThreadingHTTPServer(("127.0.0.1",port), RadioHTTP)
     srv.worker=worker
     srv.surface=surface
