@@ -1,0 +1,48 @@
+name: POSTAL-CORPS-002 carrier pocket
+
+on:
+  pull_request:
+    paths:
+      - 'ghot/carrier_pocket.py'
+      - 'test/test_carrier_pocket.py'
+      - '.github/workflows/postal-corps-002.yml'
+      - 'web/carrier-pocket/**'
+      - 'experiments/026-carrier-pocket.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-pockets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify native P-256 and Python syntax
+        run: |
+          openssl version
+          python3 -m py_compile ghot/carrier_pocket.py
+      - name: Test signed QR, durable outbox, WAL recovery, and fork HOLD
+        run: python3 -m unittest discover -s test -p test_carrier_pocket.py -v
+      - name: Keep first-mile signed route tests green
+        run: python3 -m unittest discover -s test -p test_postal_corps.py -v
+      - name: Validate phone UI script and service worker syntax
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path("web/carrier-pocket/index.html").read_text()
+          scripts=re.findall(r'<script>(.*?)</script>',html,flags=re.S)
+          assert len(scripts)==1
+          Path("/tmp/carrier-pocket.js").write_text(scripts[0])
+          PY
+          node --check /tmp/carrier-pocket.js
+          node --check web/carrier-pocket/sw.js
