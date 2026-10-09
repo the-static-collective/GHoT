@@ -1,0 +1,103 @@
+name: RIFF-RAFT-007 two-repository custody / one-store-offline rehearsal
+on:
+  push:
+    branches:
+      - experiment/riff-raft-007-peer-custody
+    paths:
+      - ".github/workflows/riff-raft-007.yml"
+      - "ghot/riff_raft_custody_007.py"
+      - "ghot/riff_raft_partition_007.py"
+      - "fixtures/riff-raft-007/**"
+  pull_request:
+    paths:
+      - ".github/workflows/riff-raft-007.yml"
+      - "ghot/riff_raft_custody_007.py"
+      - "ghot/riff_raft_partition_007.py"
+      - "fixtures/riff-raft-007/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  two-stores-partition:
+    name: Independently verify source in both repos; disconnect each temporary store
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout GHoT peer custody store
+        uses: actions/checkout@v4
+      - name: Checkout reLATTE primary store at fixed experimental evidence branch
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/reLATTE
+          ref: experiment/riff-raft-minecraft-007-two-custodians
+          path: relatte-primary
+          persist-credentials: false
+      - name: Execute actual two-repository mirror comparison, signatures and two fault trials
+        run: |
+          mkdir -p work/riff-raft-007
+          python3 ghot/riff_raft_partition_007.py \
+            relatte-primary/fixtures/riff-raft-minecraft-006/signed-005-return.bundle.json \
+            fixtures/riff-raft-007/signed-005-return.bundle.json \
+            work/riff-raft-007/custody-and-partition-receipts.json
+      - name: Preserve locally signed independent non-admission custody evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: riff-raft-007-two-store-partition-proof
+          path: work/riff-raft-007/custody-and-partition-receipts.json
+          if-no-files-found: error
+          retention-days: 7
+
+  cold-ghot-survives:
+    name: GHoT store cold reopens signed 004+005 with no reLATTE data checkout
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout only GHoT repository
+        uses: actions/checkout@v4
+      - name: Require reLATTE local repository absent
+        run: test ! -e relatte-primary
+      - name: GHoT independently verifies original 004 and 005 signatures and generates local HOLD
+        run: |
+          mkdir -p work/riff-raft-007
+          python3 ghot/riff_raft_custody_007.py receipt \
+            fixtures/riff-raft-007/signed-005-return.bundle.json \
+            --store GHoT --receipt work/riff-raft-007/GHoT-local-receipt.json
+          python3 ghot/riff_raft_custody_007.py verify-receipt \
+            fixtures/riff-raft-007/signed-005-return.bundle.json \
+            --store GHoT --receipt work/riff-raft-007/GHoT-local-receipt.json
+
+  cold-relatte-survives:
+    name: reLATTE store cold reopens while GHoT peer DATA is absent
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout independent GHoT verifier CODE only without GHoT evidence fixture
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: ghot
+          repository: the-static-collective/GHoT
+          ref: experiment/riff-raft-007-peer-custody
+          path: ghot-code-only
+          persist-credentials: false
+      - name: Checkout reLATTE PRIMARY evidence only
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/reLATTE
+          ref: experiment/riff-raft-minecraft-007-two-custodians
+          path: relatte-primary
+          persist-credentials: false
+      - name: Assert peer evidence store NOT present
+        run: |
+          test -s relatte-primary/fixtures/riff-raft-minecraft-006/signed-005-return.bundle.json
+          test ! -e ghot-code-only/fixtures/riff-raft-007/signed-005-return.bundle.json
+      - name: Reopen original signed chain using survivor's bytes only
+        run: |
+          mkdir -p work/riff-raft-007
+          PYTHONPATH=ghot-code-only/ghot python3 ghot-code-only/ghot/riff_raft_custody_007.py receipt \
+            relatte-primary/fixtures/riff-raft-minecraft-006/signed-005-return.bundle.json \
+            --store reLATTE --receipt work/riff-raft-007/reLATTE-local-receipt.json
+          PYTHONPATH=ghot-code-only/ghot python3 ghot-code-only/ghot/riff_raft_custody_007.py verify-receipt \
+            relatte-primary/fixtures/riff-raft-minecraft-006/signed-005-return.bundle.json \
+            --store reLATTE --receipt work/riff-raft-007/reLATTE-local-receipt.json
