@@ -1,0 +1,22 @@
+{
+  "schema": "ghot.printer-owner-declaration/v0",
+  "machine_id": "fixture:fff-cabinet-01",
+  "owner_ref": "fixture:workshop-owner-01",
+  "manufacturer": "Example Workshop",
+  "model": "FFF Prototype",
+  "technology": "FFF_FDM",
+  "build_volume_mm": {
+    "x": 180,
+    "y": 180,
+    "z": 180
+  },
+  "materials": [
+    "PLA"
+  ],
+  "profile_ref": "virtual-pla-180-011",
+  "endpoint_kind": "NONE",
+  "status_endpoint": null,
+  "hardware_authenticated": false,
+  "physical_execution_authorized": false,
+  "physical_output_created": false
+}
