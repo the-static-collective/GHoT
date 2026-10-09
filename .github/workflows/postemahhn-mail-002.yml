@@ -1,0 +1,69 @@
+name: PostEmahh'n MAIL-002 encrypted relay
+
+on:
+  pull_request:
+    paths:
+      - 'ghot/postemahhn_sealed_mail.py'
+      - 'test/test_postemahhn_sealed_mail.py'
+      - '.github/workflows/postemahhn-mail-002.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  private-post-office:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install modern authenticated encryption library
+        run: python3 -m pip install 'cryptography>=43,<47'
+      - name: Test privacy, signatures, relay, and print-door boundaries
+        run: python3 -m unittest discover -s test -p test_postemahhn_sealed_mail.py -v
+      - name: Actual Orshot PDF over opaque relay to recipient-gated print staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --max-time 35 \
+            'https://storage.orshot.com/cloud/w-11442/renders/images/orshot-001-signed-test-receipt-6bu9B4ng54q.pdf' \
+            -o "$RUNNER_TEMP/original.pdf"
+          python3 - "$RUNNER_TEMP/original.pdf" "$RUNNER_TEMP/mail2" <<'PY'
+          import sys, threading
+          from pathlib import Path
+          from http.server import ThreadingHTTPServer
+          sys.path.insert(0, str(Path.cwd() / "ghot"))
+          from relatte_identity import IdentityKey
+          from postemahhn_mail import register
+          from postemahhn_sealed_mail import (
+              make_sealed, send_http, fetch_http, open_sealed, stage_release,
+              accept_at_station, OpaqueRelay, relay_handler,
+          )
+          pdf = Path(sys.argv[1]).read_bytes()
+          root = Path(sys.argv[2])
+          source = IdentityKey.load_or_create(root / "sender" / "key.pem")
+          owner = IdentityKey.load_or_create(root / "recipient" / "key.pem")
+          recipient = register(root / "recipient-mail", owner)
+          sealed = make_sealed(pdf, recipient, source)
+          server = ThreadingHTTPServer(("127.0.0.1", 0), relay_handler(OpaqueRelay(root / "relay")))
+          worker = threading.Thread(target=server.serve_forever, daemon=True)
+          worker.start()
+          try:
+              url = f"http://127.0.0.1:{server.server_port}"
+              assert send_http(url, sealed)["state"] == "STORED_OPAQUE"
+              incoming = fetch_http(url, recipient["address"])
+              assert len(incoming) == 1 and incoming[0] == sealed
+              assert open_sealed(incoming[0], owner) == pdf
+              permit = stage_release(incoming[0], owner, "local-station-001")
+              job = accept_at_station(incoming[0], pdf, permit, "local-station-001",
+                                      recipient["address"], root / "station")
+              assert (job / "document.pdf").read_bytes() == pdf
+              print("PASS Orshot PDF: signed sender -> encrypted relay -> recipient decrypts -> signed local station release -> HELD. Paper not printed.")
+          finally:
+              server.shutdown()
+              server.server_close()
+              worker.join(timeout=5)
+          PY
