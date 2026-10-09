@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import tempfile
 import uuid
@@ -26,6 +27,8 @@ from relatte_identity import (
 PROFILE = "postemahhn.mail-print/v0"
 MAX_BYTES = 5 * 1024 * 1024
 MAX_ITEMS_PER_ADDRESS = 32
+ADDRESS_RE = re.compile(r"^pm1-[0-9a-f]{40}$")
+STATION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 
 
 def digest(data: bytes) -> str:
@@ -74,6 +77,8 @@ def register(mail_root: Path, owner: IdentityKey) -> dict[str, Any]:
     directory = mail_root / "addresses"
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     path = directory / (contact["address"] + ".json")
+    if path.is_symlink():
+        raise ValueError("address registration symlink refused")
     if path.exists() and canonical_contact(load_json(path)) != contact:
         raise ValueError("existing address binding differs")
     if not path.exists():
@@ -112,6 +117,8 @@ def compose(pdf: bytes, recipient: dict[str, Any], sender: IdentityKey,
 
 
 def verify_parcel(parcel: Path) -> tuple[dict[str, Any], dict[str, Any], bytes]:
+    if not parcel.is_dir() or parcel.is_symlink():
+        raise ValueError("parcel path must be a real directory")
     for name in ("document.pdf", "crossing.json", "recipient.json"):
         if not (parcel / name).is_file() or (parcel / name).is_symlink():
             raise ValueError("parcel member missing or symlinked: " + name)
@@ -153,7 +160,11 @@ def receive(mail_root: Path, parcel: Path) -> Path:
         raise ValueError("recipient key not recognized by the station")
     mailbox = mail_root / "inbox" / addr
     mailbox.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if mailbox.is_symlink():
+        raise ValueError("mailbox symlink refused")
     target = received_path(mail_root, addr, crossing["crossing_id"])
+    if target.is_symlink():
+        raise ValueError("existing mail target symlink refused")
     if target.exists():
         existing_crossing, existing_recipient, existing_pdf = verify_parcel(target)
         if (existing_crossing != crossing or existing_recipient != recipient
@@ -206,7 +217,7 @@ def inbox(mail_root: Path, owner: IdentityKey) -> list[dict[str, str]]:
 
 def release(mail_root: Path, owner: IdentityKey, crossing_id: str,
             station_id: str, valid_for_seconds: int = 900) -> dict[str, Any]:
-    if not station_id or len(station_id) > 128 or any(ch in station_id for ch in "/\\\n"):
+    if not isinstance(station_id, str) or not STATION_RE.fullmatch(station_id):
         raise ValueError("station id must be a bounded label")
     if not 1 <= valid_for_seconds <= 3600:
         raise ValueError("release duration must be 1..3600 seconds")
@@ -248,7 +259,7 @@ def authorize_export(mail_root: Path, receipt: dict[str, Any], station_id: str,
     if not isinstance(release_obj, dict):
         raise ValueError("missing signed release body")
     addr = release_obj.get("recipient_address")
-    if not isinstance(addr, str) or not addr.startswith("pm1-"):
+    if not isinstance(addr, str) or not ADDRESS_RE.fullmatch(addr):
         raise ValueError("invalid release address")
     contact_path = mail_root / "addresses" / (addr + ".json")
     if not contact_path.is_file() or contact_path.is_symlink():
@@ -273,7 +284,8 @@ def authorize_export(mail_root: Path, receipt: dict[str, Any], station_id: str,
         raise ValueError("invalid release expiry") from e
     current = now or datetime.now(timezone.utc)
     created = datetime.fromisoformat(receipt["created_at"].replace("Z", "+00:00"))
-    if current > expires or expires <= created or (expires-created).total_seconds() > 3601:
+    if (current > expires or current < created - timedelta(seconds=60)
+            or expires <= created or (expires-created).total_seconds() > 3601):
         raise ValueError("expired or invalid release window")
     crossing_id = receipt.get("crossing_id")
     if not isinstance(crossing_id, str):
