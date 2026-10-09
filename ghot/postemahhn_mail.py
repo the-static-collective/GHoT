@@ -212,6 +212,8 @@ def release(mail_root: Path, owner: IdentityKey, crossing_id: str,
         raise ValueError("release duration must be 1..3600 seconds")
     contact = contact_for_key(owner)
     item = received_path(mail_root, contact["address"], crossing_id)
+    if not item.is_dir() or item.is_symlink():
+        raise ValueError("owner/address/crossing mismatch")
     crossing, recipient, pdf = verify_parcel(item)
     if crossing["crossing_id"] != crossing_id or recipient != contact:
         raise ValueError("owner/address/crossing mismatch")
