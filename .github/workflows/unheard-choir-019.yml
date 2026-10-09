@@ -25,6 +25,8 @@ jobs:
         run: |
           openssl version
           python3 -c 'import sqlite3; print(sqlite3.sqlite_version)'
+      - name: Preflight bounded 019 referee and owner signatures
+        run: python3 ghot/unheard_choir_referee.py demo
       - name: 019 independently pinned epochs, referee refusal and owner-local selection
         run: python3 -m unittest discover -s tests -p 'test_unheard_choir_referee.py' -v
       - name: Inherited Choir 001–018 signed suites
