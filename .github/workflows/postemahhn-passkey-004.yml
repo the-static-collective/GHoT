@@ -1,0 +1,30 @@
+name: PostEmahh'n MAIL-004 Passkey Doors
+
+on:
+  pull_request:
+    paths:
+      - 'ghot/postemahhn_passkey_door.py'
+      - 'test/test_postemahhn_passkey_door.py'
+      - '.github/workflows/postemahhn-passkey-004.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  passkey-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install WebAuthn P-256 and CBOR dependencies
+        run: python3 -m pip install 'cryptography>=43,<47' 'cbor2>=5.6,<6'
+      - name: Enroll passkey, verify WebAuthn origin RP UV signature and one-use print hold
+        run: python3 -m unittest discover -s test -p test_postemahhn_passkey_door.py -v
+      - name: Retain MAIL-003 and MAIL-002 no-asset authorization tests
+        run: |
+          python3 -m unittest discover -s test -p test_postemahhn_wallet_door.py -v
+          python3 -m unittest discover -s test -p test_postemahhn_sealed_mail.py -v
