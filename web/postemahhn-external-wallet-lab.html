@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PostEmahh'n — External Wallet Proof Laboratory</title>
+<style>
+body{font-family:system-ui,sans-serif;color:#17333a;background:#f3efe7;margin:0}main{max-width:760px;margin:32px auto;padding:0 18px}h1{font-size:clamp(2rem,6vw,3.5rem);letter-spacing:-.05em}section{border:1px solid #a9bbb8;background:#fffcf5;border-radius:12px;padding:18px;margin:18px 0}textarea{width:100%;min-height:105px;box-sizing:border-box;border:1px solid #afc2c4;border-radius:8px;padding:10px;font:12px ui-monospace,monospace;overflow-wrap:anywhere}button{background:#204f59;border:0;color:white;font-weight:700;font-size:1rem;padding:12px 18px;border-radius:8px;margin:12px 0;cursor:pointer}button:disabled{opacity:.4}.eyebrow{letter-spacing:.17em;color:#9b5039;font-weight:800;font-size:.75rem}.warning{border-left:3px solid #bd5937;padding:8px 12px;background:#f9e7d1}small{color:#536f70}
+</style>
+</head>
+<body><main>
+<div class="eyebrow">STATIC COLLECTIVE / POSTEMAHH'N / MAIL-005</div>
+<h1>Wallets as witnesses.</h1>
+<p>A Solana-compatible wallet may sign a narrowly scoped off-chain message as proof of key control. This browser page requests <strong>signMessage only</strong>; it does not request or submit a transaction.</p>
+<p class="warning">Developer prototype. The verifier runs separately in GHoT. Verify the trusted station and signed wallet-door challenge independently before signing. Never paste a seed phrase or private key here.</p>
+<section>
+<h2>01. Link a wallet to a postal address</h2>
+<p>Get a signed link body from your PostEmahh'n owner-key workflow. Both the existing postal owner AND the external wallet must approve the linkage.</p>
+<label>Link body (JSON)</label>
+<textarea id="linkBody" spellcheck="false"></textarea>
+<label>Owner-link signature (base64url)</label>
+<textarea id="ownerSignature" style="min-height:52px" spellcheck="false"></textarea>
+<button id="link">Connect and sign wallet link</button>
+</section>
+<section>
+<h2>02. Authenticate one print request</h2>
+<p>A signed wallet-door request must come from a separately trusted station. This page displays its scope but cannot independently validate the station's key.</p>
+<label>Wallet request (JSON)</label><textarea id="request" spellcheck="false"></textarea>
+<label>Linked wallet record (JSON)</label><textarea id="linkRecord" spellcheck="false"></textarea>
+<label>Wallet-door policy (JSON)</label><textarea id="policy" spellcheck="false"></textarea>
+<button id="proof">Sign off-chain proof</button>
+</section>
+<section>
+<h2>03. Copy the verification packet</h2>
+<p>Send only this public signed proof to the PostEmahh'n verifier. It is not a print order and has no financial effect.</p>
+<textarea id="out" readonly spellcheck="false"></textarea>
+<div id="status" role="status" aria-live="polite">Ready.</div>
+</section>
+<small>WALLET ≠ TREASURY · SIGNATURE ≠ PRINT PERMISSION · NO TOKEN APPROVAL OR TRANSACTION</small>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const enc=new TextEncoder();
+const utf=val=>enc.encode(val);
+const canonical=o=>JSON.stringify(o, (function() {
+  const seen=new WeakSet();
+  return function(key,value){
+    if (value && typeof value==="object" && !Array.isArray(value)){
+      if (seen.has(value)) throw Error("Cyclic input rejected");
+      seen.add(value);
+      return Object.fromEntries(Object.entries(value).sort(([a],[b])=>a<b?-1:a>b?1:0));
+    }
+    return value;
+  };
+})());
+const base64url=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=/g,"");
+async function shahex(bytes){
+  const raw=await crypto.subtle.digest("SHA-256",bytes);
+  return [...new Uint8Array(raw)].map(x=>x.toString(16).padStart(2,"0")).join("");
+}
+async function getWallet(){
+  const w=window.phantom?.solana || window.solana;
+  if(!w || typeof w.signMessage!=="function" || typeof w.connect!=="function")
+    throw Error("No compatible injected Solana signMessage wallet found.");
+  const connected=await w.connect();
+  const addr=String(connected.publicKey || w.publicKey);
+  if(!addr) throw Error("Wallet address unavailable");
+  return {w,addr};
+}
+async function sign(w,message){
+  const result=await w.signMessage(utf(message),"utf8");
+  if(!result || !result.signature)throw Error("Wallet did not return a signature");
+  return base64url(result.signature);
+}
+async function action(name,fn){
+  const btn=$(name);btn.disabled=true;$("status").textContent="Waiting for wallet authorization...";
+  try{const result=await fn();$("out").value=JSON.stringify(result,null,2);
+      $("status").textContent="Signature returned. GHoT must independently verify the proof."}
+  catch(e){$("status").textContent=String(e?.message||e)}
+  finally{btn.disabled=false}
+}
+$("link").addEventListener("click",()=>action("link",async()=>{
+  const body=JSON.parse($("linkBody").value);
+  if(body.profile!=="solana.ed25519-signed-message/v0" ||
+     body.capability!=="authenticate-one-print-request-only" ||
+     body.money_transfer_allowed!==false || body.print_effect_allowed!==false)
+    throw Error("Unrecognized or overly broad wallet link");
+  const {w,addr}=await getWallet();
+  if(addr!==body.wallet_public_address)throw Error("Connected wallet differs from requested key");
+  const sig=await sign(w,"PostEmahh-n-Solana-Wallet-Link-v0|"+canonical(body));
+  return {body,owner_signature:$("ownerSignature").value.trim(),wallet_signature:sig};
+}));
+$("proof").addEventListener("click",()=>action("proof",async()=>{
+  const request=JSON.parse($("request").value);
+  const link=JSON.parse($("linkRecord").value);
+  const policy=JSON.parse($("policy").value);
+  const body=link.body;
+  if(request.schema!=="postemahhn.wallet-door-request/v0" ||
+     request.body.capability!=="postemahhn.print-stage" ||
+     body.profile!=="solana.ed25519-signed-message/v0" ||
+     body.recipient_address!==request.body.recipient_address ||
+     policy.recipient_address!==body.recipient_address)
+    throw Error("Mail, wallet or signed print scope mismatch");
+  const {w,addr}=await getWallet();
+  if(addr!==body.wallet_public_address)throw Error("Wrong linked wallet connected");
+  const rid=await shahex(utf("PostEmahh-n-WalletDoor-Request-ID-v0|"+canonical(request)));
+  const binding=await shahex(utf(canonical(link)));
+  const message= {
+    schema:"postemahhn.external-wallet-request-proof/v0",
+    profile:"solana.ed25519-signed-message/v0",
+    purpose:"verify-control-of-linked-wallet-for-HELD-print-only",
+    request_id:rid,
+    station_id:request.body.station_id,
+    recipient_address:body.recipient_address,
+    artifact_sha256:request.body.artifact_sha256,
+    binding_id:binding,
+    wallet_address:body.wallet_public_address,
+    wallet_does_not_authorize:["funds","transactions","printing","delivery"],
+  };
+  const signature=await sign(w,"PostEmahh-n-Solana-Print-Authentication-v0|"+canonical(message));
+  return {
+    schema:message.schema,profile:message.profile,
+    request_id:rid,binding_id:binding,
+    wallet_public_address:body.wallet_public_address,signature
+  };
+}));
+</script>
+</body></html>
