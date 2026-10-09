@@ -86,3 +86,6 @@ jobs:
 
       - name: Carried intent signed dispatch simulation
         run: GHOT_HOME="$(mktemp -d)" python3 ghot/carried_intent_dispatch_sim.py
+
+      - name: Unfinished Business 001 bounded discovery tests
+        run: python3 ghot/unfinished_business_sim.py

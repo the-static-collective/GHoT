@@ -1,0 +1,55 @@
+{
+  "schema": "ghot.unfinished-inventory/v0",
+  "items": [
+    {
+      "id": "ghot.intent-assignment-crossing",
+      "title": "Carry a bounded intent toward reviewable cross-repo composition",
+      "source": {
+        "repo": "the-static-collective/GHoT",
+        "commit": "e35dd470384d864b7b0b629a68dad570875a7df0",
+        "path": "ghot/carried_intent_assignment.py"
+      },
+      "state": "OPEN",
+      "needs": [
+        "receipt.boundary"
+      ],
+      "offers": [
+        "intent.assignment"
+      ],
+      "annotation": "Researcher's hypothesis: assignment receipts could be related to a separately owned crossing boundary; source claims require review, no integration claimed."
+    },
+    {
+      "id": "relatte.portable-receipts",
+      "title": "Portable crossings and owner-local receipts",
+      "source": {
+        "repo": "the-static-collective/reLATTE",
+        "commit": "dcc8cdca84c440aa4294134f020fb7095bf87f24",
+        "path": "README.md"
+      },
+      "state": "OPEN",
+      "needs": [],
+      "offers": [
+        "receipt.boundary"
+      ],
+      "annotation": "Documented project capability, not a claim this particular GHoT integration exists or executes."
+    },
+    {
+      "id": "cannon.owner-selected-histories",
+      "title": "Owner-selected canon, not automatic main",
+      "source": {
+        "repo": "the-static-collective/CANNON",
+        "commit": "62a557389013155c07e4d98578cbfb560f5f59c5",
+        "path": "README.md"
+      },
+      "state": "OPEN",
+      "needs": [
+        "crossrepo.inventory-index"
+      ],
+      "offers": [
+        "history.owner-selected"
+      ],
+      "annotation": "CANNON README is a bootstrap statement. The missing inventory index is an experimenter-authored hypothesis, not a CANNON owner request."
+    }
+  ],
+  "relations": []
+}
