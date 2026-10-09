@@ -406,6 +406,7 @@ def demo():
         inventory = make_inventory(inbox, common, policy, log_root,
                                    roster, root, keys["gossip-east"], now=1001)
         hinted = reconcile(outbox, roster, inventory)
+        inventory_had_no_ack = read_outbox(outbox)[0]["ack"] is None
         retry = receive_once(inbox, common, policy, log_root, roster, root,
                              resumed[0]["envelope"], peast,
                              keys["gossip-east"], now=1001)
@@ -422,7 +423,7 @@ def demo():
             "first_receiver_result": deliver["status"],
             "lost_ack_kept_pending": len(lost_ack["pending_resend"]) == 1,
             "anti_entropy_reports_ack_recovery": len(hinted["ack_recovery_needed"]) == 1,
-            "inventory_alone_not_ack": read_outbox(outbox)[0]["ack"] is not None,
+            "inventory_alone_not_ack": inventory_had_no_ack,
             "repeat_is_idempotent": retry["ack"] == deliver["ack"],
             "recorded_ack": acknowledged,
             "outbox_cleared_by_signed_ack": len(reconcile(outbox, roster)["pending_resend"]) == 0,
@@ -441,9 +442,33 @@ def load(path: Path):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("demo",))
+    parser.add_argument("command", choices=("demo", "verify"))
+    names = ("parent", "roster", "challenge", "statements", "primary_anchor",
+             "primary_precommit", "primary_measurement", "pinset",
+             "primary_custody", "secondary_custody", "secondary_measurement",
+             "manifest", "attestations", "audit_policy", "audit_commits",
+             "audit_reports", "trusted_root")
+    for name in names + ("log_policy", "log_root", "gossip_roster", "gossip_root",
+                         "envelope", "ack"):
+        parser.add_argument("--" + name.replace("_", "-"), type=Path)
+    parser.add_argument("--now", type=int)
     args = parser.parse_args()
-    print(json.dumps(demo(), sort_keys=True, indent=2))
+    if args.command == "demo":
+        output = demo()
+    else:
+        mandatory = names + ("log_policy", "log_root", "gossip_roster",
+                             "gossip_root", "envelope", "ack")
+        if args.now is None or any(getattr(args, x) is None for x in mandatory):
+            parser.error("verify requires all 008 source artifacts and signed 011 evidence plus --now")
+        try:
+            common = [load(getattr(args, n)) for n in names]
+            evidence = [load(getattr(args, n)) for n in mandatory[len(names):]]
+            decision = verify_ack(common, evidence[0], evidence[1], evidence[2],
+                                  evidence[3], evidence[4], evidence[5], now=args.now)
+            output = {"verified": True, "decision": decision["decision"]}
+        except (InvalidWorld, ValueError, KeyError, TypeError, OSError, IdentityProfileError) as exc:
+            parser.error(str(exc))
+    print(json.dumps(output, sort_keys=True, indent=2))
     return 0
 
 
