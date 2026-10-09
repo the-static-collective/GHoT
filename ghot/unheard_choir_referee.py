@@ -574,8 +574,12 @@ def main():
             required = PRIOR_NAMES + OTHER_NAMES[:10]
             if any(getattr(options, n.replace("-", "_")) is None for n in required):
                 parser.error("full 001–018 independent public evidence and 019 source epoch certificates required")
-            sources = [load(getattr(options, k.replace("-", "_")))
-                       for k in PRIOR_NAMES + OTHER_NAMES[:10]]
+            documents = [load(getattr(options, k.replace("-", "_")))
+                         for k in PRIOR_NAMES + OTHER_NAMES[:10]]
+            # 001–015 ancestors are one list argument; 016–019 context is flat.
+            # Otherwise assess/record/verify receive twenty-plus positional
+            # arguments and cannot cold-verify public evidence.
+            sources = (documents[:len(PRIOR_NAMES)], *documents[len(PRIOR_NAMES):])
             choice = load(options.referee_statement) if options.referee_statement else None
             owner = load(options.owner_selection) if options.owner_selection else None
             if options.command == "assess":
