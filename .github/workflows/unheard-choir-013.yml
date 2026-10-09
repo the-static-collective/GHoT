@@ -1,0 +1,62 @@
+name: Unheard Choir 013
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-013
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_reincarnation.py'
+      - 'tests/test_unheard_choir_reincarnation.py'
+      - 'docs/UNHEARD-CHOIR-013.md'
+      - '.github/workflows/unheard-choir-013.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  letter-outlived-address:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - name: Crypto and SQLite providers
+        run: |
+          openssl version
+          python3 -c 'import sqlite3; print(sqlite3.sqlite_version)'
+      - name: Inherited Choir 001–012 suites
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_lying_witness.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_collusion.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_counterfeit.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_hidden_cause.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_missing_node.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_timestamp.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_gossip.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_vanishing.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_dead_letter.py' -v
+      - name: 013 stale receiver identity, signed archive-only grant and hostile tests
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_reincarnation.py' -v
+      - name: Old signed parcel survives dead owner, new owner can only archive
+        run: |
+          python3 ghot/unheard_choir_reincarnation.py demo > /tmp/choir013.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/choir013.json'))
+          assert x['historic_parcel_expired_at'] == 1050
+          assert x['new_incarnation_epoch'] == 2
+          assert x['new_receiver_key_distinct'] is True
+          assert x['historical_fork_signatures_survive'] is True
+          assert x['no_grant_decision'] == 'HOLD_STALE_INCARNATION_NO_ARCHIVE_GRANT'
+          assert x['owner_archival_decision'] == 'HOLD_ARCHIVED_AS_HISTORY_BY_NEW_OWNER_NOT_ADMITTED'
+          assert x['signed_receipts_persisted'] is True
+          assert x['cold_public_receipt_verifies'] is True
+          assert x['no_native_relatte_receipt'] is True
+          assert x['no_forwarding'] is True
+          assert x['no_execution'] is True
+          print('UNHEARD CHOIR 013: old signed parcel retains evidence; new local owner has no inherited grant')
+          PY
