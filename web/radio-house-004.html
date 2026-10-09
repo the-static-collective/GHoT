@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Radio House / Local Node</title>
+<style>
+:root{color-scheme:dark;--ink:#e7e7df;--muted:#a6ada9;--edge:#34504a;--panel:#172320;--deep:#0d1614;--green:#a7e0b0;--amber:#f2c877;--red:#ed9488}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 20% 0,#18322a,#0c1613 55%);font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink)}
+main{max-width:1050px;padding:24px 18px 100px;margin:auto}.top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}.eyebrow{text-transform:uppercase;font-size:11px;letter-spacing:.18em;color:var(--green)}h1{font-size:clamp(26px,4vw,39px);margin:.15em 0;font-weight:650;letter-spacing:-.035em}h2{font-size:17px;margin:0 0 12px}.sub{color:var(--muted);margin:0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:22px}.card{background:var(--panel);border:1px solid var(--edge);border-radius:16px;padding:18px;box-shadow:0 14px 40px #04090745}
+.wide{grid-column:1/-1}.status{padding:6px 10px;border-radius:999px;background:#32473b;color:var(--green);display:inline-flex;font-size:12px;font-weight:650}.status.hold{background:#493624;color:var(--amber)}button{border:1px solid #537369;padding:10px 14px;background:#284339;color:var(--ink);border-radius:10px;cursor:pointer;font:inherit;font-weight:600}button:hover{background:#385b4e}button:focus-visible{outline:2px solid var(--green);outline-offset:2px}.danger{background:#4c2926;border-color:#82504b}.danger:hover{background:#6b3834}.buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.small{color:var(--muted);font-size:13px}.mono{font:12px ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}#messages{white-space:pre-wrap;padding:12px 14px;border-left:3px solid var(--amber);background:#2d3224;border-radius:4px;color:#f3e3bc;min-height:54px;margin-top:16px}#inbox{display:grid;gap:12px}.job{border:1px solid #31483f;border-radius:12px;padding:15px;background:#12201b}.job h3{font-size:15px;margin:0}.bar{height:6px;background:#304239;border-radius:99px;overflow:hidden;margin:10px 0}.bar>div{height:100%;background:var(--green);transition:width .15s}footer{margin-top:22px;color:var(--muted);font-size:12px}
+@media(max-width:680px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}main{padding:17px 12px 70px}button{flex:1}}
+</style></head>
+<body><main>
+<div class="top"><div><div class="eyebrow">GHoT / RADIO HOUSE 004 · owner-local</div><h1>Media first. Compute when free.</h1><p class="sub">A real local control room for the voluntary Static computer.</p></div><div id="gate" class="status hold">Checking…</div></div>
+<div id="messages" role="status" aria-live="polite">No work has been authorized by this browser session.</div>
+<div class="grid">
+<section class="card"><h2>01 / Computer permission</h2><div id="optin">Compute disabled</div>
+<p class="small">Permission to offer spare computation must be explicit. Turning it off blocks the next work step.</p>
+<div class="buttons"><button id="enable">Enable voluntary compute</button><button id="disable" class="danger">Withdraw permission</button></div></section>
+<section class="card"><h2>02 / Media has priority</h2><div id="media">Media state unknown</div>
+<p class="small">These are operator declarations, not OBS telemetry. Detected capture processes also force HOLD.</p>
+<div class="buttons"><button data-media="RECORDING">Recording</button><button data-media="STREAMING">Live</button><button data-media="EDITING">Editing</button><button data-media="IDLE_CONFIRMED">Confirm idle</button><button data-media="UNKNOWN" class="danger">Unknown</button></div></section>
+<section class="card"><h2>03 / Observations</h2><p id="power" class="mono">Waiting for probe…</p>
+<p id="guard" class="small"></p><div class="buttons"><button id="refresh">Refresh observations</button><button id="verify">Verify local checkpoints</button></div></section>
+<section class="card"><h2>04 / Authority</h2><p class="small">Signed requests enter a proposal inbox. The sender cannot click Approve, Step, or Broadcast through the narrow intake port.</p>
+<p class="mono">Admin: this browser only · Intake: separate loopback port · Network: explicit SSH tunnel · Shell execution: NONE</p></section>
+<section class="card wide"><h2>05 / Work inbox <span id="inboxcount" class="small"></span></h2>
+<div id="inbox"><p class="small">Waiting for signed requests. Nothing runs automatically.</p></div></section>
+</div>
+<footer>This is a controlled engineering pilot. An operator-confirmed idle button cannot prove an OBS livestream is safe; genuine field deployments need OBS WebSocket monitoring and Linux resource isolation. No real ministry partnership or station permission is implied.</footer>
+</main>
+<script>
+const TOKEN="__ADMIN_TOKEN__";const messages=document.getElementById('messages');let latest=null;
+function el(t,c){const n=document.createElement(t);if(c)n.className=c;return n}
+function say(s){messages.textContent=String(s)}
+async function api(path,obj){let r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Radio-House-Token':TOKEN},body:JSON.stringify(obj)});let v=await r.json();if(!r.ok)throw Error(v.reason||r.status);return v}
+async function action(path,obj={}){try{const result=await api('/api/'+path,obj);say(JSON.stringify(result));await refresh()}catch(e){say('HOLD: '+e.message);await refresh()}}
+async function refresh(){try{
+let r=await fetch('/api/status',{cache:'no-store'});if(!r.ok)throw Error('status unavailable');let s=await r.json();latest=s;
+document.getElementById('optin').textContent=s.opted_in?'Compute opt-in: ENABLED':'Compute opt-in: WITHDRAWN';
+document.getElementById('media').textContent='Declared media state: '+s.media_mode;
+let ok=s.gate.status==='OFFER_LOCAL_BOUNDED_ONLY';const g=document.getElementById('gate');g.textContent=ok?'Available for bounded local work':'HOLD — '+(s.gate.reasons||[]).join(', ');g.className='status'+(ok?'':' hold');
+document.getElementById('power').textContent=JSON.stringify(s.gate.power_snapshot,null,2);
+document.getElementById('guard').textContent='Capture process check: '+s.gate.obs_sensor.status+' (not full OBS telemetry)';
+let box=document.getElementById('inbox');box.replaceChildren();document.getElementById('inboxcount').textContent='('+s.inbox.length+')';
+if(!s.inbox.length){let p=el('p','small');p.textContent='No signed proposals. First connect a separate requesting node.';box.append(p)}
+for(const item of s.inbox){let card=el('article','job');let h=el('h3');h.textContent=item.job_id+' · '+item.state;card.append(h);let intro=el('p','small');intro.textContent='Public test data: '+item.preview;card.append(intro);let ident=el('div','mono');ident.textContent=item.crossing_id;card.append(ident);
+let bar=el('div','bar'),inner=el('div');inner.style.width=String(Math.min(100,Math.round(100*item.cursor/item.size_bytes)))+'%';bar.append(inner);card.append(bar);
+let meta=el('p','small');meta.textContent=item.compute_status+' · '+item.cursor+'/'+item.size_bytes+' bytes';card.append(meta);
+let btns=el('div','buttons');for(const [verb,label,bad] of [['approve','Approve locally',false],['step','Step ×1',false],['step10','Step ×10',false],['cancel','Refuse / cancel',true]]){
+if((item.state==='PENDING'&&verb!=='approve'&&verb!=='cancel')||(item.state==='ADMITTED'&&verb==='approve')||!['PENDING','ADMITTED'].includes(item.state))continue;
+let b=el('button',bad?'danger':'');b.textContent=label;b.addEventListener('click',()=>{const v=verb==='step10'?'step':verb;const args={crossing_id:item.crossing_id};if(verb==='step10')args.steps=10;action(v,args)});btns.append(b)}card.append(btns);box.append(card)}
+}catch(e){say('HOLD: '+e.message)}}
+document.getElementById('enable').addEventListener('click',()=>action('enable'));
+document.getElementById('disable').addEventListener('click',()=>action('disable'));
+for(const b of document.querySelectorAll('[data-media]'))b.addEventListener('click',()=>action('media',{mode:b.dataset.media}));
+document.getElementById('verify').addEventListener('click',()=>action('verify'));
+document.getElementById('refresh').addEventListener('click',refresh);
+refresh();setInterval(refresh,5000);
+</script>
+</body></html>
