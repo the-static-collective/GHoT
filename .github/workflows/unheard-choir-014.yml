@@ -1,0 +1,60 @@
+name: Unheard Choir 014
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-014
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_successors.py'
+      - 'tests/test_unheard_choir_successors.py'
+      - 'docs/UNHEARD-CHOIR-014.md'
+      - '.github/workflows/unheard-choir-014.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  equal-successors:
+    runs-on: ubuntu-latest
+    timeout-minutes: 26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Crypto and SQLite providers
+        run: |
+          openssl version
+          python3 -c 'import sqlite3; print(sqlite3.sqlite_version)'
+      - name: 014 conflicting successor claims and hostile matrix
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_successors.py' -v
+      - name: Inherited Choir 001–013 adversarial suites
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_lying_witness.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_collusion.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_counterfeit.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_hidden_cause.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_missing_node.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_timestamp.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_gossip.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_vanishing.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_dead_letter.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_reincarnation.py' -v
+      - name: Both successors retain history, external reviewer cannot appoint universal owner
+        run: |
+          python3 ghot/unheard_choir_successors.py demo > /tmp/choir014.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/choir014.json'))
+          assert x['unselected'] == 'HOLD_TWO_EQUAL_SUCCESSORS_UNRESOLVED'
+          assert x['two_signed_valid_but_incompatible_selections'] == 'HOLD_CONTRADICTORY_SIGNED_SUCCESSION_SELECTIONS'
+          assert x['single_bounded_archival_selection'] == 'HOLD_SELECTED_SUCCESSOR_ARCHIVAL_ONLY_NOT_ADMITTED'
+          assert x['cold_receipt_verified'] is True
+          assert x['one_neutral_receipt'] is True
+          assert x['global_successor_proven'] is False
+          assert x['forwarding_permitted'] is False
+          assert x['external_execution'] is False
+          print('UNHEARD CHOIR 014: signed succession dispute survives; no self-appointment or native authority')
+          PY
