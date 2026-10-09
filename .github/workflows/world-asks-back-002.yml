@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: the-static-collective/reLATTE
-          ref: experiment/wab-native-receiver-002
+          ref: c107087ccb65227be78e844a422b174b84cee06e
           path: relatte-native
       - name: Setup Node with TS stripping
         uses: actions/setup-node@v4
