@@ -1,0 +1,62 @@
+name: Unheard Choir 011
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-011
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_vanishing.py'
+      - 'tests/test_unheard_choir_vanishing.py'
+      - 'docs/UNHEARD-CHOIR-011.md'
+      - '.github/workflows/unheard-choir-011.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  vanishing-witness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Crypto and SQLite providers
+        run: |
+          openssl version
+          python3 -c 'import sqlite3; print(sqlite3.sqlite_version)'
+      - name: Replay inherited Choir 001–010 hostile suites
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_lying_witness.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_collusion.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_counterfeit.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_hidden_cause.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_missing_node.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_timestamp.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_gossip.py' -v
+      - name: Signed outbox/inbox, dropped transfer, inventory, ACK and hostile matrix
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_vanishing.py' -v
+      - name: Demonstration of recovery with no native external effect
+        run: |
+          python3 ghot/unheard_choir_vanishing.py demo > /tmp/choir011.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/choir011.json'))
+          assert x['staged_durably'] is True
+          assert x['first_message_dropped_pending'] is True
+          assert x['restored_from_outbox'] is True
+          assert x['fork_detected_at_recipient'] == 'HOLD_GOSSIP_REVEALS_UNSEEN_FORK'
+          assert x['lost_ack_kept_pending'] is True
+          assert x['anti_entropy_reports_ack_recovery'] is True
+          assert x['inventory_alone_not_ack'] is True
+          assert x['repeat_is_idempotent'] is True
+          assert x['recorded_ack'] == 'ACKNOWLEDGED'
+          assert x['outbox_cleared_by_signed_ack'] is True
+          assert x['recipient_inbox_preserved'] is True
+          assert x['010_observation_journals_unchanged'] is True
+          assert x['native_external_execution'] is False
+          print('UNHEARD CHOIR 011: stage, drop, recover, dedupe, verify signed ACK and HOLD')
+          PY
