@@ -1,0 +1,67 @@
+name: Unheard Choir 017
+
+on:
+  push:
+    branches:
+      - experiment/unheard-choir-017
+  pull_request:
+    paths:
+      - 'ghot/unheard_choir_delayed_revocation.py'
+      - 'tests/test_unheard_choir_delayed_revocation.py'
+      - 'docs/UNHEARD-CHOIR-017.md'
+      - '.github/workflows/unheard-choir-017.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  negative-outlives-positive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 38
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cryptographic signing and SQLite providers
+        run: |
+          openssl version
+          python3 -c 'import sqlite3; print(sqlite3.sqlite_version)'
+      - name: 017 source-signed delayed revocation, site isolation and hostile matrix
+        run: python3 -m unittest discover -s tests -p 'test_unheard_choir_delayed_revocation.py' -v
+      - name: Inherited Choir 001–016 signed adversarial suites
+        run: |
+          python3 -m unittest discover -s tests -p 'test_unheard_choir.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_blindspot.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_false_aperture.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_lying_witness.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_collusion.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_counterfeit.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_hidden_cause.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_missing_node.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_timestamp.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_gossip.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_vanishing.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_dead_letter.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_reincarnation.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_successors.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_third_party.py' -v
+          python3 -m unittest discover -s tests -p 'test_unheard_choir_witness_custody.py' -v
+      - name: Standalone two observer gossip with no native authority
+        run: |
+          python3 ghot/unheard_choir_delayed_revocation.py demo > /tmp/choir017.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/choir017.json'))
+          assert x['west_initial'] == 'HOLD_REVOCATION_STATE_UNKNOWN'
+          assert x['east_initial'] == 'HOLD_SIGNED_REVOCATION_WITNESSED_IN_GOSSIP'
+          assert x['transport_drop_kept_sender_unknown'] is True
+          assert x['signed_exchange_decision'] == 'HOLD_SIGNED_REVOCATION_WITNESSED_IN_GOSSIP'
+          assert x['old_positive_approval_retained'] is True
+          assert x['west_original_snapshot_preserved'] is True
+          assert x['east_original_snapshot_preserved'] is True
+          assert x['gossip_receipt_durable'] is True
+          assert x['idempotent_duplicate'] is True
+          assert x['public_cold_replay'] is True
+          assert x['native_relatte_receive'] is False
+          assert x['external_execution'] is False
+          print('UNHEARD CHOIR 017: missing notice UNKNOWN; signed revocation gossip appends owner-local HOLD')
+          PY
