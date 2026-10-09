@@ -110,3 +110,6 @@ jobs:
 
       - name: Counterfactual signed reception hostile tests
         run: python3 ghot/riff_raft_counterfactual_return_sim.py
+
+      - name: Riff-Raft-007 independent mirror custody and hostile receipt tests
+        run: python3 ghot/riff_raft_custody_007_sim.py
