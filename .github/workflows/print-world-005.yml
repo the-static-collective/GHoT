@@ -1,0 +1,127 @@
+name: GHoT Full Measure PENNY Print World 005 native donor verification
+on:
+  push:
+    branches: [experiment/fullmeasure-penny-print-world-005]
+  pull_request:
+    paths:
+      - "ghot/public_print_world_005.mjs"
+      - "tests/print-world-005.test.mjs"
+      - "docs/FULLMEASURE-PENNY-PRINT-WORLD-005.md"
+      - ".github/workflows/print-world-005.yml"
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Test synthetic source constraints before native donors
+        run: node --test tests/print-world-005.test.mjs
+      - name: Checkout exact Full Measure Field Quest source
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/full-measure-world-layer
+          ref: c9206d5055ad574a23acb2eceb5f8785a4ad64fe
+          path: external/full-measure
+          persist-credentials: false
+      - name: Checkout exact PENNY-014 Treasury policy
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/Jubilee-treasury
+          ref: a36777cb87bcfb6b7706b910ba18c4c4b24c73a3
+          path: external/penny-014
+          persist-credentials: false
+      - name: Install native Full Measure TypeScript runner, never deploy
+        working-directory: external/full-measure
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Install actual local PDF inspector
+        run: python3 -m pip install pypdf==5.9.0
+      - name: GHoT original PDF -> exact held venue candidate
+        run: |
+          mkdir -p dist/print-world-005
+          python3 - <<'PY'
+          import json,os,sys
+          from pathlib import Path
+          from tempfile import TemporaryDirectory
+          from pypdf import PdfWriter
+          sys.path.insert(0,'ghot')
+          from public_print_venues_004 import compile_handoff,json_digest
+          with TemporaryDirectory() as temp:
+              root=Path(temp)
+              (root/'reviewed').mkdir()
+              w=PdfWriter()
+              w.add_blank_page(width=612,height=792)
+              with (root/'reviewed'/'public-sample.pdf').open('wb') as output:
+                  w.write(output)
+              os.environ['GHOT_PUBLIC_PRINT_INBOX']=str(root)
+              command={
+                  'schema':'ghot.public-print-input-004/v0',
+                  'action':'printer.venue.library.public.prepare',
+                  'input':{
+                      'relative_pdf':'reviewed/public-sample.pdf',
+                      'source_ref':'fixture:public-sample-005',
+                      'venue_ref':'fixture:public-library-005',
+                      'method':'MANUAL_WEB_RELEASE',
+                      'copies':1,'color':'MONOCHROME',
+                      'duplex':'SIMPLEX','paper':'LETTER',
+                      'sensitivity':'PUBLIC','operator_review':True
+                  }
+              }
+              result=compile_handoff(command['action'],command)
+              assert result['packet_id']=='ghot-print-venue-004:'+json_digest({k:v for k,v in result.items() if k!='packet_id'})
+              assert result['pages_physically_printed']==0
+              Path('dist/print-world-005/ghot-public-source.json').write_text(json.dumps(result,indent=2)+'\n')
+              print('SOURCE_NATIVE_PDF_PAGE_AND_RECEIPT_DIGEST_VERIFIED')
+          PY
+      - name: Native Full Measure Garden proposal and PENNY-014 zero-journal cold inspection
+        run: |
+          FM="$PWD/external/full-measure"
+          PENNY="$PWD/external/penny-014"
+          node "$FM/node_modules/tsx/dist/cli.mjs" \
+            "$PWD/ghot/public_print_world_005.mjs" \
+            "$FM" "$PENNY" \
+            "$PWD/dist/print-world-005/ghot-public-source.json" \
+            "$PWD/dist/print-world-005/held-cross.json"
+      - name: Deny phantom Deed, backing and issuance in native output
+        run: |
+          python3 - <<'PY'
+          import json
+          p=json.load(open('dist/print-world-005/held-cross.json'))
+          assert p['status']=='NATIVE_FULL_MEASURE_QUEST_PENNY_ZERO_HOLD'
+          assert p['full_measure_quest']['truth_state']=='PROPOSAL'
+          assert p['full_measure_quest']['participation_state']=='NOT_PLEDGED'
+          assert p['full_measure_quest']['deed_state']=='NOT_AWARDED'
+          assert p['full_measure_hold_choice']['disposition']=='HOLD'
+          assert p['penny_work_candidate']['verified_work_witness_present'] is False
+          assert p['penny_work_candidate']['pending_penny_units_created']==0
+          assert p['penny_work_candidate']['active_penny_units_issued']==0
+          assert p['native_penny_zero_genesis']['sourceEventCount']==0
+          assert p['native_penny_zero_genesis']['outstandingPennyUnits']==0
+          assert p['native_penny_zero_genesis']['boxBookCoinCount']==0
+          assert p['physical_pages_collected']==0
+          assert p['payment_performed'] is False
+          assert p['real_relatte_crossing'] is False
+          print('FULL_MEASURE_QUEST_NO_DEED_PENNY_ZERO_NO_ACTUATION')
+          PY
+      - name: Run native Full Measure quest tests with its own implementation
+        working-directory: external/full-measure
+        run: node --import tsx --test tests/field-quest-engine.test.ts
+      - name: Run PENNY-014 existing signed role and physical custody tests
+        working-directory: external/penny-014
+        run: node --test test/penny-work-matter-014.test.mjs
+      - name: Upload only public-safe source and held projection
+        uses: actions/upload-artifact@v4
+        with:
+          name: ghot-full-measure-penny-005-held
+          path: |
+            dist/print-world-005/ghot-public-source.json
+            dist/print-world-005/held-cross.json
+          retention-days: 7
+          if-no-files-found: error
