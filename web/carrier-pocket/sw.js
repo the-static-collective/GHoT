@@ -1,6 +1,6 @@
 /* Static read-only UI caching. No network synchronization, mailboxes or money. */
-const CACHE="postemahhn-carrier-pocket-002-v1";
-const ASSETS=["./","./index.html","./manifest.webmanifest"];
+const CACHE="postemahhn-carrier-pocket-003-v1";
+const ASSETS=["./","./index.html","./two-phones.html","./two-phone-core.js","./vendor/qrgen.min.js","./manifest.webmanifest"];
 self.addEventListener("install",event=>{
   event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));
   self.skipWaiting();
