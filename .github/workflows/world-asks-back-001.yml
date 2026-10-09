@@ -1,0 +1,33 @@
+name: World Asks Back 001
+
+on:
+  push:
+    paths:
+      - "ghot/world_asks_back.py"
+      - "tests/test_world_asks_back.py"
+      - ".github/workflows/world-asks-back-001.yml"
+  pull_request:
+    paths:
+      - "ghot/world_asks_back.py"
+      - "tests/test_world_asks_back.py"
+      - ".github/workflows/world-asks-back-001.yml"
+
+jobs:
+  synthetic-workshop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check OpenSSL availability
+        run: openssl version
+      - name: Compile
+        run: python3 -m py_compile ghot/world_asks_back.py tests/test_world_asks_back.py
+      - name: Hostile and cold-replay tests
+        run: python3 -m unittest discover -s tests -p 'test_world_asks_back.py' -v
+      - name: Green-world self-check
+        run: |
+          python3 -m ghot.world_asks_back demo > /tmp/wab-green.json
+          python3 -m ghot.world_asks_back verify /tmp/wab-green.json
+      - name: No-consent world stays held
+        run: |
+          python3 -m ghot.world_asks_back demo --hold > /tmp/wab-hold.json
+          python3 -m ghot.world_asks_back verify /tmp/wab-hold.json
