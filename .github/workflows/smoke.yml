@@ -98,3 +98,9 @@ jobs:
 
       - name: Read-only Minecraft two-world signed return receiver
         run: python3 ghot/riff_raft_minecraft_return_sim.py
+
+      - name: Dynamic Riff-Raft synthetic Minecraft quest proposals
+        run: python3 ghot/riff_raft_quest_sim.py
+
+      - name: Dynamic Minecraft quest return receiver hostility tests
+        run: python3 ghot/riff_raft_dynamic_return_sim.py
