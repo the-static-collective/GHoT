@@ -19,9 +19,11 @@ from typing import Any
 
 from relatte_identity import IdentityKey, jcs_bytes, verify_p256
 from postal_corps import (
-    DOMAIN_EVENT, EVENT, RULES, event_body, make_route, replay, require, sha,
+    DOMAIN_EVENT, DOMAIN_ROUTE, EVENT, HASH, REF, ROLES, ROUTE, RULES,
+    dispatch_gate_candidate, event_body, replay, require, route_body, sha,
     verify_route,
 )
+from relatte_identity import normalize_public_jwk
 
 CHALLENGE_SCHEMA = "postemahhn.carrier-pocket-challenge/v0"
 RESPONSE_SCHEMA = "postemahhn.carrier-pocket-response/v0"
@@ -45,6 +47,40 @@ def obj(raw: Any, keys: set[str], reason: str) -> dict[str, Any]:
 
 def challenge_id(challenge: dict[str, Any]) -> str:
     return sha(jcs_bytes(challenge))
+
+
+def make_route_from_pins(
+    dispatch: dict[str, Any], parcel_sha256: str,
+    role_pins: dict[str, dict[str, Any]], origin: IdentityKey,
+    route_id: str = "route-specimen-001",
+) -> dict[str, Any]:
+    """Enroll browser public role keys WITHOUT exporting their private keys.
+
+    Origin separately signs the complete registry. Site must independently
+    verify who controls each claimed public key; this API cannot do that.
+    """
+    src = dispatch_gate_candidate(dispatch)
+    require(isinstance(parcel_sha256, str) and HASH.fullmatch(parcel_sha256),
+            "parcel hash invalid")
+    require(isinstance(route_id, str) and REF.fullmatch(route_id), "route ID invalid")
+    require(isinstance(role_pins, dict) and set(role_pins) == set(ROLES),
+            "exact six enrolled roles required")
+    pins = {role: normalize_public_jwk(role_pins[role]) for role in ROLES}
+    require(len({jcs_bytes(key) for key in pins.values()}) == len(ROLES),
+            "role keys must be independently held")
+    require(origin.public_jwk() == pins["origin"], "origin signer key mismatch")
+    route = {
+        "schema": ROUTE, "route_id": route_id,
+        "parcel_id": src["packet_id"], "parcel_sha256": parcel_sha256,
+        "source_dispatch_sha256": src["source_dispatch_sha256"],
+        "source_manifest_sha256": src["source_manifest_sha256"],
+        "source_dispatch_state": src["state"],
+        "classification": "synthetic_parcel_no_real_carriage",
+        "role_pins": pins, "source_signature": "",
+    }
+    route["source_signature"] = origin.sign(DOMAIN_ROUTE + jcs_bytes(route_body(route)))
+    verify_route(route, dispatch)
+    return route
 
 
 def make_challenge(
@@ -252,16 +288,19 @@ class PocketJournal:
 
     def respond(self, challenge: dict[str, Any], signer: IdentityKey,
                 now: int | None = None) -> dict[str, Any]:
-        response = make_response(self.route, self.dispatch, self.events(),
-                                 challenge, signer, now)
         nonce = challenge["body"]["nonce"]
         row = self.db.execute("SELECT json FROM outbox WHERE nonce=?", (nonce,)).fetchone()
         if row:
-            # Do not accidentally mint a distinct acknowledgment on repeated scan.
-            require(json.loads(row[0]) == response, "conflicting response to same QR")
-        else:
-            self.db.execute("INSERT INTO outbox VALUES (?,?)",
-                            (nonce, canonical(response)))
+            response = json.loads(row[0])
+            require(response["challenge"] == challenge, "conflicting QR reuse")
+            require(signer.public_jwk() == self.route["role_pins"][challenge["body"]["responder"]],
+                    "wrong responder replay key")
+            verify_response(self.route, self.dispatch, response, self.events(), now)
+            return response
+        response = make_response(self.route, self.dispatch, self.events(),
+                                 challenge, signer, now)
+        self.db.execute("INSERT INTO outbox VALUES (?,?)",
+                        (nonce, canonical(response)))
         return response
 
     def recover_outbox(self, nonce: str) -> dict[str, Any]:
