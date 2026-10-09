@@ -36,7 +36,8 @@ jobs:
           python3 - <<'PY'
           import json
           p=json.load(open('/tmp/ghot-printer-pantry.json'))
-          caps={offer['capability'] for offer in p['offers']}
+          assert p['status']=='ok'
+          caps={offer['capability'] for offer in p['output']['offers']}
           expected={
             'printer.surface.zebra.label.prepare',
             'printer.surface.kodak.photo.inspect',
