@@ -352,7 +352,8 @@ class RefereeWhoRefusedTests(unittest.TestCase):
 
     def test_cold_public_process_has_no_private_keys_or_journal(self):
         saved = self.store()["receipt"]
-        values = self.inputs() + [saved]
+        case = self.inputs()
+        values = list(case[0]) + list(case[1:]) + [saved]
         fields = PRIOR_NAMES + OTHER_NAMES
         with tempfile.TemporaryDirectory() as scratch:
             folder = Path(scratch)
