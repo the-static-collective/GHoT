@@ -38,7 +38,7 @@ def validate_context(value: Any) -> dict[str, str]:
         value["repository"], value["commit"], value["path"],
         value["sha256"], value["branchHint"]
     )
-    if not REPOSITORY.fullmatch(repo) or not SHA.fullmatch(commit):
+    if (not REPOSITORY.fullmatch(repo) or any(p in (".", "..") for p in repo.split("/")) or not SHA.fullmatch(commit)):
         raise ValueError("INVALID_BRANCH_IDENTITY")
     if not PATH.fullmatch(path) or path.startswith("/") or any(
         p in ("", ".", "..") for p in path.split("/")
