@@ -1,0 +1,22 @@
+name: AI Recomposition 001
+on:
+  push:
+    branches:
+      - 'experiment/ai-recomposition-001-thinking-workbench'
+  pull_request:
+    paths:
+      - 'ghot/ai_recomposition.py'
+      - 'integrations/ai-recomposition-001/**'
+      - 'tests/test_ai_recomposition_001.py'
+      - '.github/workflows/ai-recomposition-001.yml'
+jobs:
+  bounded-thinking-workbench:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Python syntax
+        run: python3 -m py_compile ghot/ai_recomposition.py tests/test_ai_recomposition_001.py
+      - name: Exercise genuine native GHoT Rack dispatch with fake local inference runner
+        run: python3 -m unittest discover -s tests -p 'test_ai_recomposition_001.py' -v
