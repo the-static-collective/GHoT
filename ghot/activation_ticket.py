@@ -38,6 +38,7 @@ from composition_want import CompositionWantStore, collect_observations
 from curious_doors import ReadOnlyCuriosityStore
 from launch_descriptor import (
     APP_COMPOSITION_WANTS,
+    APP_BRANCH_WORK,
     APP_MERGE_PANTRY,
     APP_PLUGIN_PARCEL,
     verify_launch_descriptor,
@@ -516,6 +517,12 @@ class ActivationStore:
         context = descriptor["context"]
         app_id = str(destination["app_id"])
         operation = str(destination["operation"])
+
+        if app_id == APP_BRANCH_WORK:
+            if operation != "hash-exact-source":
+                raise ValueError("unsupported branch-work operation")
+            from branch_work import execute_hash
+            return execute_hash(context, root=self.root)
 
         if app_id == APP_COMPOSITION_WANTS:
             want_id = str(context.get("want_id") or "")

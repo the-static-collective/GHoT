@@ -1,0 +1,36 @@
+name: GHoT 030 — owner-local branch worker with explicit ACT
+on:
+  push:
+    branches: [experiment/branch-native-owner-worker-030]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  owner-local-worker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout experimental GHoT branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          path: ghot
+          persist-credentials: false
+      - name: Checkout exact planZ donor branch commit
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/planZ
+          ref: e8111fdb64c5587b33aece0fed639ed3d03375ac
+          path: planz
+          persist-credentials: false
+      - name: Python compile
+        run: python3 -m py_compile ghot/ghot/branch_work.py ghot/ghot/branch_worker.py ghot/ghot/branch_worker_sim.py
+      - name: Exact-source one-use signed activation in disposable HOME
+        run: |
+          cd ghot
+          BRANCH_DONOR_REPO="$(pwd)/../planz" python3 ghot/branch_worker_sim.py
+      - name: Preserve all historical activation 028 tests
+        run: |
+          cd ghot
+          python3 ghot/launch_descriptor_sim.py
+          python3 ghot/activation_ticket_sim.py
+          python3 ghot/activation_broker_sim.py
