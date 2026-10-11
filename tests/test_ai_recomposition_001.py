@@ -22,7 +22,7 @@ class TestThinkingWorkbench(unittest.TestCase):
                         GHOT_HOME=str(self.home / "state"),
                         GHOT_ADAPTER_MANIFESTS=str(MANIFEST))
         self.text_file = self.home / "input.txt"
-        self.text_file.write_text("Rosemary grows. Rosemary remembers. Sky is blue.\n", encoding="utf-8")
+        self.text_file.write_text("Rosemary grows. Rosemary remembers. Sky is blue today.\n", encoding="utf-8")
 
     def cmd(self, *args, expect=0):
         proc = subprocess.run([sys.executable, str(CLI), *map(str, args)],
