@@ -1,0 +1,39 @@
+{
+  "schema": "ghot.external-adapter-manifest/v0",
+  "adapter_id": "ghot-ai-recomposition-001",
+  "capabilities": [
+    {
+      "capability": "analysis.text.profile",
+      "protocol": "stdin-json/stdout-json-v0",
+      "command": "python3",
+      "args": [
+        "../../ghot/ai_recomposition.py",
+        "adapter"
+      ],
+      "timeout_seconds": 30,
+      "limits": {
+        "max_input_bytes": 8192,
+        "no_network_required": true,
+        "deterministic": true,
+        "human_dispatch_required": true
+      }
+    },
+    {
+      "capability": "ai.text.infer.local",
+      "protocol": "stdin-json/stdout-json-v0",
+      "command": "python3",
+      "args": [
+        "../../ghot/ai_recomposition.py",
+        "adapter"
+      ],
+      "timeout_seconds": 115,
+      "limits": {
+        "max_input_bytes": 8192,
+        "max_output_tokens": 192,
+        "local_model_required": true,
+        "no_remote_provider": true,
+        "human_dispatch_required": true
+      }
+    }
+  ]
+}
