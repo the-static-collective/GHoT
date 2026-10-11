@@ -30,8 +30,15 @@ LAUNCH_ID_DOMAIN = b"GHoT-LaunchDescriptor-v0|"
 APP_COMPOSITION_WANTS = "composition-wants"
 APP_PLUGIN_PARCEL = "merge-plugin-parcel"
 APP_MERGE_PANTRY = "merge-contract-pantry"
+APP_BRANCH_WORK = "branch-work"
+BRANCH_WORK_SOURCE = "ghot.branch-worker@0"
 
 ROUTES: dict[str, dict[str, Any]] = {
+    APP_BRANCH_WORK: {
+        "owner_contract": "ghot.branch-worker@0",
+        "entrypoint": "ghot/branch_worker.py",
+        "operations": {"hash-exact-source"},
+    },
     APP_COMPOSITION_WANTS: {
         "owner_contract": "ghot.composition-wants@0",
         "entrypoint": "ghot/composition_want.py",
@@ -168,11 +175,25 @@ def verify_launch_descriptor(
         if not isinstance(requirements, dict):
             return False
 
-        if source.get("surface_contract") != "ghot.curious-doors@2":
-            return False
-        for field in ("door_id", "want_id", "door_state"):
-            if not isinstance(source.get(field), str) or not source.get(field):
+        if destination.get("app_id") == APP_BRANCH_WORK:
+            if set(source) != {"surface_contract", "source_id"}:
                 return False
+            if source.get("surface_contract") != BRANCH_WORK_SOURCE:
+                return False
+            if set(context) != {"repository", "commit", "path", "sha256", "branchHint"}:
+                return False
+            if source.get("source_id") != "sha256:" + hashlib.sha256(
+                jcs_bytes(identity_safe(context))
+            ).hexdigest():
+                return False
+            if descriptor.get("effect_if_executed") != "owner-local-source-hash":
+                return False
+        else:
+            if source.get("surface_contract") != "ghot.curious-doors@2":
+                return False
+            for field in ("door_id", "want_id", "door_state"):
+                if not isinstance(source.get(field), str) or not source.get(field):
+                    return False
 
         app_id = destination.get("app_id")
         operation = destination.get("operation")
