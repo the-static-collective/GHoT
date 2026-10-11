@@ -20,6 +20,7 @@ from curious_doors import ReadOnlyCuriosityStore
 from grammar_exchange import fetch_exchange_advert
 from launch_descriptor import (
     APP_COMPOSITION_WANTS,
+    APP_BRANCH_WORK,
     APP_MERGE_PANTRY,
     APP_PLUGIN_PARCEL,
     ROUTES,
@@ -676,7 +677,25 @@ def preflight_launch(
     ]
 
     try:
-        if app_id == APP_COMPOSITION_WANTS:
+        if app_id == APP_BRANCH_WORK:
+            from branch_work import inspect_source
+            witness = inspect_source(descriptor["context"], root=state_root)
+            context = descriptor["context"]
+            result = _resolution(
+                descriptor,
+                status="ready",
+                checks=[_check("exact-local-source-verified", True,
+                               detail=witness["blob_sha256"]),
+                        _check("local-read-policy-bound", True,
+                               detail=witness["local_policy_sha256"])],
+                proposal=_proposal([
+                    "ghot.branch-work", "hash-exact-source",
+                    context["repository"], context["commit"], context["path"],
+                    context["sha256"], witness["local_policy_sha256"],
+                ]),
+                note="Local Git read only; execution requires a fresh one-use ACT ticket",
+            )
+        elif app_id == APP_COMPOSITION_WANTS:
             result = _preflight_composition_wants(
                 descriptor,
                 root=state_root,
