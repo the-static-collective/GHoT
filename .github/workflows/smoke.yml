@@ -86,3 +86,8 @@ jobs:
 
       - name: Carried intent signed dispatch simulation
         run: GHOT_HOME="$(mktemp -d)" python3 ghot/carried_intent_dispatch_sim.py
+
+      - name: Commons Machine 001 synthetic contract tests
+        run: |
+          python3 -m unittest discover -s tests -p 'test_commons_machine.py' -v
+          python3 ghot/commons_machine.py experiments/commons-machine-001.json
