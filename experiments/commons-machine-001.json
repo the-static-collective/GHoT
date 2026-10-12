@@ -1,0 +1,140 @@
+{
+  "kind": "ghot.commons.scenario/v0",
+  "scenario_id": "commons-lever-001",
+  "source_event": {
+    "node_id": "lever",
+    "synthetic": true,
+    "description": "Operator pulls a modeled flush lever; NOT a sensor observation",
+    "origin": "fictional fixture"
+  },
+  "nodes": [
+    {
+      "id": "lever",
+      "kind": "event",
+      "domain": "mechanical.fixture"
+    },
+    {
+      "id": "flush",
+      "kind": "physical-effect",
+      "domain": "sanitation.fixture",
+      "medium": "wastewater"
+    },
+    {
+      "id": "meter",
+      "kind": "sensor",
+      "domain": "potable.supply",
+      "medium": "potable",
+      "capability": "sensor.water.flow.read"
+    },
+    {
+      "id": "demand",
+      "kind": "inference",
+      "domain": "water.demand",
+      "capability": "water.demand.estimate"
+    },
+    {
+      "id": "cooling-review",
+      "kind": "proposal",
+      "domain": "thermal.control",
+      "capability": "thermal.cooling.review"
+    },
+    {
+      "id": "adjust-cooling",
+      "kind": "actuator",
+      "domain": "thermal.control",
+      "capability": "thermal.cooling.set"
+    },
+    {
+      "id": "audit",
+      "kind": "inference",
+      "domain": "ghot.receipt.analysis",
+      "capability": "commons.log.inspect"
+    },
+    {
+      "id": "compute",
+      "kind": "proposal",
+      "domain": "ghot.capability",
+      "capability": "system.info"
+    },
+    {
+      "id": "coil-coolant",
+      "kind": "physical-effect",
+      "domain": "coil.coolant",
+      "medium": "coolant"
+    },
+    {
+      "id": "flow-probe",
+      "kind": "sensor",
+      "domain": "water.flow",
+      "capability": "sensor.pressure.read"
+    },
+    {
+      "id": "pressure-review",
+      "kind": "proposal",
+      "domain": "water.pressure",
+      "capability": "water.pressure.inspect"
+    }
+  ],
+  "edges": [
+    {
+      "id": "flush-action",
+      "from": "lever",
+      "to": "flush",
+      "relation": "mechanical"
+    },
+    {
+      "id": "fixture-to-meter-hypothesis",
+      "from": "flush",
+      "to": "meter",
+      "relation": "observation"
+    },
+    {
+      "id": "demand-estimate",
+      "from": "meter",
+      "to": "demand",
+      "relation": "inference"
+    },
+    {
+      "id": "cooling-idea",
+      "from": "demand",
+      "to": "cooling-review",
+      "relation": "candidate-action"
+    },
+    {
+      "id": "no-unsupervised-cooling",
+      "from": "cooling-review",
+      "to": "adjust-cooling",
+      "relation": "candidate-action"
+    },
+    {
+      "id": "audit-candidate",
+      "from": "meter",
+      "to": "audit",
+      "relation": "inference"
+    },
+    {
+      "id": "compute-offer-review",
+      "from": "audit",
+      "to": "compute",
+      "relation": "candidate-action"
+    },
+    {
+      "id": "wastewater-to-coil-crossing",
+      "from": "flush",
+      "to": "coil-coolant",
+      "relation": "fluid-transfer"
+    },
+    {
+      "id": "pressure-observation",
+      "from": "flush",
+      "to": "flow-probe",
+      "relation": "observation"
+    },
+    {
+      "id": "pressure-inspection",
+      "from": "flow-probe",
+      "to": "pressure-review",
+      "relation": "candidate-action"
+    }
+  ]
+}
