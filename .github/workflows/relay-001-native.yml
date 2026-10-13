@@ -1,0 +1,100 @@
+name: RELAY-001 native LOADOUT x GHoT
+
+on:
+  push:
+    branches:
+      - experiment/relay001-loadout-media-probe
+  pull_request:
+    paths:
+      - 'ghot/relay001_loadout_probe.py'
+      - '.github/workflows/relay-001-native.yml'
+      - 'experiments/relay-001-loadout-ghot.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-crossing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout GHoT
+        uses: actions/checkout@v4
+      - name: Checkout pinned LOADOUT source
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/LOADOUT
+          ref: 1adcb3d82f736f3ca8329c3c1d0d9eba398d49ee
+          path: .relay-deps/LOADOUT
+          persist-credentials: false
+      - name: Create harmless synthetic WAV
+        run: |
+          python3 - <<'PY'
+          import math
+          import struct
+          import wave
+          with wave.open("relay001-fixture.wav", "wb") as wav:
+              wav.setnchannels(1)
+              wav.setsampwidth(2)
+              wav.setframerate(16000)
+              wav.writeframes(b"".join(
+                  struct.pack("<h", int(7500*math.sin(2*math.pi*440*i/16000)))
+                  for i in range(4000)
+              ))
+          PY
+      - name: Native effect-bound execution
+        run: |
+          set -euo pipefail
+          SHA="$(sha256sum relay001-fixture.wav | cut -d ' ' -f 1)"
+          export GHOT_HOME="$RUNNER_TEMP/relay001-ghot"
+          python3 ghot/relay001_loadout_probe.py relay001-fixture.wav \
+            --sha256 "$SHA" \
+            --loadout-src .relay-deps/LOADOUT/src \
+            --ghot-root . \
+            --out evidence/relay-001
+          python3 - <<'PY'
+          import json, hashlib
+          from pathlib import Path
+          root = Path("evidence/relay-001")
+          r = json.loads((root/"relay-crossing.json").read_text())
+          task = json.loads((root/"ghot-task.json").read_text())
+          receipt = json.loads((root/"ghot-receipt.json").read_text())
+          binding = json.loads((root/"loadout-binding.json").read_text())
+          assert r["status"] == "PROBED_NATIVE_GHOT", r
+          assert r["source_unchanged"] and r["ghot_output_sha256_valid"]
+          assert binding["disposition"] == "BIND"
+          assert task["capability"] == "media.probe"
+          assert task["task_id"] == receipt["task_id"]
+          assert task["constraints"]["source_sha256"] == r["source_sha256"]
+          assert task["constraints"]["loadout_parameter_digest"] == binding["parameter_digest"]
+          assert receipt["status"] == "ok"
+          assert not r["signed"] and not r["published"] and not r["canon_admitted"]
+          assert receipt["output"]["probe"]["streams"][0]["codec_type"] == "audio"
+          print("PASS: native GHoT task + receipt bound to LOADOUT digest and WAV source SHA")
+          PY
+      - name: Adversarial refusals
+        run: |
+          set -euo pipefail
+          SHA="$(sha256sum relay001-fixture.wav | cut -d ' ' -f 1)"
+          if python3 ghot/relay001_loadout_probe.py relay001-fixture.wav \
+              --sha256 "$(printf '0%.0s' {1..64})" \
+              --loadout-src .relay-deps/LOADOUT/src --ghot-root . \
+              --out evidence/refuse-hash; then
+            echo "FAIL: altered source digest accepted"; exit 1
+          fi
+          if python3 ghot/relay001_loadout_probe.py relay001-fixture.wav \
+              --sha256 "$SHA" --fence filesystem.read \
+              --loadout-src .relay-deps/LOADOUT/src --ghot-root . \
+              --out evidence/refuse-fence; then
+            echo "FAIL: un-fenced process effect accepted"; exit 1
+          fi
+          test ! -f evidence/refuse-hash/ghot-receipt.json
+          test ! -f evidence/refuse-fence/ghot-receipt.json
+          echo "PASS: altered hash and unfenced execution refused before GHoT"
+      - name: Attach synthetic-only receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relay-001-native-synthetic-receipts
+          path: evidence/relay-001/
+          if-no-files-found: ignore
