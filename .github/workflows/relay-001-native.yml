@@ -27,6 +27,12 @@ jobs:
           ref: 1adcb3d82f736f3ca8329c3c1d0d9eba398d49ee
           path: .relay-deps/LOADOUT
           persist-credentials: false
+      - name: Install bounded media probe executor
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          command -v ffprobe
+          ffprobe -version | head -n 1
       - name: Create harmless synthetic WAV
         run: |
           python3 - <<'PY'
