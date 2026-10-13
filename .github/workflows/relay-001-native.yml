@@ -48,6 +48,14 @@ jobs:
                   for i in range(4000)
               ))
           PY
+      - name: Package exact public project sources for local replay
+        run: |
+          tar --exclude='__pycache__' -czf relay001-native-source.tar.gz ghot .relay-deps/LOADOUT/src
+      - name: Attach exact source carrier
+        uses: actions/upload-artifact@v4
+        with:
+          name: relay-001-source-carrier
+          path: relay001-native-source.tar.gz
       - name: Native effect-bound execution
         run: |
           set -euo pipefail
