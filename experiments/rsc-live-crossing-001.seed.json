@@ -1,0 +1,205 @@
+{
+  "kind": "rsc.seed",
+  "version": "0",
+  "title": "RSC Live Crossing 001 — Freshness Is a Capability",
+  "artifacts": [
+    {
+      "id": "ghot",
+      "kind": "runtime",
+      "source": "the-static-collective/GHoT@many-bodied-machine-001",
+      "current_role": "Local-first heterogeneous capability discovery, scheduling, execution, and receipts across bodies.",
+      "primitives": [
+        {"name": "capability offer", "evidence": "BODY records advertise bounded available capabilities."},
+        {"name": "inspectable deterministic scheduling", "evidence": "Capability Composer records why_selected and persists plans."},
+        {"name": "body-local execution receipt", "evidence": "TASK execution emits a GHoT receipt."}
+      ],
+      "migratable_parts": [
+        {"name": "BODY/OFFER records", "can_become": "carrier for epistemic constraints as well as compute constraints"},
+        {"name": "scheduler constraints", "can_become": "context-posture eligibility checks"}
+      ],
+      "boundaries": [
+        "PROCESSOR != AUTHORITY",
+        "OFFER != ASSIGNMENT",
+        "ASSIGNMENT != EXECUTION",
+        "EXECUTION != RECEIPT"
+      ]
+    },
+    {
+      "id": "relatte",
+      "kind": "protocol",
+      "source": "the-static-collective/reLATTE@super-relatte-001",
+      "current_role": "Portable crossing grammar, local disposition, lineage, return, and signed receipts without inherited authority.",
+      "primitives": [
+        {"name": "portable bounded crossing", "evidence": "Super Relatte keeps capsule/crossing portable while local authority stays local."},
+        {"name": "composition pulse", "evidence": "R13 binds witness, question, adaptation, descendant, return and receipts without global agreement."},
+        {"name": "non-collapse law", "evidence": "PROJECTION != AUTHORITY; DOOR != CROSSING; RECOMMENDATION != SELECTION."}
+      ],
+      "migratable_parts": [
+        {"name": "crossing constraints", "can_become": "explicit context and memory grants"},
+        {"name": "receipt trace", "can_become": "proof of what context was offered to an epistemic organ"}
+      ],
+      "boundaries": [
+        "PROJECTION != AUTHORITY",
+        "DOOR != CROSSING",
+        "RECOMMENDATION != SELECTION",
+        "ANCESTRY != AUTHORITY"
+      ]
+    },
+    {
+      "id": "autodisco",
+      "kind": "media-system",
+      "source": "the-static-collective/the-autodisco/canon/FIRST-LISTEN-RADIO.md",
+      "current_role": "Radio system where ordinary AI DJs receive mechanically bounded first-listen context while an Archivist may receive declared lineage access.",
+      "primitives": [
+        {"name": "mechanically real first hearing", "evidence": "Ordinary DJs may receive only a fresh bounded listening context."},
+        {"name": "declared epistemic roles", "evidence": "The Archivist is an explicit exception with authorized catalog and lineage access."},
+        {"name": "commentary separation", "evidence": "DJ interpretation is not silently promoted into canon."}
+      ],
+      "migratable_parts": [
+        {"name": "first-listen isolation", "can_become": "general fresh-context capability posture"},
+        {"name": "Archivist exception", "can_become": "general lineage-enabled capability posture"}
+      ],
+      "boundaries": [
+        "STATION MEMORY != DJ MEMORY",
+        "COMMENTARY != CANON",
+        "VOICE != MIND"
+      ]
+    },
+    {
+      "id": "roroomom",
+      "kind": "creative-interface",
+      "source": "the-static-collective/ROroomOM@experiment/relatte-com5-room-009-guest-port",
+      "current_role": "Human-facing creative room with bounded capability preparation, explicit approval, receipts, developmental lineage, and guest-port crossings.",
+      "primitives": [
+        {"name": "prepare-inspect-approve-execute", "evidence": "Effectful operations require bounded preview and a second explicit human action."},
+        {"name": "no inherited grants", "evidence": "Imported or developmental descendants begin without executable grants."},
+        {"name": "guest port", "evidence": "Room lineage has progressed through human-AI crossing to guest-port experiments."}
+      ],
+      "migratable_parts": [
+        {"name": "Instrument deck", "can_become": "human-facing selector for epistemic capability posture"},
+        {"name": "guest port", "can_become": "receiver for bounded fresh or archival organs"}
+      ],
+      "boundaries": [
+        "DESCRIPTOR != AUTHORITY",
+        "GUEST != OWNER",
+        "SOURCE CLAIM != PROJECT AUTHORITY",
+        "PREPARE != EXECUTE"
+      ]
+    }
+  ],
+  "crossings": [
+    {
+      "id": "epistemic-capability-contract",
+      "from": ["autodisco", "relatte"],
+      "to": ["ghot", "roroomom"],
+      "proposal": "Treat permitted knowledge state as part of a capability contract: fresh, bounded-window, lineage-enabled, or owner-local.",
+      "exaptation": "AutoDisco's first-listen isolation becomes a general scheduler-visible property rather than a radio-specific trick.",
+      "evidence": [
+        "AutoDisco mechanically separates fresh DJs from the lineage-aware Archivist.",
+        "GHoT already selects bodies by explicit capability and policy constraints.",
+        "reLATTE carries bounded crossings and receipts without transferring authority.",
+        "ROroomOM already admits guest capability surfaces without inherited grants."
+      ],
+      "preserves": [
+        "PROCESSOR != AUTHORITY",
+        "RECOMMENDATION != SELECTION",
+        "STATION MEMORY != DJ MEMORY",
+        "GUEST != OWNER"
+      ],
+      "boundary_checks": [
+        {"law": "MEMORY POSTURE != IDENTITY", "status": "pass", "note": "The posture constrains supplied context; it does not define personhood or identity."},
+        {"law": "CONTEXT GRANT != AUTHORITY", "status": "pass", "note": "Receiving lineage context cannot authorize local consequence."},
+        {"law": "RECOMMENDATION != SELECTION", "status": "pass", "note": "RSC emits a candidate experiment; a human still selects execution."}
+      ],
+      "experiment": {
+        "title": "Fresh Listener as a schedulable GHoT capability",
+        "cost": "small",
+        "reversible": true,
+        "requires": [
+          "Add context_posture to a bounded offer/task specimen",
+          "Simulate fresh and archival workers with explicit packets",
+          "Emit receipt including supplied-context digest"
+        ],
+        "produces": [
+          "epistemic capability contract v0",
+          "fresh-vs-archive test receipts",
+          "adapter seam for AutoDisco and ROroomOM"
+        ]
+      },
+      "readiness": "ready"
+    },
+    {
+      "id": "room-as-rsc-control-surface",
+      "from": ["roroomom", "ghot", "relatte"],
+      "to": ["autodisco"],
+      "proposal": "Use the Room Instrument deck as the human selection surface for RSC recommendations and context-posture grants.",
+      "exaptation": "The creative room becomes a reversible cockpit for choosing which organ gets which bounded context.",
+      "evidence": [
+        "ROroomOM already separates prepare from execute.",
+        "GHoT exposes inspectable plans.",
+        "reLATTE preserves crossing and receipt identity."
+      ],
+      "preserves": [
+        "PREPARE != EXECUTE",
+        "RECOMMENDATION != SELECTION",
+        "DOOR != CROSSING"
+      ],
+      "boundary_checks": [
+        {"law": "PREPARE != EXECUTE", "status": "pass", "note": "The UI can preview a proposed crossing without executing it."},
+        {"law": "ROOM != SOURCE AUTHORITY", "status": "pass", "note": "The Room displays and receipts external operations without absorbing their authority."}
+      ],
+      "experiment": {
+        "title": "ROroomOM Epistemic Instrument card",
+        "cost": "medium",
+        "reversible": true,
+        "requires": [
+          "RSC reseed packet import",
+          "display fresh, bounded, and archive postures",
+          "explicit human selection"
+        ],
+        "produces": [
+          "human-visible crossing preview",
+          "selected posture receipt"
+        ]
+      },
+      "readiness": "ready"
+    },
+    {
+      "id": "radio-as-distributed-epistemic-testbed",
+      "from": ["autodisco", "ghot", "relatte"],
+      "to": ["roroomom"],
+      "proposal": "Run multiple isolated listener organs across available GHoT bodies and compare only after sealed first responses return.",
+      "exaptation": "Static Collective Radio becomes a reproducible testbed for distributed epistemic isolation and later recomposition.",
+      "evidence": [
+        "First-Listen Radio requires isolated first responses before dialogue.",
+        "GHoT can place capabilities on different bodies and preserve execution receipts.",
+        "reLATTE can preserve attributable crossings and returns."
+      ],
+      "preserves": [
+        "STATION MEMORY != DJ MEMORY",
+        "EXECUTION != RECEIPT",
+        "PULSE != CONSENSUS"
+      ],
+      "boundary_checks": [
+        {"law": "FIRST RESPONSE MUST BE SEALED", "status": "pass", "note": "Dialogue starts only after independent responses are receipted."},
+        {"law": "DISTRIBUTION != INDEPENDENCE", "status": "hold", "note": "Different machines alone do not prove context isolation; the adapter needs an explicit context audit."}
+      ],
+      "experiment": {
+        "title": "Two-body sealed first-listen broadcast specimen",
+        "cost": "large",
+        "reversible": true,
+        "requires": [
+          "two GHoT bodies",
+          "bounded listening packets",
+          "context-audit receipt field"
+        ],
+        "produces": [
+          "two independent first responses",
+          "sealed-return trace",
+          "broadcast dialogue packet"
+        ]
+      },
+      "readiness": "hold"
+    }
+  ]
+}
