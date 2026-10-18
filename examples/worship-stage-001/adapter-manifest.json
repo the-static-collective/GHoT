@@ -1,0 +1,22 @@
+{
+  "schema": "ghot.external-adapter-manifest/v0",
+  "adapter_id": "worship-stage-001",
+  "capabilities": [
+    {
+      "capability": "worship.stage.preflight",
+      "protocol": "stdin-json/stdout-json-v0",
+      "command": "python3",
+      "args": ["preflight.py"],
+      "timeout_seconds": 20,
+      "limits": {
+        "network": false,
+        "arbitrary_shell": false,
+        "writes_assets": false,
+        "reads_only_owner_configured_packages": true,
+        "privacy": "report has no source filenames or lyric text",
+        "domain": "offline-rehearsal-preparation",
+        "live_console_control": false
+      }
+    }
+  ]
+}

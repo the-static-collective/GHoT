@@ -1,0 +1,21 @@
+name: GHoT Worship Stage 001
+on:
+  pull_request:
+    paths:
+      - 'examples/worship-stage-001/**'
+      - '.github/workflows/worship-stage-001.yml'
+  workflow_dispatch:
+jobs:
+  synthetic-stage-proof:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Exercise actual GHoT external adapter offer, task and receipt
+        run: python3 examples/worship-stage-001/sim.py
+      - name: Existing generic external adapter smoke
+        run: python3 ghot/external_adapter_sim.py
