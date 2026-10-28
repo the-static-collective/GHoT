@@ -718,3 +718,7 @@ This is a hypothetical energy-budget demonstration, **not** a heating appliance,
 ### Thermal Domino 002 — pressure-work as another useful output, not another fuel
 
 An **offline first-law cascade** explores an independently engineered heat engine converting part of a fuel burn into mechanical shaft work, then to a hypothetical work buffer and electricity, while rejected heat returns to a masonry heat bank. It conserves fuel energy and explicitly prohibits pressure-vessel, steam, flue, heater, or safety control. Run `python3 ghot/thermal_cascade_sim.py`, see `experiments/019-pressure-work-cascade.md` and the 002 section of the main Thermal Domino spec.
+
+### Thermal Flow Feedback 003 — follow each joule through the house
+
+Connect the modeled cascade output to a **time-stepped conservative energy-flow graph**: masonry releases heat passively, electronics produce low-grade heat after optional useful work, outside losses are measured in the ledger, and GHoT **advises** RUN/HOLD only for nonessential compute when battery reserve and synthetic comfort signals permit. GHoT **never** controls a heater, pump, pressure relief device, combustion, flue, or independent safety equipment. `python3 ghot/flow_feedback_sim.py`; tests: `python3 -m unittest discover -s ghot -p 'test_flow_feedback_sim.py'`. Read `experiments/020-thermal-flow-feedback.md` and section 003 of `docs/THERMAL-DOMINO-HOUSE-001.md`.

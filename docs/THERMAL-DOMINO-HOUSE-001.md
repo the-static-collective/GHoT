@@ -134,3 +134,66 @@ Compared with the no-engine 30 kWh heat scenario (same 75% baseline), the heat-e
 **Scientific goal:** maximize valuable useful output under `energy_conservation`, `independently_safe_installation`, `physical_measurement`, and `free_human_consent`. We should optimize *forms of work* and preserve hot-to-cold temperature usefulness, not add up multiple readings of the same heat as though they were separate energy sources.
 
 **New law:** `PRESSURE_WORK = CONVERTED_HEAT_WORK`, not `ADDITIONAL_FUEL`. `HEAT_ENGINE_REJECTED_HEAT MAY BE RECOVERED`. `GHOT ADVISES COMPUTE; GHoT NEVER CONTROLS HEATER SAFETY`.
+
+
+## 003 / Thermal flow feedback — make the room a resource graph, not a perpetual-motion machine
+
+### Four different meanings of "loop"
+
+1. **Heat cascade / reuse**: fire -> high-grade heat engine -> useful mechanical/electric work -> lower-temperature rejected heat -> masonry storage -> space heat -> outdoor loss. The returned engine waste heat is not a second fuel; it uses a heat stream previously headed toward waste. DOE CHP documents concurrent electrical/mechanical and thermal use: https://www.energy.gov/cmei/ito/combined-heat-and-power-basics
+2. **Thermal storage charge/discharge**: an approved appliance charges masonry during a burn, masonry discharges passively afterwards. This is a cycle through time, **not** heat circulating to create energy.
+3. **Electrical reuse inside a heated building**: electricity -> GHoT optional compute -> heat dissipated by electronics -> occupied-room warmth. The computation serves a useful purpose before becoming low-grade heat. It cannot regenerate enough electricity to power itself. Recovery depends on where the equipment dissipates heat, heating load, noise and ventilation.
+4. **Information feedback (actual GHoT role)**: validated battery and temperature telemetry -> advisory schedule -> optional computing task or HOLD -> updated battery/temperature telemetry. A negative-feedback controller can make resource consumption stable and bounded. This **does not control a wood heater**, or promise that sensors and software can enforce human safety.
+
+```text
+                         SINGLE VERIFIED FUEL INPUT
+                                     |
+                             INDEPENDENT HEATER
+                                     |
+                       +-------------+---------------+
+                       |                             |
+                     HIGH HEAT                 bypass heating
+                       |                             |
+                PROFESSIONAL ENGINE                  |
+                 |          |                        |
+             SHAFT WORK   REJECT HEAT ---------------+
+                 |                                   |
+         GENERATOR / BATTERY                     MASONRY MASS
+                 |                                   |
+           GHoT OPTIONAL TASK                    SPACE HEAT
+                 |                                   |
+           ELECTRONICS HEAT ---------------------+    |
+                (only if indoors)                    |
+                  +----------- OUTDOOR HEAT LOSS ----+
+                 |
+          STATE MEASUREMENT
+                 |
+          GHoT ADVISORY HOLD / RUN
+                 |
+          OPTIONAL LOAD ONLY
+```
+
+There are **two different arrows**: (a) material/energy-flow arrows and (b) sensor/decision feedback arrows. Don't equate a recirculating working fluid, pressure reservoir, or a control signal with a net energy gain. The laws of thermodynamics require an energy gradient and losses; to lift low-temperature heat back to higher temperature requires external work and an appropriately engineered heat pump. IEA explains heat pump energy comes partly from an **external environment**, not merely the battery: https://www.iea.org/reports/the-future-of-heat-pumps/how-a-heat-pump-works .
+
+### Honest, reproducible time-series model
+
+The 002 cascade ends with a finite packet of mass heat, one period of direct room heat, battery electricity, unspent abstract mechanical-buffer work and irrecoverable losses. The 003 model consumes that exact packet **once** and runs a 24-step observation/advisory experiment. It never invents recurring burns or an energy source from a loop.
+
+```bash
+python3 ghot/flow_feedback_sim.py
+python3 -m unittest discover -s ghot -p 'test_flow_feedback_sim.py'
+```
+
+Parameters **are synthetic**: every hour a fixed fraction of the remaining masonry energy passively releases; a set percentage enters the room while the remainder escapes; the house has hypothetical hourly heat demand. GHoT *advises* an optional computing task only when (a) enough modeled battery charge exists above reserve, and (b) the room has a heat deficit after passive delivery. The small electricity spent on useful computing then dissipates as room heat (or outdoor loss); this is counted once and cannot be reharvested as a new electric supply.
+
+Outputs include the hour-by-hour energy remaining, GHoT advice, thermal comfort shortfall/excess, and full conservation across **fuel = cumulative room heat + outside losses + remaining heat bank + battery + unspent mechanical buffer + upstream losses**. The initial burn-period direct heat is separate from later hourly demand to avoid claiming a house's thermal response is solved.
+
+**Interpretation limits:** A real room has heat capacity, weather-dependent losses and temperature dynamics. A masonry heater discharges according to its actual thermal properties; GHoT cannot command how quickly it radiates. The model does not represent a stable control-loop implementation, heat-exchanger design, Carnot/exergy calculations, steam/pressure/vessel sizing, a listed appliance, or qualified installation. There is **no** permitted pressure system or domestic heater pilot in this code.
+
+### Validated research direction
+
+The useful next empirical question is *which waste heat can be recovered without creating more system losses or maintenance than it saves?* On a professionally supervised, noncombustion laboratory bench, measure energy at each boundary, both hot and cold side, battery electrical Wh, electronics dissipation, and rejected heat. Expose measured, timestamped, provenance-labeled readings to GHoT, but treat missing sensors as UNKNOWN -> HOLD.
+
+No physical prototype, partner, approval, test heating data or installed energy feedback loop is claimed.
+
+**New laws:** `ENERGY LOOP != ENERGY SOURCE`, `FEEDBACK SIGNAL != POWER FLOW`, `REUSE HEAT ONCE`, `QUALITY OF ENERGY DEGRADES`, `PASSIVE HEATER != GHOT ACTUATOR`, `NO MEASUREMENT -> NO POWER CLAIM`.
