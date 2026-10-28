@@ -46,6 +46,8 @@ jobs:
         run: |
           python3 ghot/thermal_domino_sim.py
           python3 -m unittest discover -s ghot -p 'test_thermal_domino_sim.py'
+          python3 ghot/thermal_cascade_sim.py
+          python3 -m unittest discover -s ghot -p 'test_thermal_cascade_sim.py'
 
       - name: Hold queue wake simulation
         run: python3 ghot/wake_sim.py

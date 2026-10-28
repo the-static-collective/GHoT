@@ -73,3 +73,64 @@ Simulated input: 10 kg dry wood × 4 kWh/kg × 75% delivered-heat fraction = 30 
 A hotter fire, a bigger bench or an AI scheduler **cannot multiply the fuel energy**. The key question is **how to spend and store each joule better while preserving independent human safety controls.**
 
 **New laws:** `STORED_HEAT != FREE_ELECTRICITY`; `SENSOR != SAFETY_AUTHORITY`; `RUBE_GOLDBERG_SHOW != HEATER_CONTROL`; `PRESSURE_RELIEF != ENERGY_HARVEST`; `DEMO_OUTPUT != PERMITTED_INSTALLATION`; `MEASURED_POWER != RENEWABLE_CLAIM`.
+
+
+## 002 / The pressure-work insight: more useful functions from the same burn
+
+**New insight:** a high-temperature fire can drive a heat engine, whose working fluid changes pressure and volume, producing **shaft work**. That work may be used immediately or stored in a separate appropriately engineered mechanical/electrical buffer. The engine's rejected heat can subsequently warm masonry or a room. This is **combined heat and power**, not pressure energy created in addition to the heat already supplied.
+
+```
+single measured fuel input
+        |
+  high-grade heat
+        +---> professionally engineered heat engine
+        |             |
+        |             +---> expanding working fluid / shaft work
+        |             |                       |
+        |             |                +------+------+
+        |             |                |             |
+        |             |          generator        approved, sealed
+        |             |                |          work buffer (concept)
+        |             |          charged battery     |
+        |             |                |          recovered work
+        |             |           GHoT observes       |
+        |             |           and schedules       |
+        |             |
+        |             +---> rejected heat ----+
+        |                                      |
+        +------------> bypass heat ------------> masonry bank / occupied room
+        |
+        +------------> unrecoverable losses
+```
+
+**Thermodynamic accounting:** pressure is a state variable, not an independent fuel. Useful mechanical energy from expansion is work drawn from the heat supplied to the engine, subject to the temperature difference and real efficiencies. A pressure/work accumulator would store some of the already extracted mechanical energy, and round-trip losses reduce the recoverable fraction. Higher pressure by itself does not guarantee more net work; temperature, working fluid, full thermodynamic cycle, heat rejection, and safety all matter.
+
+Pressure-bearing equipment **is not a proposed DIY addition** to the woodstove. Steam generation, improvised heated vessels, relief-valve manipulation, flue/combustion controls, and safety-device dependence on GHoT are explicitly prohibited. Where it is suitable, a commercially engineered/certified heat-engine module with independently qualified installation could theoretically perform the conversion; the heater itself must remain approved and independent.
+
+### Model 002: accounting for heat + electricity + buffered work
+
+```bash
+python3 ghot/thermal_cascade_sim.py
+python3 -m unittest discover -s ghot -p 'test_thermal_cascade_sim.py'
+```
+
+A **hypothetical energy ledger**, not an equipment prediction, starts with 40 kWh fuel energy, of which 30 kWh is modeled as potentially useful heating energy. An illustrative 8-kWh high-temperature stage yields 0.8 kWh shaft work at a 10% **assumed** shaft conversion fraction. It splits that 0.8 kWh into:
+
+- 0.2 kWh abstract mechanical-buffer input, 0.13 kWh delivered after a hypothetical 65% round trip.
+- 0.6 kWh shaft toward an electric generator, leaving 0.432 kWh stored electricity after assumed 80% generator and 90% charge conversion.
+- 7.2 kWh rejected heat from the engine; if 90% is recovered, that adds 6.48 kWh back to the home.
+- 22 kWh direct bypass thermal flow, yielding 28.48 kWh total delivered thermal energy.
+- 10.958 kWh total modeled energy losses, so the ledger closes: **28.48 + 0.13 + 0.432 + 10.958 = 40 kWh**.
+
+Compared with the no-engine 30 kWh heat scenario (same 75% baseline), the heat-engine path offers **more useful forms of work but less heat**. Whether the trade is worthwhile must be established by a real measured device and site-specific goals. The abstract pressure-buffer output cannot be interpreted as a pressure vessel specification.
+
+### Independent evidence
+
+- US DOE combined heat and power: https://www.energy.gov/cmei/ito/combined-heat-and-power-basics
+- DOE industrial waste heat and exergy: https://www1.eere.energy.gov/manufacturing/intensiveprocesses/pdfs/waste_heat_recovery.pdf
+- 2026 research prototype using biomass gasifier + Stirling engine: 210 W electric and 3.74 kW heating, at an experimental 3-kg pellet burn over >2 hours; **not transferable as performance or authorization of this house concept**. https://www.sciencedirect.com/science/article/pii/S1359431126007994
+- Consumer Product Safety Commission's fireplace water-heater pressure-explosion warning: https://www.cpsc.gov/Recalls/1982/cpsc-warns-of-explosion-hazard-with-fireplace-powered-water-heaters
+
+**Scientific goal:** maximize valuable useful output under `energy_conservation`, `independently_safe_installation`, `physical_measurement`, and `free_human_consent`. We should optimize *forms of work* and preserve hot-to-cold temperature usefulness, not add up multiple readings of the same heat as though they were separate energy sources.
+
+**New law:** `PRESSURE_WORK = CONVERTED_HEAT_WORK`, not `ADDITIONAL_FUEL`. `HEAT_ENGINE_REJECTED_HEAT MAY BE RECOVERED`. `GHOT ADVISES COMPUTE; GHoT NEVER CONTROLS HEATER SAFETY`.

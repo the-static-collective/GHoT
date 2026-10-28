@@ -714,3 +714,7 @@ python3 -m unittest discover -s ghot -p 'test_thermal_domino_sim.py'
 ```
 
 This is a hypothetical energy-budget demonstration, **not** a heating appliance, electrician's plan or evidence of useful generated electricity. **Pressure/steam, flue, combustion and independent fire/CO safety devices are explicitly outside GHoT control.** Do not attach an experimental exchanger to an occupied-house firebox. Read `docs/THERMAL-DOMINO-HOUSE-001.md` and `experiments/018-thermal-domino-house.md` for assumptions, sources, verification boundaries and independent professional approvals.
+
+### Thermal Domino 002 — pressure-work as another useful output, not another fuel
+
+An **offline first-law cascade** explores an independently engineered heat engine converting part of a fuel burn into mechanical shaft work, then to a hypothetical work buffer and electricity, while rejected heat returns to a masonry heat bank. It conserves fuel energy and explicitly prohibits pressure-vessel, steam, flue, heater, or safety control. Run `python3 ghot/thermal_cascade_sim.py`, see `experiments/019-pressure-work-cascade.md` and the 002 section of the main Thermal Domino spec.
