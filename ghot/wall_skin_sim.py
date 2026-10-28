@@ -77,7 +77,7 @@ def simulate(p: PanelAssumptions=PanelAssumptions()) -> dict:
     for hour in range(1,p.hours+1):
         hr={}
         for name in ("masonry","radiant","pcm"):
-            stored=locals()[name]  # read only; write below explicitly
+            stored=mass if name=="masonry" else radiant if name=="radiant" else pcm
             rate=getattr(p,f"{name}_discharge_hourly")
             capture=getattr(p,f"{name}_indoor_capture")
             release=stored*rate
