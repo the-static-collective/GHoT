@@ -42,6 +42,11 @@ jobs:
       - name: Energy-aware scheduling simulation
         run: python3 ghot/energy_sim.py
 
+      - name: Thermal domino house no-hardware energy simulation
+        run: |
+          python3 ghot/thermal_domino_sim.py
+          python3 -m unittest discover -s ghot -p 'test_thermal_domino_sim.py'
+
       - name: Hold queue wake simulation
         run: python3 ghot/wake_sim.py
 
