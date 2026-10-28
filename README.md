@@ -726,3 +726,7 @@ Connect the modeled cascade output to a **time-stepped conservative energy-flow 
 ### Thermal Wall Skin 004 — distribute heat, buffer heat, test any harvesting claim
 
 Three independently accountable wall-panel categories: radiant/hydronic distribution, phase-change storage, and experimental wall thermoelectric generation. The last option can increase *loss of building heat* far beyond collected electricity. All share one finite energy budget; GHoT advises optional tasks, not HVAC or heater operation. `python3 ghot/wall_skin_sim.py`, `python3 -m unittest discover -s ghot -p 'test_wall_skin_sim.py'`. Sources and scope in `docs/THERMAL-DOMINO-HOUSE-001.md` section 004.
+
+### Fuel Commons 006 — material is not fuel, fuel is not measured energy
+
+Nine distinct resource categories and ten safe research routes, with independent processing and end-use authority gates. Food rescue is first; plastics are not domestic fuel, and raw used cooking oil is not biodiesel. All proposed routes HOLD; no stock, partner, verification, transfer, energy output or process-control integration is claimed. Public read-only resource browser: https://apps.abundent.org/jubilee/wood/fuels/ ; source-of-truth GHoT proposal: `ghot/fuel_commons_006.py`, `docs/FUEL-COMMONS-006.md`.
