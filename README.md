@@ -702,3 +702,15 @@ python3 ghot/state_migration_sim.py
 
 See `docs/STATE-MIGRATIONS.md` and
 `experiments/017-state-migration-receipts.md`.
+
+
+## Thermal Domino House 001 — heat is a resource, not a permission
+
+A short, hot fire / thermal-mass heater could serve as a **heat bank**, with an optional properly engineered thermoelectric generator feeding a small battery. GHoT's existing Power Field and Energy Scheduler could then *observe* that battery and schedule nonessential compute. The first test contains no actual fire or hardware control:
+
+```bash
+python3 ghot/thermal_domino_sim.py
+python3 -m unittest discover -s ghot -p 'test_thermal_domino_sim.py'
+```
+
+This is a hypothetical energy-budget demonstration, **not** a heating appliance, electrician's plan or evidence of useful generated electricity. **Pressure/steam, flue, combustion and independent fire/CO safety devices are explicitly outside GHoT control.** Do not attach an experimental exchanger to an occupied-house firebox. Read `docs/THERMAL-DOMINO-HOUSE-001.md` and `experiments/018-thermal-domino-house.md` for assumptions, sources, verification boundaries and independent professional approvals.
