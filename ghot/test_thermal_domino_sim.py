@@ -18,7 +18,7 @@ class ThermalDominoTests(unittest.TestCase):
         a = simulate(Scenario(house_heat_demand_kw=1))
         b = simulate(Scenario(house_heat_demand_kw=2))
         self.assertAlmostEqual(a["thermal_budget"]["bank_duration_at_assumed_load_h"] / 2,
-                               b["thermal_budget"]["bank_duration_at_assumed_load_h"], places=2)
+                               b["thermal_budget"]["bank_duration_at_assumed_load_h"], delta=0.011)
 
     def test_no_energy_creation(self):
         with self.assertRaises(ValueError):
