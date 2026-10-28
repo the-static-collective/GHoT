@@ -50,6 +50,8 @@ jobs:
           python3 -m unittest discover -s ghot -p 'test_thermal_cascade_sim.py'
           python3 ghot/flow_feedback_sim.py
           python3 -m unittest discover -s ghot -p 'test_flow_feedback_sim.py'
+          python3 ghot/wall_skin_sim.py
+          python3 -m unittest discover -s ghot -p 'test_wall_skin_sim.py'
 
       - name: Hold queue wake simulation
         run: python3 ghot/wake_sim.py

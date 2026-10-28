@@ -197,3 +197,42 @@ The useful next empirical question is *which waste heat can be recovered without
 No physical prototype, partner, approval, test heating data or installed energy feedback loop is claimed.
 
 **New laws:** `ENERGY LOOP != ENERGY SOURCE`, `FEEDBACK SIGNAL != POWER FLOW`, `REUSE HEAT ONCE`, `QUALITY OF ENERGY DEGRADES`, `PASSIVE HEATER != GHOT ACTUATOR`, `NO MEASUREMENT -> NO POWER CLAIM`.
+
+
+## 004 / Wall panels as thermal routing surfaces (2026-10-28)
+
+Three materially different devices might be described as "thermal transfer panels":
+
+| Panel family | Input | What it actually accomplishes | Where it belongs |
+|---|---|---|---|
+| **Hydronic/radiant wall panel** | Properly controlled warm water or electric heat | Distributes thermal energy across a large indoor surface with radiation and convection. **Not an additional heat source.** | Interior conditioned-side walls, properly insulated exterior wall assembly and code-compliant HVAC. |
+| **Phase-change material (PCM) wallboard/panel** | Heat crossing its phase-change temperature | **Buffers heat across time**, slowing temperature swings. It must subsequently discharge and re-solidify/reset to be effective. | Fire-rated, moisture-reviewed interior thermal-storage layers rather than bare thermal bridges through insulation. |
+| **Thermoelectric generator (TEG) wall tiles** | Sustained hot-to-cold temperature difference | **Converts a small fraction of traversing heat into electricity**. For normal indoor-outdoor gradients, practical output may be tiny, and penetrating wall insulation to create a gradient can *increase building heat loss*. | Research only until independent energy-balance/installation assessment proves usefulness. |
+
+Conventional radiant hydronic walls do not themselves harvest electricity; TEG wall tiles don't store much heat; PCM panels don't create energy. They are complementary but cannot be conflated.
+
+**Most important architectural decision:** Put safe heat-sharing surfaces *inside* the insulated building envelope. Otherwise adding a thermally conductive panel can short-circuit the insulation and dump valuable stored heat outdoors. In summer, reverse cooling design must consider condensation and dew point. Do **not** connect a wood heater directly to unapproved wall tubing or install a pressurized steam loop. Any hydronic equipment uses code-compliant, independently engineered HVAC circulation, expansion, protection, and freeze safeguards, not GHoT-controlled life safety.
+
+### Context and evidence
+
+- ASHRAE, wall/floor/ceiling hydronic radiant panel definition: https://handbook.ashrae.org/Handbooks/S24/IP/S24_Ch36/S24_Ch36_ip.aspx
+- ASHRAE, thermal bridging increases losses and condensation risk: https://handbook.ashrae.org/Handbooks/F25/SI/f25_Ch25/f25_Ch25_si.aspx
+- 2026 review of building thermoelectric envelopes, including wall TEGs and PCM hybrids, concludes more validation needed: https://www.sciencedirect.com/science/article/pii/S0378778826004706
+- 2026 review on real building TEG power: smaller and fluctuating indoor-outdoor gradients limit generation: https://doi.org/10.1016/j.enbuild.2026.117697
+- Minnesota Department of Commerce/LHB study of commercial PCM building panels found **inconclusive measured energy savings**, despite modeling promise: https://lhbcorp.com/insights/field-study-of-phase-change-material-use-for-passive-thermal-regulation-in-mn-buildings/
+- 2024 California Energy Commission PCM retrofits found climate, behavior and installation-dependent results and mixed heating outcomes: https://www.energy.ca.gov/publications/2024/phase-change-material-enhanced-insulation-residential-exterior-wall-retrofits
+
+### New offline demonstration: an energy-accountable wall skin
+
+```bash
+python3 ghot/wall_skin_sim.py
+python3 -m unittest discover -s ghot -p 'test_wall_skin_sim.py'
+```
+
+Experiment 004 uses the finite existing `thermal_cascade_sim.py` *same* 40-kWh fuel budget. It partitions the existing thermal-mass bank into four shares: 60% conventional mass, 20% radiant wall distribution, 15% PCM wall storage, 5% research-only TEG wall branch. All of the wall panel heating energy is **subtracted from the same original thermal bank** rather than conjured as a separate source. A 24-hour illustrative passive release flows to indoors or outdoors. TEG electrical generation is debited from heat leaving the building. GHoT may report simulated optional compute `RUN_ELIGIBLE`/`HOLD` based on battery budget; it does not operate any panel or heater.
+
+**Warning about the illustration:** The model's TEG wall share is intentionally a counterexample: using the indoor-outdoor gradient for generation could lose **far more heat** through the envelope than the electricity it produces. It is not a recommended residential retrofit. Transfer coefficients are invented assumptions and not weather, fluid, temperature, PCM latent heat or building-shell engineering. No hardware, approval, partners, actual installed wall performance or real measurements are claimed.
+
+Future study: choose *interior* radiant-wall/PCM panelization first. Compare seasonal heat loss, heat comfort, moisture/fire safety and parasitic pump power against an ordinary well-insulated house; reject modifications that cost more power/heat than they yield.
+
+**New laws:** `WALL_PANEL != FUEL`; `DISTRIBUTION != GENERATION`; `PCM STORAGE != NEW ENERGY`; `TEG POWER MUST PAY FOR WALL HEAT LOSS`; `ENVELOPE INSULATION FIRST`.
