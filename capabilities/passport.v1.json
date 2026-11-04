@@ -1,0 +1,53 @@
+{
+  "schema": "jarvis.capability-passport/v1",
+  "repository": "the-static-collective/GHoT",
+  "version": "2026-11-04.1",
+  "authority": "PUBLIC_DESCRIPTION_ONLY_NOT_RUNTIME_OR_PERMISSION",
+  "availability": "NOT_OBSERVED",
+  "capabilities": [
+    {
+      "id": "ghot.media-probe",
+      "title": "Inspect media metadata using local installed tools",
+      "intents": [
+        "ffprobe",
+        "video metadata",
+        "audio metadata",
+        "media file",
+        "inspect video",
+        "inspect audio",
+        "codec",
+        "media probe"
+      ],
+      "readiness": "LOCAL_OPERATOR",
+      "delivers": "A local executor can inspect a provided file when ffprobe exists; this site cannot access or run your device.",
+      "entry": {
+        "kind": "SOURCE_REFERENCE",
+        "href": "https://github.com/the-static-collective/GHoT/blob/main/docs/EXECUTOR-PANTRY.md"
+      },
+      "sourcePath": "docs/EXECUTOR-PANTRY.md",
+      "requires": "Requires a running GHoT body and explicitly authorized file access."
+    },
+    {
+      "id": "ghot.composer",
+      "title": "Select an installed computer capability",
+      "intents": [
+        "distributed compute",
+        "which computer",
+        "local executor",
+        "compute node",
+        "capability composer",
+        "cpu",
+        "remote body",
+        "worker"
+      ],
+      "readiness": "LOCAL_OPERATOR",
+      "delivers": "The capability composer produces a reproducible local execution plan; no machine is enrolled by this catalog.",
+      "entry": {
+        "kind": "SOURCE_REFERENCE",
+        "href": "https://github.com/the-static-collective/GHoT/blob/main/docs/CAPABILITY-COMPOSER.md"
+      },
+      "sourcePath": "docs/CAPABILITY-COMPOSER.md",
+      "requires": "Executor enrollment, runtime status and operator permission are independent requirements."
+    }
+  ]
+}
