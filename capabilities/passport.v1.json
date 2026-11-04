@@ -25,7 +25,14 @@
         "href": "https://github.com/the-static-collective/GHoT/blob/main/docs/EXECUTOR-PANTRY.md"
       },
       "sourcePath": "docs/EXECUTOR-PANTRY.md",
-      "requires": "Requires a running GHoT body and explicitly authorized file access."
+      "requires": "Requires a running GHoT body and explicitly authorized file access.",
+      "contract": {
+        "inputHint": "operator.local-file/v1",
+        "outputHint": "local.media-metadata/v1",
+        "invocation": "NOT_CONNECTED_TO_JARVIS",
+        "receipt": "LOCAL_SELF_REPORT",
+        "effect": "NO_CROSS_PROJECT_EFFECT"
+      }
     },
     {
       "id": "ghot.composer",
@@ -47,7 +54,14 @@
         "href": "https://github.com/the-static-collective/GHoT/blob/main/docs/CAPABILITY-COMPOSER.md"
       },
       "sourcePath": "docs/CAPABILITY-COMPOSER.md",
-      "requires": "Executor enrollment, runtime status and operator permission are independent requirements."
+      "requires": "Executor enrollment, runtime status and operator permission are independent requirements.",
+      "contract": {
+        "inputHint": "operator.capability-request/v1",
+        "outputHint": "local.execution-plan/v1",
+        "invocation": "NOT_CONNECTED_TO_JARVIS",
+        "receipt": "LOCAL_SELF_REPORT",
+        "effect": "NO_CROSS_PROJECT_EFFECT"
+      }
     }
   ]
 }
