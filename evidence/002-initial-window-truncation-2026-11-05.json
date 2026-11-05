@@ -1,0 +1,186 @@
+{
+  "actual_network_activity": {
+    "actual_on_wire_network_bytes": null,
+    "all_http_sources_bounded": true,
+    "allowed_host": "api.waterdata.usgs.gov",
+    "cpu_time_ns_for_requests_only": 18557866,
+    "energy_joules_attributable_to_requests": null,
+    "fresh_public_source_count": 0,
+    "http_successes_with_valid_records": 3,
+    "method": "GET",
+    "received_body_payload_bytes": 824285,
+    "requests_sent": 3,
+    "source_failures": 0,
+    "source_sites": [
+      "blue",
+      "sueur",
+      "mankato"
+    ],
+    "sum_individually_observed_http_elapsed_ns": 1567309986
+  },
+  "automatic_body_assignment": false,
+  "automatic_model_promotion": false,
+  "completed_at_utc": "2026-11-05T14:55:26.727229Z",
+  "disposition": "HOLD_NO_FRESH_SOURCE_WITNESS_OBSERVED",
+  "electrical_energy_measured": false,
+  "external_action": false,
+  "hardware_decision": {
+    "battery_percentage": null,
+    "measurement_hints": {
+      "battery_percent": false,
+      "charging": false,
+      "renewable_surplus": false,
+      "source": false,
+      "thermal_c": false
+    },
+    "power_is_not_a_wattmeter": true,
+    "power_source": null,
+    "source": "GHOT_NATIVE_POWER_FIELD",
+    "thermal_c": null,
+    "willingness": "normal"
+  },
+  "next_question": "Will a predeclared stop-when-first-fresh strategy actually reduce measured requests and latency on a new run without lowering the rate of obtaining source-backed current observations?",
+  "not_a_public_hazard_prediction": true,
+  "objective": "RETURN_AN_EVIDENCED_FRESH_PUBLIC_OBSERVATION_OR_ABSTAIN",
+  "per_request_receipts": [
+    {
+      "body_bytes_received": 271284,
+      "body_sha256": "48444622047f97607db5259320ac1ac4aae6a4b71638a1790c528bec9a0a4229",
+      "content_type_header": "application/json; charset=utf-8",
+      "error": null,
+      "http_status": 200,
+      "kind": "ghot.source-probe/v1",
+      "latency_wall_ns": 578711838,
+      "local_cpu_ns": 7770401,
+      "observation": {
+        "age_seconds": 53725.718,
+        "evidence_is": "USGS_REPORTED_VALUE_NOT_INDEPENDENTLY_AUTHENTICATED",
+        "fresh_source_witness": false,
+        "latest_flow_cfs": 2060,
+        "latest_observation_utc": "2026-11-05T00:00:00Z",
+        "parsed_source_points": 385,
+        "station": "blue"
+      },
+      "request_start_utc": "2026-11-05T14:55:25.139109Z",
+      "response_end_utc": "2026-11-05T14:55:25.717820Z",
+      "site": "blue",
+      "valid_source_response": true,
+      "wire_network_bytes_total": null
+    },
+    {
+      "body_bytes_received": 276538,
+      "body_sha256": "e18131bf858582927d1f88d4f3accb997b331c87ab121ef2020941dc728163dc",
+      "content_type_header": "application/json; charset=utf-8",
+      "error": null,
+      "http_status": 200,
+      "kind": "ghot.source-probe/v1",
+      "latency_wall_ns": 490476084,
+      "local_cpu_ns": 5467624,
+      "observation": {
+        "age_seconds": 53726.217,
+        "evidence_is": "USGS_REPORTED_VALUE_NOT_INDEPENDENTLY_AUTHENTICATED",
+        "fresh_source_witness": false,
+        "latest_flow_cfs": 2370,
+        "latest_observation_utc": "2026-11-05T00:00:00Z",
+        "parsed_source_points": 385,
+        "station": "sueur"
+      },
+      "request_start_utc": "2026-11-05T14:55:25.726956Z",
+      "response_end_utc": "2026-11-05T14:55:26.217429Z",
+      "site": "sueur",
+      "valid_source_response": true,
+      "wire_network_bytes_total": null
+    },
+    {
+      "body_bytes_received": 276463,
+      "body_sha256": "cdf7056e455291b15ca90188a36a0abd0d5ea27e8ada465030dca5cf76262ebf",
+      "content_type_header": "application/json; charset=utf-8",
+      "error": null,
+      "http_status": 200,
+      "kind": "ghot.source-probe/v1",
+      "latency_wall_ns": 498122064,
+      "local_cpu_ns": 5319841,
+      "observation": {
+        "age_seconds": 53726.724,
+        "evidence_is": "USGS_REPORTED_VALUE_NOT_INDEPENDENTLY_AUTHENTICATED",
+        "fresh_source_witness": false,
+        "latest_flow_cfs": 5660,
+        "latest_observation_utc": "2026-11-05T00:00:00Z",
+        "parsed_source_points": 385,
+        "station": "mankato"
+      },
+      "request_start_utc": "2026-11-05T14:55:26.226027Z",
+      "response_end_utc": "2026-11-05T14:55:26.724146Z",
+      "site": "mankato",
+      "valid_source_response": true,
+      "wire_network_bytes_total": null
+    }
+  ],
+  "permission_required_for_additional_sources": true,
+  "question": "Can at least one named public river station provide a reported measurement within 12 hours of the GET?",
+  "research_only_not_flood_warning": true,
+  "schema": "ghot.public-network-inquiry/v1",
+  "source_reporting_is_not_ground_truth": true,
+  "source_snapshots_preserved": {
+    "http_status_codes_recorded": true,
+    "original_raw_json": "NOT_INCLUDED_IN_OUTPUT_TO_AVOID_UNBOUNDED_ARCHIVING",
+    "payload_sha256_in_receipts": true
+  },
+  "strategy_comparison": {
+    "all_three_queries_actually_executed": true,
+    "alternative_policies_NOT_ACTUALLY_RUN": {
+      "all_three": {
+        "inferred_local_cpu_ns_sum": 18557866,
+        "inferred_query_count": 3,
+        "inferred_response_payload_bytes_sum": 824285,
+        "inferred_wall_ns_serial_sum": 1567309986,
+        "not_actual_separate_policy_execution": false,
+        "physical_source_witness": false,
+        "policy_sources_replayed": [
+          "blue",
+          "sueur",
+          "mankato"
+        ],
+        "witness_site": null
+      },
+      "first_source_only": {
+        "inferred_local_cpu_ns_sum": 7770401,
+        "inferred_query_count": 1,
+        "inferred_response_payload_bytes_sum": 271284,
+        "inferred_wall_ns_serial_sum": 578711838,
+        "not_actual_separate_policy_execution": true,
+        "physical_source_witness": false,
+        "policy_sources_replayed": [
+          "blue"
+        ],
+        "witness_site": null
+      },
+      "no_query": {
+        "inferred_local_cpu_ns_sum": 0,
+        "inferred_query_count": 0,
+        "inferred_response_payload_bytes_sum": 0,
+        "inferred_wall_ns_serial_sum": 0,
+        "not_actual_separate_policy_execution": true,
+        "physical_source_witness": false,
+        "policy_sources_replayed": [],
+        "witness_site": null
+      },
+      "until_first_witness": {
+        "inferred_local_cpu_ns_sum": 18557866,
+        "inferred_query_count": 3,
+        "inferred_response_payload_bytes_sum": 824285,
+        "inferred_wall_ns_serial_sum": 1567309986,
+        "not_actual_separate_policy_execution": true,
+        "physical_source_witness": false,
+        "policy_sources_replayed": [
+          "blue",
+          "sueur",
+          "mankato"
+        ],
+        "witness_site": null
+      }
+    },
+    "evaluation_kind": "SAME_OBSERVED_RESPONSES_COUNTERFACTUAL_STOPPING_POLICY",
+    "no_tokens_or_credits": true
+  }
+}
