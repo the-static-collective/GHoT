@@ -9,7 +9,7 @@ remote shell, cryptocurrency, money price, or execution assignment.
 """
 from __future__ import annotations
 import argparse
-from hashlib import sha256
+from hashlib import sha256,sha1
 import json
 import math
 import os
@@ -260,9 +260,8 @@ def meter(source,trials=5,repeats=250, *,power=None):
     # Refuse an incorrect/altered research record rather than measuring it
     # as if it were the actual known 019 evidence.
     expected=SOURCE_BLOB
-    git_blob=sha256(b"blob "+str(len(source_bytes)).encode()+b"\0"+source_bytes).hexdigest()
-    # Above is NOT Git SHA-1: intended as a SHA-256 independent integrity receipt.
-    # Exact Git blob identity is verified separately by pinned repository CI.
+    git_blob=sha1(b"blob "+str(len(source_bytes)).encode()+b"\\0"+source_bytes).hexdigest()
+    require(git_blob==SOURCE_BLOB,"PINNED_PHYSICAL_SOURCE_BYTES_CHANGED")
     source_summary=validate_and_summarize(source_bytes)
     if power is None:
         power=probe_power()
