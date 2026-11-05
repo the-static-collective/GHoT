@@ -1,0 +1,53 @@
+name: GHoT 004 — physical inquiry cost and explicit answer goals
+
+on:
+  pull_request:
+    paths:
+      - "ghot/goal_inquiry.py"
+      - "ghot/test_goal_inquiry.py"
+      - "docs/GOAL-INQUIRY-004.md"
+      - ".github/workflows/goal-inquiry-004.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test contract satisfiability, refusal, power HOLD and actual request counts
+        run: |
+          python3 -m unittest discover -s ghot -p test_goal_inquiry.py -v
+          python3 -m unittest discover -s ghot -p test_network_inquiry.py -v
+          python3 -m unittest discover -s ghot -p test_conditional_inquiry.py -v
+
+  live-measurement:
+    needs: offline-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Execute up to 10 fixed public bounded USGS GETs, in four declared trials
+        run: python3 ghot/goal_inquiry.py --out goal-004-physical-receipt.json
+      - name: Preserve actual completed-task and work receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ghot-004-actual-goal-inquiry
+          path: goal-004-physical-receipt.json
+          if-no-files-found: warn
+          retention-days: 30
