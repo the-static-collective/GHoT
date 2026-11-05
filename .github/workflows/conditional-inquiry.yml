@@ -1,0 +1,52 @@
+name: GHoT 003 — real stop-when-useful query experiment
+
+on:
+  pull_request:
+    paths:
+      - "ghot/conditional_inquiry.py"
+      - "ghot/test_conditional_inquiry.py"
+      - "docs/CONDITIONAL-INQUIRY-003.md"
+      - ".github/workflows/conditional-inquiry.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify early stop, fallback, source restrictions, and critical power
+        run: |
+          python3 -m unittest discover -s ghot -p "test_conditional_inquiry.py" -v
+          python3 -m unittest discover -s ghot -p "test_network_inquiry.py" -v
+
+  live:
+    runs-on: ubuntu-latest
+    needs: tests
+    timeout-minutes: 6
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Execute actual bounded conditional public inquiry
+        run: python3 ghot/conditional_inquiry.py --out ghot-003-conditional-witness.json
+      - name: Preserve actual request count, bytes, CPU, latency, source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ghot-003-real-conditional-request-receipt
+          path: ghot-003-conditional-witness.json
+          if-no-files-found: warn
+          retention-days: 30
