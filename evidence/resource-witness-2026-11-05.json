@@ -1,0 +1,224 @@
+{
+  "authority": false,
+  "automatic_model_promotion": false,
+  "benchmark": {
+    "all_answers_bitwise_equal": true,
+    "observed": {
+      "cpu_time_delta_ns_reparse_minus_reuse": 72048073,
+      "energy_joules_comparison_claim_available": false,
+      "reparse": {
+        "bytes_read_per_trial": 2426750,
+        "hashes_per_trial": 250,
+        "median_cpu_time_ns": 100424701,
+        "median_python_tracemalloc_peak_bytes": 35100,
+        "median_wall_time_ns": 100417581,
+        "parses_per_trial": 250,
+        "rapl_package_joules_median_if_measured": null
+      },
+      "reuse": {
+        "bytes_read_per_trial": 2426750,
+        "hashes_per_trial": 250,
+        "median_cpu_time_ns": 28376628,
+        "median_python_tracemalloc_peak_bytes": 33581,
+        "median_wall_time_ns": 28369806,
+        "parses_per_trial": 1,
+        "rapl_package_joules_median_if_measured": null
+      }
+    },
+    "raw_trials": [
+      {
+        "actual_bytes_read": 2426750,
+        "answer_sha256": "aa01762fb9525409865af52ac96dd116f059ba2e4dcaee43d629825842e3af18",
+        "cpu_time_ns": 100424701,
+        "json_validation_parses": 250,
+        "local_sha256_hash_operations": 250,
+        "mode": "reparse",
+        "package_energy_scope": "NO_ENERGY_SENSOR",
+        "package_rapl_joules_IF_VISIBLE": null,
+        "python_tracemalloc_peak_bytes": 35700,
+        "repetitions": 250,
+        "wall_time_ns": 100417581
+      },
+      {
+        "actual_bytes_read": 2426750,
+        "answer_sha256": "aa01762fb9525409865af52ac96dd116f059ba2e4dcaee43d629825842e3af18",
+        "cpu_time_ns": 28451207,
+        "json_validation_parses": 1,
+        "local_sha256_hash_operations": 250,
+        "mode": "reuse",
+        "package_energy_scope": "NO_ENERGY_SENSOR",
+        "package_rapl_joules_IF_VISIBLE": null,
+        "python_tracemalloc_peak_bytes": 33581,
+        "repetitions": 250,
+        "wall_time_ns": 28444095
+      },
+      {
+        "actual_bytes_read": 2426750,
+        "answer_sha256": "aa01762fb9525409865af52ac96dd116f059ba2e4dcaee43d629825842e3af18",
+        "cpu_time_ns": 28376628,
+        "json_validation_parses": 1,
+        "local_sha256_hash_operations": 250,
+        "mode": "reuse",
+        "package_energy_scope": "NO_ENERGY_SENSOR",
+        "package_rapl_joules_IF_VISIBLE": null,
+        "python_tracemalloc_peak_bytes": 33645,
+        "repetitions": 250,
+        "wall_time_ns": 28369806
+      },
+      {
+        "actual_bytes_read": 2426750,
+        "answer_sha256": "aa01762fb9525409865af52ac96dd116f059ba2e4dcaee43d629825842e3af18",
+        "cpu_time_ns": 100713930,
+        "json_validation_parses": 250,
+        "local_sha256_hash_operations": 250,
+        "mode": "reparse",
+        "package_energy_scope": "NO_ENERGY_SENSOR",
+        "package_rapl_joules_IF_VISIBLE": null,
+        "python_tracemalloc_peak_bytes": 35100,
+        "repetitions": 250,
+        "wall_time_ns": 100707906
+      },
+      {
+        "actual_bytes_read": 2426750,
+        "answer_sha256": "aa01762fb9525409865af52ac96dd116f059ba2e4dcaee43d629825842e3af18",
+        "cpu_time_ns": 100247310,
+        "json_validation_parses": 250,
+        "local_sha256_hash_operations": 250,
+        "mode": "reparse",
+        "package_energy_scope": "NO_ENERGY_SENSOR",
+        "package_rapl_joules_IF_VISIBLE": null,
+        "python_tracemalloc_peak_bytes": 35036,
+        "repetitions": 250,
+        "wall_time_ns": 100240680
+      },
+      {
+        "actual_bytes_read": 2426750,
+        "answer_sha256": "aa01762fb9525409865af52ac96dd116f059ba2e4dcaee43d629825842e3af18",
+        "cpu_time_ns": 29601712,
+        "json_validation_parses": 1,
+        "local_sha256_hash_operations": 250,
+        "mode": "reuse",
+        "package_energy_scope": "NO_ENERGY_SENSOR",
+        "package_rapl_joules_IF_VISIBLE": null,
+        "python_tracemalloc_peak_bytes": 33581,
+        "repetitions": 250,
+        "wall_time_ns": 29594441
+      },
+      {
+        "actual_bytes_read": 2426750,
+        "answer_sha256": "aa01762fb9525409865af52ac96dd116f059ba2e4dcaee43d629825842e3af18",
+        "cpu_time_ns": 28174699,
+        "json_validation_parses": 1,
+        "local_sha256_hash_operations": 250,
+        "mode": "reuse",
+        "package_energy_scope": "NO_ENERGY_SENSOR",
+        "package_rapl_joules_IF_VISIBLE": null,
+        "python_tracemalloc_peak_bytes": 33645,
+        "repetitions": 250,
+        "wall_time_ns": 28185511
+      },
+      {
+        "actual_bytes_read": 2426750,
+        "answer_sha256": "aa01762fb9525409865af52ac96dd116f059ba2e4dcaee43d629825842e3af18",
+        "cpu_time_ns": 100950512,
+        "json_validation_parses": 250,
+        "local_sha256_hash_operations": 250,
+        "mode": "reparse",
+        "package_energy_scope": "NO_ENERGY_SENSOR",
+        "package_rapl_joules_IF_VISIBLE": null,
+        "python_tracemalloc_peak_bytes": 35100,
+        "repetitions": 250,
+        "wall_time_ns": 100954207
+      },
+      {
+        "actual_bytes_read": 2426750,
+        "answer_sha256": "aa01762fb9525409865af52ac96dd116f059ba2e4dcaee43d629825842e3af18",
+        "cpu_time_ns": 98802005,
+        "json_validation_parses": 250,
+        "local_sha256_hash_operations": 250,
+        "mode": "reparse",
+        "package_energy_scope": "NO_ENERGY_SENSOR",
+        "package_rapl_joules_IF_VISIBLE": null,
+        "python_tracemalloc_peak_bytes": 35036,
+        "repetitions": 250,
+        "wall_time_ns": 98803667
+      },
+      {
+        "actual_bytes_read": 2426750,
+        "answer_sha256": "aa01762fb9525409865af52ac96dd116f059ba2e4dcaee43d629825842e3af18",
+        "cpu_time_ns": 28255192,
+        "json_validation_parses": 1,
+        "local_sha256_hash_operations": 250,
+        "mode": "reuse",
+        "package_energy_scope": "NO_ENERGY_SENSOR",
+        "package_rapl_joules_IF_VISIBLE": null,
+        "python_tracemalloc_peak_bytes": 33581,
+        "repetitions": 250,
+        "wall_time_ns": 28248910
+      }
+    ],
+    "repetitions_per_trial": 250,
+    "shape": "same-answer-parse-every-time-vs-content-verified-reuse",
+    "status": "OBSERVED_LOCAL_CPU_REUSE_ADVANTAGE_NOT_POWER_SAVINGS_PROOF",
+    "trials_each": 5
+  },
+  "limits": [
+    "The input is an archived source-owned research report, not live USGS sensor telemetry.",
+    "Microbenchmarks do not measure user decision quality, river forecast skill, or real data-acquisition network latency.",
+    "GHoT power status is an OS probe or explicitly identified manual hints; synthetic scheduler candidate is not a real offered executor.",
+    "Thermal throttling, Python allocator overhead, OS page cache, filesystem caching and shared host contention affect timings.",
+    "CPU time and local I/O bytes are not interchangeable units; resource preferences require actual operator constraints.",
+    "Linux RAPL package counts, if readable, include other processes and cannot establish this task's power draw."
+  ],
+  "model_weights_modified": false,
+  "power": {
+    "deferrable_background": true,
+    "kind": "ghot.resource-policy-observation/v1",
+    "native_ghot_scheduler_action": "run_here",
+    "native_power_willingness": "normal",
+    "offer_withdrawn_by_power": false,
+    "power_pressure_reasons": [
+      "no V0 power-pressure threshold crossed"
+    ],
+    "real_energy_budget_reserved": false,
+    "real_task_dispatched": false,
+    "reported_power_source": null,
+    "type": "HYPOTHETICAL_NATIVE_DRY_RUN_NOT_REAL_OFFER"
+  },
+  "purpose": "Replace invented research credits with witnessed physical-compute units",
+  "real_remote_tasks_executed": 0,
+  "resource_accounting": {
+    "actual_energy_usage_attributed_to_this_task": false,
+    "battery_consumption_joules_measured": false,
+    "bytes_read": "READ_SOURCE_BYTES_NOT_STORAGE_ENERGY",
+    "cpu_time_ns": "MEASURED_PROCESS_CPU_TIME_NOT_ELECTRICAL_ENERGY",
+    "grid_co2_kg_measured": false,
+    "memory": "TRACEMALLOC_PEAK_PYTHON_ALLOCATIONS_NOT_FULL_RSS",
+    "network_bytes_observed": 0,
+    "no_arbitrary_credit_prices": true,
+    "package_energy_joules": "NULL_IF_NO_SUPPORTED_SENSOR; IF_PRESENT IS_SHARED_PACKAGE_NOT_PYTHON",
+    "real_energy_joules_measured": false,
+    "wall_time_ns": "MEASURED_ELAPSED_TIME_NOT_NETWORK_LATENCY"
+  },
+  "schema": "ghot.resource-witness/v1",
+  "source": {
+    "git_blob_sha1_expected": "0cf1303cdeb83d9c29fe417ac19c66c217ddf63d",
+    "source_commit": "1bb4028141eb20a8798bed338dcb3d851284de22",
+    "source_file_sha256": "0159cab6e35b64de52039e64c3bd268de4b8331887bf3344ae798d9cf22cdb57",
+    "source_id": "motif-019-public-USGS-research-card",
+    "source_kind": "motif.question-kind-physical-test/v1",
+    "source_length_bytes": 9707,
+    "source_summary": {
+      "automatic_admission": false,
+      "frozen_disposition": "HOLD_NO_INDEPENDENT_QUESTION_VALUE",
+      "frozen_question": "downstream",
+      "observed_downstream_hours": 300,
+      "observed_raw_error_health_proxy_cfs": 150.4962,
+      "observed_raw_error_persistence_cfs": 185.3333,
+      "report_schema": "motif.question-kind-physical-test/v1",
+      "research_question": "What does it cost in real computation to reuse an already verified answer?",
+      "safety_caveat": "Historical sensor availability is NOT actual issue-time sensor health."
+    }
+  },
+  "source_code_self_modified": false
+}
