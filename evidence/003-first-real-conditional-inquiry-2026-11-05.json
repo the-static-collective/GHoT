@@ -1,0 +1,76 @@
+{
+  "GHOT_willingness": "normal",
+  "actual_on_wire_bytes": null,
+  "actual_request_elapsed_ns_sum": 745783791,
+  "actually_executed_sites": [
+    "blue"
+  ],
+  "authority": false,
+  "automatic_model_promotion": false,
+  "body_payload_bytes_received": 270808,
+  "credit_cost_used": false,
+  "electrical_energy_joules": null,
+  "local_request_cpu_ns_sum": 8168904,
+  "new_requests_avoided_vs_previous_run": "NOT_MEASURED_AS_PARALLEL_CONTROL",
+  "per_request_receipts": [
+    {
+      "body_bytes_received": 270808,
+      "body_sha256": "1762708b6bb00272c6908f87fe2ac85347e453e497cd234a503e332748121110",
+      "content_type_header": "application/json; charset=utf-8",
+      "error": null,
+      "http_status": 200,
+      "kind": "ghot.source-probe/v1",
+      "latency_wall_ns": 745783791,
+      "local_cpu_ns": 8168904,
+      "observation": {
+        "age_seconds": 3658.054,
+        "evidence_is": "USGS_REPORTED_VALUE_NOT_INDEPENDENTLY_AUTHENTICATED",
+        "fresh_source_witness": true,
+        "latest_flow_cfs": 2580,
+        "latest_observation_utc": "2026-11-05T14:00:00Z",
+        "parsed_source_points": 384,
+        "station": "blue"
+      },
+      "request_start_utc": "2026-11-05T15:00:57.307774Z",
+      "response_end_utc": "2026-11-05T15:00:58.053557Z",
+      "site": "blue",
+      "valid_source_response": true,
+      "wire_network_bytes_total": null
+    }
+  ],
+  "physical_action": false,
+  "policy": "BLUE_SUEUR_MANKATO_STOP_ON_FIRST_RECENT_SOURCE",
+  "power_source": null,
+  "recorded_query_windows": [
+    {
+      "end_utc": "2026-11-05T14:00:57.300734Z",
+      "site": "blue",
+      "start_utc": "2026-11-01T14:00:57.300734Z"
+    }
+  ],
+  "requests_sent": 1,
+  "research_question": "Obtain one timestamp-recent public river reading, or abstain.",
+  "schema": "ghot.actual-conditional-inquiry/v1",
+  "skipped_sites": [
+    "sueur",
+    "mankato"
+  ],
+  "source_limitations": [
+    "The only knowledge goal was any one source-reported timestamp-recent value, not flood prediction.",
+    "Public USGS reported discharge may be provisional or revised; source authenticity is not independently confirmed.",
+    "Actual UDP/TCP overhead, radio energy, process electrical power and network wire bytes remain unknown.",
+    "Comparing this result to another run with three calls is noncontemporaneous; saved requests are not experimentally isolated.",
+    "Only the predeclared source sequence is searched. The inability to find a measurement is not proof no such measurement exists."
+  ],
+  "source_witness_found": true,
+  "status": "HELD_SINGLE_CURRENT_SOURCE_WITNESS_OBTAINED",
+  "stopped_early": true,
+  "witness": {
+    "not_a_hazard_prediction": true,
+    "observation_utc": "2026-11-05T14:00:00Z",
+    "observed_age_seconds": 3658.054,
+    "reported_discharge_cfs": 2580,
+    "response_sha256": "1762708b6bb00272c6908f87fe2ac85347e453e497cd234a503e332748121110",
+    "site": "blue"
+  }
+}
