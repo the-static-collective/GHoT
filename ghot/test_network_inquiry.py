@@ -74,6 +74,17 @@ class Network002(unittest.TestCase):
                        "https://api.waterdata.usgs.gov@127.0.0.1/"):
             with self.assertRaises(m.HOLD):m.preflight_url(attack,"blue")
 
+    def test_source_window_preserves_clock_time_and_rejects_date_only_cutoff(self):
+        from urllib.parse import urlsplit,parse_qs
+        start=TIME-timedelta(hours=36,minutes=13)
+        url=m.query_url("blue",start,TIME-timedelta(hours=1))
+        d=parse_qs(urlsplit(url).query)["datetime"][0]
+        self.assertIn("T",d)
+        self.assertEqual(m.parse_utc(d.split("/")[1]),TIME-timedelta(hours=1))
+        m.preflight_url(url,"blue")
+        date_only=url.replace(d,d.split("/")[0].split("T")[0]+"/"+d.split("/")[1].split("T")[0])
+        with self.assertRaises(m.HOLD):m.preflight_url(date_only,"blue")
+
     def test_wrong_sensor_payload_holds_and_missing_records_remain_missing(self):
         raw={"type":"FeatureCollection","links":[],"features":[{
             "type":"Feature","properties":{

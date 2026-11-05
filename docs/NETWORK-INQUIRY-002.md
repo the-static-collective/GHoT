@@ -34,3 +34,13 @@ The GitHub Action runs offline adversarial tests, then a separate actual read-on
 The next logical experiment should run a **genuine conditional requester**, not a simulated strategy, and compare task-completion reliability, response freshness, CPU/time/bytes, and eventual metered watt-hours across separately scheduled tasks or devices with the same requirements. On an unavailable meter, Joules means `null`, never zero.
 
 The objective is an *evidence-backed useful answer*, not raw inference throughput or a purchased credit token. Measurement is not a proof of real-world benefit beyond the narrowly declared question.
+
+## First empirical failure: our own query manufactured stale evidence
+
+The first read-only GHOT-002 USGS request run [42049678911](https://github.com/the-static-collective/GHoT/actions/runs/42049678911) returned valid HTTP 200 and **824,285 received JSON body bytes** across three sources, with total sequential request elapsed **1.567 seconds**. Yet each source's apparently latest observation was `2026-11-05T00:00Z`, roughly fifteen hours before the run. The pipeline reported no <12-hour witness.
+
+**Root cause discovered from the code, not an agency outage:** the original URL query used `YYYY-MM-DD/YYYY-MM-DD` dates, chopping the end of the requested interval down to **midnight**. The program had not actually asked for the more recent records it wanted. There was no justified inference that USGS sensors were lagging. We preserved the exact first machine receipt under `evidence/002-initial-window-truncation-2026-11-05.json`, marked as a reproducible reasoning/protocol counterexample, **not** a valid test of realtime freshness.
+
+Repair: use full UTC timestamp intervals `YYYY-MM-DDTHH:MM:SSZ/YYYY-MM-DDTHH:MM:SSZ`; reject *any* date-only request in the URL preflight; add a negative test demonstrating that midnight truncation is refused. Repeat live observation as a new run; do not quietly erase or reinterpret the first result.
+
+**Generalizable research lesson:** Asking the right question includes *encoding that question correctly in the protocol*. The instrument's own time-window representation can create an epistemic failure indistinguishable from bad physical sensors unless the evidence boundary is audited.

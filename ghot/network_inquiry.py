@@ -73,7 +73,7 @@ def query_url(site,start,end):
             "SOURCE_WINDOW_LIMIT")
     qs=urlencode({"monitoring_location_id":dict(STATIONS)[site],
                   "parameter_code":CODE,
-                  "datetime":iso(start).split("T")[0]+"/"+iso(end).split("T")[0],
+                  "datetime":iso(start)+"/"+iso(end),
                   "limit":str(MAX_FEATURES),"f":"json"})
     return ENDPOINT+"?"+qs
 
@@ -90,6 +90,15 @@ def preflight_url(url,site):
             q["monitoring_location_id"]==[dict(STATIONS)[site]] and
             q["parameter_code"]==[CODE] and q["limit"]==[str(MAX_FEATURES)] and
             q["f"]==["json"],"INVALID_PUBLIC_SOURCE_QUERY")
+    # A disastrous source-question bug: YYYY-MM-DD/YYYY-MM-DD silently
+    # truncated the end to midnight, manufacturing apparent 15h lag.
+    # Require explicit UTC clock times at BOTH bounds.
+    parts=q["datetime"][0].split("/")
+    require(len(parts)==2 and all("T" in t and t.endswith("Z") for t in parts),
+            "DATE_ONLY_WINDOW_WOULD_FAKE_SOURCE_STALENESS")
+    begin,finish=parse_utc(parts[0]),parse_utc(parts[1])
+    require(0<(finish-begin).total_seconds()<=MAX_HOURS*3600,
+            "TIMESTAMP_WINDOW_INVALID")
 
 def latest_observation(raw,site,received):
     """Validate agency record structure without asserting physical correctness."""
