@@ -1,0 +1,238 @@
+{
+  "actual_2026_forecasts_issued": false,
+  "all_declared_policy_results_POSTHOC_DO_NOT_SELECT": {
+    "both_graceful": {
+      "absolute_error_mae_cfs": 150.4962,
+      "count": 300,
+      "effective_model_counts": {
+        "blue": 0,
+        "both": 35,
+        "downstream": 184,
+        "sueur": 81
+      },
+      "false_positive_health_probes": 0,
+      "first_half_mae_cfs": 114.1833,
+      "inquiry_credits_per_hour": 2,
+      "probe_credits_total": 0,
+      "request_count": 600,
+      "second_half_mae_cfs": 186.8091,
+      "temporal_instability_cfs": 72.6257,
+      "unanswered_queries": 449,
+      "weighted_objective_cfs_equivalent": 351.6839
+    },
+    "downstream": {
+      "absolute_error_mae_cfs": 185.3333,
+      "count": 300,
+      "effective_model_counts": {
+        "blue": 0,
+        "both": 0,
+        "downstream": 300,
+        "sueur": 0
+      },
+      "false_positive_health_probes": 0,
+      "first_half_mae_cfs": 114.1833,
+      "inquiry_credits_per_hour": 0,
+      "probe_credits_total": 0,
+      "request_count": 0,
+      "second_half_mae_cfs": 256.4833,
+      "temporal_instability_cfs": 142.3,
+      "unanswered_queries": 0,
+      "weighted_objective_cfs_equivalent": 213.7933
+    },
+    "health_last1": {
+      "absolute_error_mae_cfs": 150.4962,
+      "count": 300,
+      "effective_model_counts": {
+        "blue": 0,
+        "both": 35,
+        "downstream": 184,
+        "sueur": 81
+      },
+      "false_positive_health_probes": 69,
+      "first_half_mae_cfs": 114.1833,
+      "inquiry_credits_per_hour": 1.54667,
+      "probe_credits_total": 60,
+      "request_count": 404,
+      "second_half_mae_cfs": 186.8091,
+      "temporal_instability_cfs": 72.6257,
+      "unanswered_queries": 253,
+      "weighted_objective_cfs_equivalent": 294.4889
+    },
+    "health_last3": {
+      "absolute_error_mae_cfs": 150.4962,
+      "count": 300,
+      "effective_model_counts": {
+        "blue": 0,
+        "both": 35,
+        "downstream": 184,
+        "sueur": 81
+      },
+      "false_positive_health_probes": 3,
+      "first_half_mae_cfs": 114.1833,
+      "inquiry_credits_per_hour": 1.32667,
+      "probe_credits_total": 60,
+      "request_count": 338,
+      "second_half_mae_cfs": 186.8091,
+      "temporal_instability_cfs": 72.6257,
+      "unanswered_queries": 187,
+      "weighted_objective_cfs_equivalent": 261.5924
+    },
+    "health_last6": {
+      "absolute_error_mae_cfs": 150.4962,
+      "count": 300,
+      "effective_model_counts": {
+        "blue": 0,
+        "both": 35,
+        "downstream": 184,
+        "sueur": 81
+      },
+      "false_positive_health_probes": 3,
+      "first_half_mae_cfs": 114.1833,
+      "inquiry_credits_per_hour": 1.32667,
+      "probe_credits_total": 60,
+      "request_count": 338,
+      "second_half_mae_cfs": 186.8091,
+      "temporal_instability_cfs": 72.6257,
+      "unanswered_queries": 187,
+      "weighted_objective_cfs_equivalent": 261.5924
+    },
+    "sueur_only": {
+      "absolute_error_mae_cfs": 155.8044,
+      "count": 300,
+      "effective_model_counts": {
+        "blue": 0,
+        "both": 0,
+        "downstream": 184,
+        "sueur": 116
+      },
+      "false_positive_health_probes": 0,
+      "first_half_mae_cfs": 114.1833,
+      "inquiry_credits_per_hour": 1,
+      "probe_credits_total": 0,
+      "request_count": 300,
+      "second_half_mae_cfs": 197.4255,
+      "temporal_instability_cfs": 83.2421,
+      "unanswered_queries": 184,
+      "weighted_objective_cfs_equivalent": 255.6909
+    },
+    "trend_gate_2pct": {
+      "absolute_error_mae_cfs": 155.224,
+      "count": 300,
+      "effective_model_counts": {
+        "blue": 0,
+        "both": 15,
+        "downstream": 184,
+        "sueur": 101
+      },
+      "false_positive_health_probes": 0,
+      "first_half_mae_cfs": 114.1833,
+      "inquiry_credits_per_hour": 1.64333,
+      "probe_credits_total": 0,
+      "request_count": 493,
+      "second_half_mae_cfs": 196.2648,
+      "temporal_instability_cfs": 82.0814,
+      "unanswered_queries": 362,
+      "weighted_objective_cfs_equivalent": 323.2881
+    }
+  },
+  "authority": false,
+  "automatic_admission": false,
+  "autonomous_code_modification": false,
+  "baseline_mae_cfs": 185.3333,
+  "downstream_complete_case_population": {
+    "complete_both_hours": 35,
+    "complete_downstream_hours": 300,
+    "period_end_utc": "2026-03-14T00:00:00Z",
+    "period_start_utc": "2026-03-01T13:00:00Z",
+    "upstream_present_feature_hours": {
+      "blue": 35,
+      "sueur": 116
+    }
+  },
+  "fixed_frozen_plan_sha256": "d6c24709882faee4e66a2b32ad0502422f5ac8d526025da114571a8a6a705cac",
+  "frozen_policy_mae_cfs": 185.3333,
+  "frozen_policy_raw_mae_improvement_cfs": 0,
+  "frozen_policy_utility_improvement_cfs_equivalent": 0,
+  "frozen_selection": "downstream",
+  "holdout_source_response_sha256": "976f0ebe10c88dd0009d12bc97e48de4c87e454453a77626bb47cf06a79a8437",
+  "hypothesis_state": "HOLD_NO_INDEPENDENT_QUESTION_VALUE",
+  "limits": [
+    "The 2025 development source was previously inspected by 018; no pretense of untouched development data.",
+    "The 2026 March test window was fixed in source before its live source query.",
+    "Probed source health is derived from hindsight historical time stamps, not true live-availability receipts.",
+    "No evidence that reported discharge estimates, later revised ratings, or missing sensor records equal contemporaneous physical truth.",
+    "No real monetary costs, real network delay, flood decisions or operational alerts; credits are declared research proxies.",
+    "All posthoc policy comparisons are diagnostic only; selecting the posthoc best would invalidate the 2026 holdout."
+  ],
+  "observed_future_labels_used_to_modify_policy": false,
+  "posthoc_best_from_opened_holdout_NOT_ADMITTED": "downstream",
+  "proposed_next_question": "Are our research credit prices the WRONG question? A different policy reduced raw error on the 2026 test, but our assumed cost function made us choose not to ask at all. What actual latency, missing-answer and opportunity costs would justify that tradeoff?",
+  "real_world_action": false,
+  "reciprocal_critique": {
+    "JARVIS_to_MOTIF": "A historical timestamp found today is not proof that the agency answered at the original hypothetical query time. The availability question itself could be wrong.",
+    "MOTIF_to_JARVIS": "An answer's value includes whether the measuring instrument answered, at what apparent cost, and whether the question stays predictive across regimes.",
+    "next_method": "Use actual time-of-issue request/response metadata, event-block holdouts, and health-probe cost measured in seconds or money.",
+    "self_doubt": "Were research credit prices or historical response completeness better predictors of the selected question than physically measured forecast error?"
+  },
+  "schema": "motif.question-kind-physical-test/v1",
+  "self_diagnostic_on_assumed_cost_of_questions": {
+    "all_candidate_break_even_credit_prices": {
+      "both_graceful": {
+        "assumed_frozen_credit_unit_cfs_equivalent": 37.382353,
+        "max_credit_unit_for_positive_weighted_value_cfs_equivalent": 9.7674,
+        "posthoc_only_not_new_model_selection": true,
+        "raw_error_improvement_cfs": 34.8371,
+        "weighted_question_units_per_case": 4.99333
+      },
+      "health_last1": {
+        "assumed_frozen_credit_unit_cfs_equivalent": 37.382353,
+        "max_credit_unit_for_positive_weighted_value_cfs_equivalent": 14.0824,
+        "posthoc_only_not_new_model_selection": true,
+        "raw_error_improvement_cfs": 34.8371,
+        "weighted_question_units_per_case": 3.46333
+      },
+      "health_last3": {
+        "assumed_frozen_credit_unit_cfs_equivalent": 37.382353,
+        "max_credit_unit_for_positive_weighted_value_cfs_equivalent": 18.8795,
+        "posthoc_only_not_new_model_selection": true,
+        "raw_error_improvement_cfs": 34.8371,
+        "weighted_question_units_per_case": 2.58333
+      },
+      "health_last6": {
+        "assumed_frozen_credit_unit_cfs_equivalent": 37.382353,
+        "max_credit_unit_for_positive_weighted_value_cfs_equivalent": 18.8795,
+        "posthoc_only_not_new_model_selection": true,
+        "raw_error_improvement_cfs": 34.8371,
+        "weighted_question_units_per_case": 2.58333
+      },
+      "sueur_only": {
+        "assumed_frozen_credit_unit_cfs_equivalent": 37.382353,
+        "max_credit_unit_for_positive_weighted_value_cfs_equivalent": 18.5661,
+        "posthoc_only_not_new_model_selection": true,
+        "raw_error_improvement_cfs": 29.5289,
+        "weighted_question_units_per_case": 2.22667
+      },
+      "trend_gate_2pct": {
+        "assumed_frozen_credit_unit_cfs_equivalent": 37.382353,
+        "max_credit_unit_for_positive_weighted_value_cfs_equivalent": 10.391,
+        "posthoc_only_not_new_model_selection": true,
+        "raw_error_improvement_cfs": 30.1093,
+        "weighted_question_units_per_case": 4.05667
+      }
+    },
+    "assumed_query_cost_dominated_final_choice": true,
+    "falsifiable_next_problem": "Measure true query delay and answer availability before assigning costs; compare a time-of-issue logged policy on an untouched period.",
+    "frozen_question_credit_price_cfs_equivalent": 37.382353,
+    "posthoc_only_not_admitted": true,
+    "pure_accuracy_best_only_known_after_test": "both_graceful",
+    "status": "AFTER_TEST_VALUE_FUNCTION_DIAGNOSTIC_NOT_POLICY_ADMISSION"
+  },
+  "sensor_health_really_queried_at_issue_time": false,
+  "source_type": "USGS_MODERN_OGC_HISTORICAL_REPORTED_DISCHARGE",
+  "status": "PUBLIC_SENSOR_RETROSPECTIVE_COMPARISON_NO_ACTUAL_FORECAST_ISSUED",
+  "test_window": [
+    "2026-03-01",
+    "2026-03-14"
+  ],
+  "whether_historical_health_probe_selected": false
+}
