@@ -1,0 +1,47 @@
+name: GHoT 001 — measured resource witness without invented credits
+
+on:
+  pull_request:
+    paths:
+      - "ghot/resource_receipt.py"
+      - "ghot/test_resource_receipt.py"
+      - "docs/RESOURCE-RECEIPTS-001.md"
+      - "integrations/motif-019/**"
+      - ".github/workflows/resource-receipts.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: "Source authenticity boundary: exact MOTIF-019 evidence bytes"
+        uses: actions/checkout@v4
+        with:
+          repository: the-static-collective/MOTIF
+          ref: 1bb4028141eb20a8798bed338dcb3d851284de22
+          persist-credentials: false
+          path: motif-019-source
+      - name: Exact source-owned file match
+        run: |
+          test "$(git hash-object integrations/motif-019/physical-witness.json)" = "0cf1303cdeb83d9c29fe417ac19c66c217ddf63d"
+          cmp integrations/motif-019/physical-witness.json motif-019-source/experiments/019/evidence/final-value-function-diagnostic-2026-11-05.json
+      - name: Offline adversarial tests
+        run: python3 -m unittest discover -s ghot -p "test_resource_receipt.py" -v
+      - name: Measure real local CPU time, wall time and allocations with GHoT power policy
+        run: python3 ghot/resource_receipt.py --trials 5 --repeats 250 --out resource-witness.json
+      - name: Preserve the actual resource receipt for source-owned review
+        uses: actions/upload-artifact@v4
+        with:
+          name: ghot-001-resource-witness-actual-run
+          path: resource-witness.json
+          retention-days: 30
