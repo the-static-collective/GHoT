@@ -260,7 +260,7 @@ def meter(source,trials=5,repeats=250, *,power=None):
     # Refuse an incorrect/altered research record rather than measuring it
     # as if it were the actual known 019 evidence.
     expected=SOURCE_BLOB
-    git_blob=sha1(b"blob "+str(len(source_bytes)).encode()+b"\\0"+source_bytes).hexdigest()
+    git_blob=sha1(b"blob "+str(len(source_bytes)).encode()+bytes([0])+source_bytes).hexdigest()
     require(git_blob==SOURCE_BLOB,"PINNED_PHYSICAL_SOURCE_BYTES_CHANGED")
     source_summary=validate_and_summarize(source_bytes)
     if power is None:
