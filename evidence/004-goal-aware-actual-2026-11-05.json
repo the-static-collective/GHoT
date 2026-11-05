@@ -1,0 +1,607 @@
+{
+  "actual_energy_joules": null,
+  "actual_http_response_body_bytes": 2463224,
+  "actual_network_requests_sent": 9,
+  "actual_request_wall_time_ns_sum": 6690788246,
+  "actual_wire_bytes": null,
+  "actually_executed_trials": [
+    {
+      "actual_resource_units": {
+        "actual_get_requests": 1,
+        "attributable_joules": null,
+        "http_response_body_bytes": 270810,
+        "sum_request_local_cpu_ns": 6627982,
+        "sum_request_wall_ns": 737191673,
+        "wire_bytes": null
+      },
+      "actual_steps": [
+        {
+          "actual_site_requested": "blue",
+          "decision": "STOP_GOAL_MET",
+          "measured_wall_ns": 737191673,
+          "original_goal_satisfied_after_this_step": true,
+          "public_request_url": "https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items?monitoring_location_id=USGS-05320000&parameter_code=00060&datetime=2026-11-01T14%3A43%3A28.721470Z%2F2026-11-05T14%3A43%3A28.721470Z&limit=700&f=json",
+          "received_http_body_bytes": 270810,
+          "request_url_sha256": "fe1ff0d55862090812218e16e0aff4dc5e101c953c627e07557ada007ecaaf16",
+          "schema": "ghot.goal-step/v1",
+          "step": 0,
+          "still_possible_to_finish": true,
+          "this_source_was_fresh": true
+        }
+      ],
+      "actually_queried_public_sites": [
+        "blue"
+      ],
+      "authority": false,
+      "contract_kind": "any_of",
+      "goal": "any_fresh",
+      "goal_meaning": "Obtain one agency-reported public discharge observation no older than 12h",
+      "no_emergency_action": true,
+      "no_monetary_or_api_credit_costs": true,
+      "per_request_receipts": [
+        {
+          "body_bytes_received": 270810,
+          "body_sha256": "cd5642e2675d7347600ecd78a7ae0f54053f5ea52027130f12916cd18bb19688",
+          "content_type_header": "application/json; charset=utf-8",
+          "error": null,
+          "http_status": 200,
+          "kind": "ghot.source-probe/v1",
+          "latency_wall_ns": 737191673,
+          "local_cpu_ns": 6627982,
+          "observation": {
+            "age_seconds": 4409.466,
+            "evidence_is": "USGS_REPORTED_VALUE_NOT_INDEPENDENTLY_AUTHENTICATED",
+            "fresh_source_witness": true,
+            "latest_flow_cfs": 2570,
+            "latest_observation_utc": "2026-11-05T14:30:00Z",
+            "parsed_source_points": 384,
+            "station": "blue"
+          },
+          "request_start_utc": "2026-11-05T15:43:28.728412Z",
+          "response_end_utc": "2026-11-05T15:43:29.465602Z",
+          "site": "blue",
+          "valid_source_response": true,
+          "wire_network_bytes_total": null
+        }
+      ],
+      "policy": "goal_aware",
+      "power_willingness": "normal",
+      "predeclared_route": [
+        "blue",
+        "sueur",
+        "mankato"
+      ],
+      "required_public_stations": [
+        "blue",
+        "sueur",
+        "mankato"
+      ],
+      "schema": "ghot.goal-trial/v1",
+      "skipped_public_sites": [
+        "sueur",
+        "mankato"
+      ],
+      "source_reporting_only_not_a_hazard_prediction": true,
+      "stop_reason": "STOP_GOAL_MET",
+      "task_contract_completed": true
+    },
+    {
+      "actual_resource_units": {
+        "actual_get_requests": 3,
+        "attributable_joules": null,
+        "http_response_body_bytes": 822777,
+        "sum_request_local_cpu_ns": 13530478,
+        "sum_request_wall_ns": 2469340577,
+        "wire_bytes": null
+      },
+      "actual_steps": [
+        {
+          "actual_site_requested": "blue",
+          "decision": "CONTROL_ASK_EXTRA_EVEN_IF_GOAL_MET",
+          "measured_wall_ns": 700212342,
+          "original_goal_satisfied_after_this_step": true,
+          "public_request_url": "https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items?monitoring_location_id=USGS-05320000&parameter_code=00060&datetime=2026-11-01T14%3A43%3A29.469126Z%2F2026-11-05T14%3A43%3A29.469126Z&limit=700&f=json",
+          "received_http_body_bytes": 270810,
+          "request_url_sha256": "8fb64bb1ed7bb7ebb838eb216346eea2e9ddb4f062038d7799f1a91b7164594d",
+          "schema": "ghot.goal-step/v1",
+          "step": 0,
+          "still_possible_to_finish": true,
+          "this_source_was_fresh": true
+        },
+        {
+          "actual_site_requested": "sueur",
+          "decision": "CONTROL_ASK_EXTRA_EVEN_IF_GOAL_MET",
+          "measured_wall_ns": 711828491,
+          "original_goal_satisfied_after_this_step": true,
+          "public_request_url": "https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items?monitoring_location_id=USGS-05320500&parameter_code=00060&datetime=2026-11-01T14%3A43%3A29.469126Z%2F2026-11-05T14%3A43%3A29.469126Z&limit=700&f=json",
+          "received_http_body_bytes": 276050,
+          "request_url_sha256": "13809748c439d998d8063dad7f417bcd0913868aeba85c4f438cdc776b94fa91",
+          "schema": "ghot.goal-step/v1",
+          "step": 1,
+          "still_possible_to_finish": true,
+          "this_source_was_fresh": true
+        },
+        {
+          "actual_site_requested": "mankato",
+          "decision": "FINISH_CONTROL_AFTER_ALL_SOURCES",
+          "measured_wall_ns": 1057299744,
+          "original_goal_satisfied_after_this_step": true,
+          "public_request_url": "https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items?monitoring_location_id=USGS-05325000&parameter_code=00060&datetime=2026-11-01T14%3A43%3A29.469126Z%2F2026-11-05T14%3A43%3A29.469126Z&limit=700&f=json",
+          "received_http_body_bytes": 275917,
+          "request_url_sha256": "1abaf0d8e68b495fe0476f59666317fc5b1fc24b72c75d65c03ee71c09e19bf6",
+          "schema": "ghot.goal-step/v1",
+          "step": 2,
+          "still_possible_to_finish": true,
+          "this_source_was_fresh": true
+        }
+      ],
+      "actually_queried_public_sites": [
+        "blue",
+        "sueur",
+        "mankato"
+      ],
+      "authority": false,
+      "contract_kind": "any_of",
+      "goal": "any_fresh",
+      "goal_meaning": "Obtain one agency-reported public discharge observation no older than 12h",
+      "no_emergency_action": true,
+      "no_monetary_or_api_credit_costs": true,
+      "per_request_receipts": [
+        {
+          "body_bytes_received": 270810,
+          "body_sha256": "36f1964e44970c49eac4cd22f3cb7ec363b95fba8e30ce63a2f58e9e9432ba6f",
+          "content_type_header": "application/json; charset=utf-8",
+          "error": null,
+          "http_status": 200,
+          "kind": "ghot.source-probe/v1",
+          "latency_wall_ns": 700212342,
+          "local_cpu_ns": 4460031,
+          "observation": {
+            "age_seconds": 4410.175,
+            "evidence_is": "USGS_REPORTED_VALUE_NOT_INDEPENDENTLY_AUTHENTICATED",
+            "fresh_source_witness": true,
+            "latest_flow_cfs": 2570,
+            "latest_observation_utc": "2026-11-05T14:30:00Z",
+            "parsed_source_points": 384,
+            "station": "blue"
+          },
+          "request_start_utc": "2026-11-05T15:43:29.475199Z",
+          "response_end_utc": "2026-11-05T15:43:30.175408Z",
+          "site": "blue",
+          "valid_source_response": true,
+          "wire_network_bytes_total": null
+        },
+        {
+          "body_bytes_received": 276050,
+          "body_sha256": "fd4138d443f1bd16d747ef8759bd88bd1ec9eed28f918beab7d256601428c173",
+          "content_type_header": "application/json; charset=utf-8",
+          "error": null,
+          "http_status": 200,
+          "kind": "ghot.source-probe/v1",
+          "latency_wall_ns": 711828491,
+          "local_cpu_ns": 4505634,
+          "observation": {
+            "age_seconds": 4410.896,
+            "evidence_is": "USGS_REPORTED_VALUE_NOT_INDEPENDENTLY_AUTHENTICATED",
+            "fresh_source_witness": true,
+            "latest_flow_cfs": 2920,
+            "latest_observation_utc": "2026-11-05T14:30:00Z",
+            "parsed_source_points": 384,
+            "station": "sueur"
+          },
+          "request_start_utc": "2026-11-05T15:43:30.184080Z",
+          "response_end_utc": "2026-11-05T15:43:30.895905Z",
+          "site": "sueur",
+          "valid_source_response": true,
+          "wire_network_bytes_total": null
+        },
+        {
+          "body_bytes_received": 275917,
+          "body_sha256": "5c5d8895ad43a59c8f01ca8b629558a60da3b02e088d2a1b478ba5a9cc825c3d",
+          "content_type_header": "application/json; charset=utf-8",
+          "error": null,
+          "http_status": 200,
+          "kind": "ghot.source-probe/v1",
+          "latency_wall_ns": 1057299744,
+          "local_cpu_ns": 4564813,
+          "observation": {
+            "age_seconds": 4411.962,
+            "evidence_is": "USGS_REPORTED_VALUE_NOT_INDEPENDENTLY_AUTHENTICATED",
+            "fresh_source_witness": true,
+            "latest_flow_cfs": 7240,
+            "latest_observation_utc": "2026-11-05T14:30:00Z",
+            "parsed_source_points": 384,
+            "station": "mankato"
+          },
+          "request_start_utc": "2026-11-05T15:43:30.904479Z",
+          "response_end_utc": "2026-11-05T15:43:31.961775Z",
+          "site": "mankato",
+          "valid_source_response": true,
+          "wire_network_bytes_total": null
+        }
+      ],
+      "policy": "exhaustive",
+      "power_willingness": "normal",
+      "predeclared_route": [
+        "blue",
+        "sueur",
+        "mankato"
+      ],
+      "required_public_stations": [
+        "blue",
+        "sueur",
+        "mankato"
+      ],
+      "schema": "ghot.goal-trial/v1",
+      "skipped_public_sites": [],
+      "source_reporting_only_not_a_hazard_prediction": true,
+      "stop_reason": "CONTROL_ALL_THREE_COMPLETED",
+      "task_contract_completed": true
+    },
+    {
+      "actual_resource_units": {
+        "actual_get_requests": 3,
+        "attributable_joules": null,
+        "http_response_body_bytes": 822777,
+        "sum_request_local_cpu_ns": 13508333,
+        "sum_request_wall_ns": 2088717948,
+        "wire_bytes": null
+      },
+      "actual_steps": [
+        {
+          "actual_site_requested": "blue",
+          "decision": "CONTROL_ASK_EXTRA_EVEN_IF_GOAL_MET",
+          "measured_wall_ns": 703612747,
+          "original_goal_satisfied_after_this_step": false,
+          "public_request_url": "https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items?monitoring_location_id=USGS-05320000&parameter_code=00060&datetime=2026-11-01T14%3A43%3A31.964989Z%2F2026-11-05T14%3A43%3A31.964989Z&limit=700&f=json",
+          "received_http_body_bytes": 270810,
+          "request_url_sha256": "968447ecd25cf73614374d16840a0773d68b4baf46644abf06c948ce4d21ec4f",
+          "schema": "ghot.goal-step/v1",
+          "step": 0,
+          "still_possible_to_finish": true,
+          "this_source_was_fresh": true
+        },
+        {
+          "actual_site_requested": "sueur",
+          "decision": "CONTROL_ASK_EXTRA_EVEN_IF_GOAL_MET",
+          "measured_wall_ns": 693549779,
+          "original_goal_satisfied_after_this_step": true,
+          "public_request_url": "https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items?monitoring_location_id=USGS-05320500&parameter_code=00060&datetime=2026-11-01T14%3A43%3A31.964989Z%2F2026-11-05T14%3A43%3A31.964989Z&limit=700&f=json",
+          "received_http_body_bytes": 276050,
+          "request_url_sha256": "6b0179629a87b7d5e4ec922536cd539e7314fedd73114f26557d6ac64134562e",
+          "schema": "ghot.goal-step/v1",
+          "step": 1,
+          "still_possible_to_finish": true,
+          "this_source_was_fresh": true
+        },
+        {
+          "actual_site_requested": "mankato",
+          "decision": "FINISH_CONTROL_AFTER_ALL_SOURCES",
+          "measured_wall_ns": 691555422,
+          "original_goal_satisfied_after_this_step": true,
+          "public_request_url": "https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items?monitoring_location_id=USGS-05325000&parameter_code=00060&datetime=2026-11-01T14%3A43%3A31.964989Z%2F2026-11-05T14%3A43%3A31.964989Z&limit=700&f=json",
+          "received_http_body_bytes": 275917,
+          "request_url_sha256": "becd6f7c0214d14e7254237a8147370bf6c354484d2f4b1b2a9c144e6bcd1c74",
+          "schema": "ghot.goal-step/v1",
+          "step": 2,
+          "still_possible_to_finish": true,
+          "this_source_was_fresh": true
+        }
+      ],
+      "actually_queried_public_sites": [
+        "blue",
+        "sueur",
+        "mankato"
+      ],
+      "authority": false,
+      "contract_kind": "all_of",
+      "goal": "two_named_fresh",
+      "goal_meaning": "Obtain separate recent public discharge reports for BOTH Blue Earth and Le Sueur",
+      "no_emergency_action": true,
+      "no_monetary_or_api_credit_costs": true,
+      "per_request_receipts": [
+        {
+          "body_bytes_received": 270810,
+          "body_sha256": "b105722ef0c17555e1d8d2691d645e704c015ab12bd0c844fae95b946e464882",
+          "content_type_header": "application/json; charset=utf-8",
+          "error": null,
+          "http_status": 200,
+          "kind": "ghot.source-probe/v1",
+          "latency_wall_ns": 703612747,
+          "local_cpu_ns": 4443020,
+          "observation": {
+            "age_seconds": 4412.674,
+            "evidence_is": "USGS_REPORTED_VALUE_NOT_INDEPENDENTLY_AUTHENTICATED",
+            "fresh_source_witness": true,
+            "latest_flow_cfs": 2570,
+            "latest_observation_utc": "2026-11-05T14:30:00Z",
+            "parsed_source_points": 384,
+            "station": "blue"
+          },
+          "request_start_utc": "2026-11-05T15:43:31.970634Z",
+          "response_end_utc": "2026-11-05T15:43:32.674244Z",
+          "site": "blue",
+          "valid_source_response": true,
+          "wire_network_bytes_total": null
+        },
+        {
+          "body_bytes_received": 276050,
+          "body_sha256": "d16299d4907dcf5c84bdc6dd0ce315045fa4d4b00d308eb1fbdc8e8185b5b73c",
+          "content_type_header": "application/json; charset=utf-8",
+          "error": null,
+          "http_status": 200,
+          "kind": "ghot.source-probe/v1",
+          "latency_wall_ns": 693549779,
+          "local_cpu_ns": 4544416,
+          "observation": {
+            "age_seconds": 4413.377,
+            "evidence_is": "USGS_REPORTED_VALUE_NOT_INDEPENDENTLY_AUTHENTICATED",
+            "fresh_source_witness": true,
+            "latest_flow_cfs": 2920,
+            "latest_observation_utc": "2026-11-05T14:30:00Z",
+            "parsed_source_points": 384,
+            "station": "sueur"
+          },
+          "request_start_utc": "2026-11-05T15:43:32.682962Z",
+          "response_end_utc": "2026-11-05T15:43:33.376508Z",
+          "site": "sueur",
+          "valid_source_response": true,
+          "wire_network_bytes_total": null
+        },
+        {
+          "body_bytes_received": 275917,
+          "body_sha256": "1acaf50a3eeec11cb1b8b820562b46233a9cb0fa52f4a18fd795fca3274f759f",
+          "content_type_header": "application/json; charset=utf-8",
+          "error": null,
+          "http_status": 200,
+          "kind": "ghot.source-probe/v1",
+          "latency_wall_ns": 691555422,
+          "local_cpu_ns": 4520897,
+          "observation": {
+            "age_seconds": 4414.077,
+            "evidence_is": "USGS_REPORTED_VALUE_NOT_INDEPENDENTLY_AUTHENTICATED",
+            "fresh_source_witness": true,
+            "latest_flow_cfs": 7240,
+            "latest_observation_utc": "2026-11-05T14:30:00Z",
+            "parsed_source_points": 384,
+            "station": "mankato"
+          },
+          "request_start_utc": "2026-11-05T15:43:33.385160Z",
+          "response_end_utc": "2026-11-05T15:43:34.076712Z",
+          "site": "mankato",
+          "valid_source_response": true,
+          "wire_network_bytes_total": null
+        }
+      ],
+      "policy": "exhaustive",
+      "power_willingness": "normal",
+      "predeclared_route": [
+        "blue",
+        "sueur",
+        "mankato"
+      ],
+      "required_public_stations": [
+        "blue",
+        "sueur"
+      ],
+      "schema": "ghot.goal-trial/v1",
+      "skipped_public_sites": [],
+      "source_reporting_only_not_a_hazard_prediction": true,
+      "stop_reason": "CONTROL_ALL_THREE_COMPLETED",
+      "task_contract_completed": true
+    },
+    {
+      "actual_resource_units": {
+        "actual_get_requests": 2,
+        "attributable_joules": null,
+        "http_response_body_bytes": 546860,
+        "sum_request_local_cpu_ns": 8372349,
+        "sum_request_wall_ns": 1395538048,
+        "wire_bytes": null
+      },
+      "actual_steps": [
+        {
+          "actual_site_requested": "blue",
+          "decision": "ASK_NEXT_POSSIBLY_USEFUL_SOURCE",
+          "measured_wall_ns": 697760279,
+          "original_goal_satisfied_after_this_step": false,
+          "public_request_url": "https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items?monitoring_location_id=USGS-05320000&parameter_code=00060&datetime=2026-11-01T14%3A43%3A34.084091Z%2F2026-11-05T14%3A43%3A34.084091Z&limit=700&f=json",
+          "received_http_body_bytes": 270810,
+          "request_url_sha256": "8e63f1218e64487e8a6ccf275aead9dae78fd832282a4acf26feb2e585c491ff",
+          "schema": "ghot.goal-step/v1",
+          "step": 0,
+          "still_possible_to_finish": true,
+          "this_source_was_fresh": true
+        },
+        {
+          "actual_site_requested": "sueur",
+          "decision": "STOP_GOAL_MET",
+          "measured_wall_ns": 697777769,
+          "original_goal_satisfied_after_this_step": true,
+          "public_request_url": "https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items?monitoring_location_id=USGS-05320500&parameter_code=00060&datetime=2026-11-01T14%3A43%3A34.084091Z%2F2026-11-05T14%3A43%3A34.084091Z&limit=700&f=json",
+          "received_http_body_bytes": 276050,
+          "request_url_sha256": "59b180a9ea1195529f9a9b6d7b113048100d3b53b68d6e790afee32fd63a5588",
+          "schema": "ghot.goal-step/v1",
+          "step": 1,
+          "still_possible_to_finish": true,
+          "this_source_was_fresh": true
+        }
+      ],
+      "actually_queried_public_sites": [
+        "blue",
+        "sueur"
+      ],
+      "authority": false,
+      "contract_kind": "all_of",
+      "goal": "two_named_fresh",
+      "goal_meaning": "Obtain separate recent public discharge reports for BOTH Blue Earth and Le Sueur",
+      "no_emergency_action": true,
+      "no_monetary_or_api_credit_costs": true,
+      "per_request_receipts": [
+        {
+          "body_bytes_received": 270810,
+          "body_sha256": "619925d1b625cecb1863d409756de7af125ab5c0fb98a0ecff21ba32118c34e5",
+          "content_type_header": "application/json; charset=utf-8",
+          "error": null,
+          "http_status": 200,
+          "kind": "ghot.source-probe/v1",
+          "latency_wall_ns": 697760279,
+          "local_cpu_ns": 4248706,
+          "observation": {
+            "age_seconds": 4414.787,
+            "evidence_is": "USGS_REPORTED_VALUE_NOT_INDEPENDENTLY_AUTHENTICATED",
+            "fresh_source_witness": true,
+            "latest_flow_cfs": 2570,
+            "latest_observation_utc": "2026-11-05T14:30:00Z",
+            "parsed_source_points": 384,
+            "station": "blue"
+          },
+          "request_start_utc": "2026-11-05T15:43:34.089377Z",
+          "response_end_utc": "2026-11-05T15:43:34.787134Z",
+          "site": "blue",
+          "valid_source_response": true,
+          "wire_network_bytes_total": null
+        },
+        {
+          "body_bytes_received": 276050,
+          "body_sha256": "36ee9cfe7bfb97f246f498cff03139f2b50826041e686719209c0f88e149c85b",
+          "content_type_header": "application/json; charset=utf-8",
+          "error": null,
+          "http_status": 200,
+          "kind": "ghot.source-probe/v1",
+          "latency_wall_ns": 697777769,
+          "local_cpu_ns": 4123643,
+          "observation": {
+            "age_seconds": 4415.493,
+            "evidence_is": "USGS_REPORTED_VALUE_NOT_INDEPENDENTLY_AUTHENTICATED",
+            "fresh_source_witness": true,
+            "latest_flow_cfs": 2920,
+            "latest_observation_utc": "2026-11-05T14:30:00Z",
+            "parsed_source_points": 384,
+            "station": "sueur"
+          },
+          "request_start_utc": "2026-11-05T15:43:34.795618Z",
+          "response_end_utc": "2026-11-05T15:43:35.493391Z",
+          "site": "sueur",
+          "valid_source_response": true,
+          "wire_network_bytes_total": null
+        }
+      ],
+      "policy": "goal_aware",
+      "power_willingness": "normal",
+      "predeclared_route": [
+        "blue",
+        "sueur"
+      ],
+      "required_public_stations": [
+        "blue",
+        "sueur"
+      ],
+      "schema": "ghot.goal-trial/v1",
+      "skipped_public_sites": [
+        "mankato"
+      ],
+      "source_reporting_only_not_a_hazard_prediction": true,
+      "stop_reason": "STOP_GOAL_MET",
+      "task_contract_completed": true
+    }
+  ],
+  "answer_quality_scope": "FORMALLY_SATISFIED_NARROW_PUBLIC_EVIDENCE_GOAL_ONLY",
+  "authority": false,
+  "automatic_model_promotion": false,
+  "data_kind": "USGS_REPORTED_DISCHARGE_NOT_INDEPENDENTLY_CALIBRATED",
+  "declared_goals": {
+    "any_fresh": {
+      "kind": "any_of",
+      "meaning": "Obtain one agency-reported public discharge observation no older than 12h",
+      "optimized_order": [
+        "blue",
+        "sueur",
+        "mankato"
+      ],
+      "required": [
+        "blue",
+        "sueur",
+        "mankato"
+      ]
+    },
+    "two_named_fresh": {
+      "kind": "all_of",
+      "meaning": "Obtain separate recent public discharge reports for BOTH Blue Earth and Le Sueur",
+      "optimized_order": [
+        "blue",
+        "sueur"
+      ],
+      "required": [
+        "blue",
+        "sueur"
+      ]
+    }
+  },
+  "deferral_supported": "CRITICAL_POWER_REFUSES_NETWORK_WORK",
+  "external_side_effects_other_than_readonly_public_GET": false,
+  "limits": [
+    "All source data are public historical reports, potentially revised and not independently calibrated.",
+    "A source being fresh says nothing about flood risk or whether physical conditions are safe.",
+    "The goal-aware and exhaustive arms run sequentially on a changing internet; this is not a randomized controlled study.",
+    "Wall time is not real power. Response-body bytes are not entire transport-layer bytes.",
+    "This measures goal satisfaction for two simple contracts, not human satisfaction or general intelligence.",
+    "Requests avoided in one arm are not independently observed counterfactual network packets."
+  ],
+  "next_question": "Can a bounded planner prove that each next query is necessary for the requested answer before asking, and measure lost usefulness when it holds?",
+  "no_paid_credits_needed": true,
+  "outcome_research_hold": "NO_CROSS_RUN_CAUSAL_ENERGY_CLAIM",
+  "power_willingness": "normal",
+  "question": "When does further inquiry cease to be useful for a fixed, explicit evidence contract?",
+  "run_order": [
+    [
+      "any_fresh",
+      "goal_aware"
+    ],
+    [
+      "any_fresh",
+      "exhaustive"
+    ],
+    [
+      "two_named_fresh",
+      "exhaustive"
+    ],
+    [
+      "two_named_fresh",
+      "goal_aware"
+    ]
+  ],
+  "schema": "ghot.goal-aware-inquiry/v1",
+  "source_code_autonomously_modified": false,
+  "source_host": "api.waterdata.usgs.gov",
+  "two_goal_comparisons": {
+    "any_fresh": {
+      "actual_control_body_bytes": 822777,
+      "actual_control_get_count": 3,
+      "actual_control_wall_ns": 2469340577,
+      "actual_optimized_body_bytes": 270810,
+      "actual_optimized_get_count": 1,
+      "actual_optimized_wall_ns": 737191673,
+      "comparison_can_prove_electrical_savings": false,
+      "comparison_can_prove_general_causal_savings": false,
+      "control_goal_satisfied": true,
+      "optimized_goal_satisfied": true,
+      "run_order_not_simultaneous": true,
+      "same_task_goal_both_runs": true
+    },
+    "two_named_fresh": {
+      "actual_control_body_bytes": 822777,
+      "actual_control_get_count": 3,
+      "actual_control_wall_ns": 2088717948,
+      "actual_optimized_body_bytes": 546860,
+      "actual_optimized_get_count": 2,
+      "actual_optimized_wall_ns": 1395538048,
+      "comparison_can_prove_electrical_savings": false,
+      "comparison_can_prove_general_causal_savings": false,
+      "control_goal_satisfied": true,
+      "optimized_goal_satisfied": true,
+      "run_order_not_simultaneous": true,
+      "same_task_goal_both_runs": true
+    }
+  }
+}
