@@ -82,7 +82,12 @@ class Network002(unittest.TestCase):
         self.assertIn("T",d)
         self.assertEqual(m.parse_utc(d.split("/")[1]),TIME-timedelta(hours=1))
         m.preflight_url(url,"blue")
-        date_only=url.replace(d,d.split("/")[0].split("T")[0]+"/"+d.split("/")[1].split("T")[0])
+        from urllib.parse import urlunsplit,urlencode
+        fields=parse_qs(urlsplit(url).query)
+        fields["datetime"]=[d.split("/")[0].split("T")[0]+"/"+d.split("/")[1].split("T")[0]]
+        parts=urlsplit(url)
+        date_only=urlunsplit((parts.scheme,parts.netloc,parts.path,
+                              urlencode(fields,doseq=True),parts.fragment))
         with self.assertRaises(m.HOLD):m.preflight_url(date_only,"blue")
 
     def test_wrong_sensor_payload_holds_and_missing_records_remain_missing(self):
