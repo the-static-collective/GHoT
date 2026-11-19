@@ -25,7 +25,7 @@ python garden/router.py context --query HUMKIN --out /path/OUTSIDE/the/repo/humk
 
 **Private output path:** defaults to `~/.ghot/garden-router`; NEVER point `--home` or `--out` at the public checkout, CI artifacts or a public cloud bucket. On POSIX, directories are mode 0700 and files 0600. On Windows protect the directory with the current user's account ACL; POSIX permission bits are not a Windows security guarantee.
 
-For a Windows computer with GitHub CLI logged in, `powershell -ExecutionPolicy Bypass -File .\garden\run-local.ps1` requests the token from `gh auth token` only for the current process and runs one sweep. This wrapper is source-only, not validated on the user's actual Windows device.
+For a Windows computer with GitHub CLI logged in, `powershell -ExecutionPolicy Bypass -File .\garden\run-local.ps1` requests the token from `gh auth token` only for the current process and runs one sweep. To enable two-hour user-scoped scanning on Windows, run `powershell -ExecutionPolicy Bypass -File .\garden\run-local.ps1 -Action Install`; inspect it using `-Action Status` or remove it using `-Action Remove`. It runs only while that user is signed in and must be reinstalled before its one-year recurrence window ends. These Windows Task Scheduler operations are **not field-tested on the user's machine**.
 
 **Schedule:** rerun `sweep` at the operator's chosen interval (for example every 2 hours) in a private, authorized runner. This PR does not create a working unattended schedule or cross-repo credentials. The existing GHoT GitHub Actions pulse remains **repo-scoped** and must not be presented as an organization-wide router. Future GitHub App/webhook ingress needs signature verification, delivery replay protection, and the same privacy gates.
 
