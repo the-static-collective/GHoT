@@ -90,14 +90,19 @@ def generate(api, owner, name, intent):
     branch = repo.get("default_branch")
     if not branch:
         raise ValueError("Repository has no default branch")
-    commits = api.get("/repos/" + slug + "/commits", per_page=1, sha=branch)
-    head = commits[0]["sha"] if commits else "UNKNOWN"
+    # Ignore this workflow's own generated-file commits. Using the actual
+    # branch HEAD here creates an infinite cron → commit → new HEAD loop.
+    commits = (c for c in api.pages("/repos/" + slug + "/commits", sha=branch)
+               if not c.get("commit", {}).get("message", "").startswith(
+                   "chore(continuity): refresh source-linked GHoT handoff"))
+    source_commit = next(commits, None)
+    head = source_commit["sha"] if source_commit else "UNKNOWN"
     open_prs = list(api.pages("/repos/" + slug + "/pulls", state="open", sort="updated", direction="desc"))
     recent_closed = api.get("/repos/" + slug + "/pulls", state="closed", sort="updated", direction="desc", per_page=30)
     recent_merged = [p for p in recent_closed if p.get("merged_at")][:8]
     # Stable event cut: identical source state yields identical output.
     # Do not commit an artificial change every two hours just to refresh a clock.
-    event_times = [commits[0].get("commit", {}).get("committer", {}).get("date", "") if commits else ""]
+    event_times = [source_commit.get("commit", {}).get("committer", {}).get("date", "") if source_commit else ""]
     event_times += [p.get("updated_at", "") for p in open_prs]
     event_times += [p.get("merged_at", "") for p in recent_merged]
     event_cut = max((x for x in event_times if x), default="UNKNOWN")
@@ -111,7 +116,7 @@ def generate(api, owner, name, intent):
         f"- Most recent visible source event: `{event_cut}` (NOT a last-check timestamp)",
         f"- Visibility: **{visibility}** (preserve source access controls)",
         f"- Repo: `{safe(repo.get('full_name', owner + '/' + name))}`",
-        f"- Base: `{safe(branch)}` at [`{head[:12]}`]({repo.get('html_url', '')}/commit/{head})",
+        f"- Last non-pulse code commit on `{safe(branch)}`: [`{head[:12]}`]({repo.get('html_url', '')}/commit/{head}) (not necessarily actual branch HEAD)",
         f"- Open PRs: **{len(open_prs)}**; recently merged sample: **{len(recent_merged)}**",
         "- Deployment: **UNKNOWN** (not examined by this tool)",
         "- Real-device / field proof: **UNKNOWN** (requires its own receipt)",
@@ -124,7 +129,7 @@ def generate(api, owner, name, intent):
         "",
     ]
     for x in intent.get("foundations", []):
-        lines.append(f"- **{safe(x['id'])}**: {safe(x['text'])} — source: {x.get('source', 'UNLINKED')}")
+        lines.append(f"- **{safe(x['id'])}** [{safe(x.get('status', 'UNCLASSIFIED'))}]: {safe(x['text'])} — source: {safe(x.get('source', 'UNLINKED'))}")
     if not intent.get("foundations"):
         lines.append("- UNKNOWN — add source-linked foundations to `garden/intent.json`.")
     lines.extend(["", "## Open pull requests (live observations)", ""])
