@@ -1,0 +1,23 @@
+{
+  "schema": "ghot.garden-routes/v1",
+  "routes": [
+    {
+      "inbox": "garden-reentry",
+      "repos": ["the-static-collective/*"],
+      "kinds": ["repo_observed", "branch_advanced", "pr_changed", "pr_updated", "visibility_changed", "default_branch_changed"],
+      "visibility": ["public", "private", "internal", "unknown"]
+    },
+    {
+      "inbox": "motif-reasoning-candidates",
+      "repos": ["the-static-collective/MOTIF", "the-static-collective/CHARTSWAN"],
+      "kinds": ["branch_advanced", "pr_changed"],
+      "visibility": ["public", "private", "internal", "unknown"]
+    },
+    {
+      "inbox": "memento-return-candidates",
+      "repos": ["the-static-collective/MEMENTO", "the-static-collective/What-is-the-static-collective-"],
+      "kinds": ["branch_advanced", "pr_changed"],
+      "visibility": ["public", "private", "internal", "unknown"]
+    }
+  ]
+}
