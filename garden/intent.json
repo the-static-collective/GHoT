@@ -16,7 +16,7 @@
     {
       "id": "private-counts",
       "text": "Authenticated repository discovery includes private repos by default when access exists. Do not publish private content or names to a public index; a public-only inventory must declare its coverage boundary.",
-      "source": "https://github.com/the-static-collective/What-is-the-static-collective-/pull/102"
+      "source": "https://github.com/the-static-collective/MEMENTO/pull/59"
     },
     {
       "id": "no-readme-authority",
@@ -26,13 +26,19 @@
     {
       "id": "proof-separation",
       "text": "Proposed, merged, deployed, field-tested, and user-corrected are different states. Never manufacture a test result or erase an earlier cut.",
-      "source": "https://github.com/the-static-collective/What-is-the-static-collective-/pull/102"
+      "source": "https://github.com/the-static-collective/MEMENTO/blob/main/docs/architecture.md"
+    },
+    {
+      "id": "prebuild-history-pass",
+      "text": "Before substantive work in a new ChatGPT conversation, perform one bounded search of relevant prior conversation history, related project aliases, corrections and earlier failures; verify against current owner sources. Private repositories count. A missing history source remains UNKNOWN and must not block useful work.",
+      "source": "User correction 2026-11-19; working contract in AGENTS.md"
     }
   ],
-  "next": "After owner review, merge and trigger the garden-pulse workflow. Prove an unchanged check makes no new commit, then exercise a PR status change and fresh-chat re-entry. Extend the workflow to HUMKIN and one authorized private pilot without copying their facts into this public repo.",
+  "next": "Run an authenticated, local garden-wide router sweep with credentials authorized to read private and public repositories; compare observed coverage with the known 110-repository aperture; then configure trusted local scheduling and blind fresh-chat re-entry. Prove that events remain HELD and that GitBook/public docs never ingest private state.",
   "unknowns": [
-    "No automatic cross-project credentials or privileged writer has been installed.",
-    "Scheduled GitHub Actions are best-effort; future-chat connector retrieval still needs a deliberate entry protocol.",
-    "No end-to-end blind re-entry or external device test has been executed."
+    "The code-level router and fixture tests do not establish live authenticated polling across all 110 repos; the connected GitHub tool's read access cannot be transplanted into a scheduled runner.",
+    "No trusted unattended local scheduler or external webhook is installed yet.",
+    "ChatGPT Project/custom instructions must be installed by the user; a GitHub AGENTS.md is not automatically loaded in arbitrary fresh chats.",
+    "Historical ChatGPT search may be bounded by memory settings, conversation availability and project settings."
   ]
 }
