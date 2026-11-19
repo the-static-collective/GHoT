@@ -1,0 +1,32 @@
+name: Garden pulse — generate CONTINUE
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */2 * * *'
+permissions:
+  contents: write
+jobs:
+  pulse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test generator
+        run: python -m unittest discover -s garden/tests -v
+      - name: Generate source-pinned handoff
+        run: python garden/pulse.py pulse --owner the-static-collective --repo GHoT --intent garden/intent.json --out CONTINUE.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Commit only semantic changes
+        run: |
+          git add CONTINUE.md
+          if git diff --cached --quiet; then
+            echo "No source-state delta; no commit."
+            exit 0
+          fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'chore(continuity): refresh source-linked GHoT handoff'
+          git push
