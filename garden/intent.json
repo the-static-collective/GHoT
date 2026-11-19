@@ -26,7 +26,7 @@
     {
       "id": "proof-separation",
       "text": "Proposed, merged, deployed, field-tested, and user-corrected are different states. Never manufacture a test result or erase an earlier cut.",
-      "source": "https://github.com/the-static-collective/MEMENTO/blob/main/docs/architecture.md"
+      "source": "https://github.com/the-static-collective/What-is-the-static-collective-/pull/102"
     }
   ],
   "next": "After owner review, merge and trigger the garden-pulse workflow. Prove an unchanged check makes no new commit, then exercise a PR status change and fresh-chat re-entry. Extend the workflow to HUMKIN and one authorized private pilot without copying their facts into this public repo.",
