@@ -94,7 +94,7 @@ def generate(api, owner, name, intent):
     # branch HEAD here creates an infinite cron → commit → new HEAD loop.
     commits = (c for c in api.pages("/repos/" + slug + "/commits", sha=branch)
                if not c.get("commit", {}).get("message", "").startswith(
-                   "chore(continuity): refresh source-linked GHoT handoff"))
+                   "chore(continuity): refresh source-linked"))
     source_commit = next(commits, None)
     head = source_commit["sha"] if source_commit else "UNKNOWN"
     open_prs = list(api.pages("/repos/" + slug + "/pulls", state="open", sort="updated", direction="desc"))
