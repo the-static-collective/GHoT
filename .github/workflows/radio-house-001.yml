@@ -1,0 +1,40 @@
+name: RADIO HOUSE 001 — synthetic record/review seam
+on:
+  push:
+    branches:
+      - experiment/radio-house-001
+  pull_request:
+    paths:
+      - ghot/radio_house_001.py
+      - tests/test_radio_house_001.py
+      - docs/RADIO-HOUSE-001.md
+      - .github/workflows/radio-house-001.yml
+permissions:
+  contents: read
+jobs:
+  sovereign-radio-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Refuse forged rights and prove chunk recovery
+        run: python -m unittest discover -s tests -p 'test_radio_house_001.py' -v
+      - name: Run without radio/network side effects
+        run: |
+          python -m ghot.radio_house_001 demo /tmp/ghot-radio-house-001 > /tmp/radio-house-output.json
+          python - <<'PY'
+          import json
+          o=json.load(open('/tmp/radio-house-output.json'))
+          assert o["first_gate"]=="HOLD",o
+          assert o["first_transfer"]=="INCOMPLETE_RETRYABLE",o
+          assert o["resumed_transfer"]=="HELD_FOR_RECIPIENT_LOCAL_REVIEW",o
+          assert o["verification"]=="REVIEW_BYTES_COMPLETE",o
+          assert o["air"]=="NOT_PERFORMED",o
+          assert o["actual_station_adoption"] is False,o
+          print("RADIO HOUSE 001: SYNTHETIC ONLY / REVIEW HOLD")
+          PY
